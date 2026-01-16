@@ -8,25 +8,55 @@
 
 ## 🏗️ **System Architecture**
 
+### **Repository Structure**
+
+**This Repository (Frontend)**:
+- Next.js application with App Router
+- React components and UI
+- Client-side logic and state management
+- Location: https://github.com/svadrutk/songranker.git
+
+**Backend Repository**:
+- **Git Repository**: https://github.com/svadrutk/songranker-backend.git
+- PostgreSQL database schema and migrations
+- SQL functions and stored procedures
+- Backend logic and database code
+- **Database Host**: Supabase (https://loqddpjjjakaqgtuvoyn.supabase.co)
+- **Note**: Backend work is developed in the git repository, deployed to Supabase, and tracked in this documentation. Git logs from backend repo can be analyzed to update documentation.
+
 ### **Overview**
-Song Ranker is a Next.js application using the App Router architecture. The application connects to Supabase for database operations.
+Song Ranker uses a frontend/backend architecture. The Next.js frontend (this repository) connects to the backend repository's database (hosted on Supabase) for database operations.
 
 ### **Architecture Diagram**
 ```
 User Browser
     ↓
-Next.js App (Frontend)
+Next.js App (Frontend - This Repo)
+    https://github.com/svadrutk/songranker.git
     ↓
 Supabase Client (lib/supabase.ts)
     ↓
-Supabase (PostgreSQL Database)
+Backend Repository → Supabase Database
+    https://github.com/svadrutk/songranker-backend.git
+    ↓
+    https://loqddpjjjakaqgtuvoyn.supabase.co
 ```
 
 ### **Key Components**
-- **Frontend**: Next.js App Router with React components
-- **Database**: Supabase (PostgreSQL) with client-side access
-- **Styling**: Tailwind CSS for utility-first styling
-- **Type Safety**: TypeScript throughout
+
+**Frontend (This Repository)**:
+- Next.js App Router with React components
+- TypeScript for type safety
+- Tailwind CSS for styling
+- Supabase client for backend communication
+
+**Backend (Supabase)**:
+- PostgreSQL database
+- SQL functions and stored procedures
+- Database views and triggers
+- Row Level Security (RLS) policies
+- **Implementation**: All backend work done in Supabase SQL Editor
+- **Documentation**: Tracked in this repository's key documentation
 
 ---
 

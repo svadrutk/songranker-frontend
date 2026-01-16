@@ -10,11 +10,26 @@
 
 Song Ranker is an interactive web application that determines a user's personalized ranking of songs from a fixed catalog by asking them to make repeated pairwise comparisons. The application is designed to feel lightweight, fast, and slightly addictive, encouraging users to continue making choices until a full ranking emerges.
 
+### **Repository Structure**
+
+**This Repository (Frontend)**:
+- **Location**: https://github.com/svadrutk/songranker.git
+- **Type**: Next.js frontend application
+- **Purpose**: User interface, client-side logic, UI components
+
+**Backend Repository**:
+- **Git Repository**: https://github.com/svadrutk/songranker-backend.git
+- **Type**: Backend code repository (SQL migrations, functions, schema)
+- **Purpose**: Database schema, SQL functions, migrations, backend logic
+- **Database Host**: Supabase (https://loqddpjjjakaqgtuvoyn.supabase.co)
+- **Note**: Backend work is implemented in the backend repository and deployed to Supabase. Git logs from the backend repo are used to track changes in this documentation.
+
 ### **Project Overview**
 
 **Assignment**: Music Preference Sorter  
 **Purpose**: Build an interactive web application for ranking songs through pairwise comparisons  
-**Approach**: Minimize comparisons while producing accurate total ordering based on user preferences
+**Approach**: Minimize comparisons while producing accurate total ordering based on user preferences  
+**Architecture**: Frontend (Next.js) + Backend (Supabase PostgreSQL)
 
 ### **Current Status**:
 - ✅ Next.js application initialized
@@ -29,10 +44,11 @@ Song Ranker is an interactive web application that determines a user's personali
 - 🚧 Ranking algorithm implementation: Not yet started
 
 ### **Key Metrics**:
-- **Tech Stack**: Next.js 16.1.3, React 19.2.3, TypeScript, Tailwind CSS
-- **Database**: Supabase (PostgreSQL)
-- **Repository**: https://github.com/svadrutk/songranker.git
-- **Supabase URL**: https://loqddpjjjakaqgtuvoyn.supabase.co
+- **Frontend Stack**: Next.js 16.1.3, React 19.2.3, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL database + backend services)
+- **Frontend Repository**: https://github.com/svadrutk/songranker.git
+- **Backend Repository**: https://github.com/svadrutk/songranker-backend.git
+- **Database Host**: Supabase (https://loqddpjjjakaqgtuvoyn.supabase.co)
 - **Target Dataset Size**: 50-200 items
 
 ---
@@ -247,22 +263,29 @@ Phases are organized by their overall development goals. Each category represent
 
 ## 🏗️ **Technical Architecture**
 
-### **Frontend Stack**
+### **Frontend Architecture** (This Repository)
 - **Framework**: Next.js 16.1.3 (App Router)
 - **Language**: TypeScript 5
 - **UI Library**: React 19.2.3
 - **Styling**: Tailwind CSS 4
 - **Font**: Geist (via next/font)
+- **Component Library**: shadcn/ui
+- **State Management**: React hooks and context
 
-### **Backend/Database**
-- **Database**: Supabase (PostgreSQL)
-- **Client Library**: @supabase/supabase-js 2.90.1
-- **Connection**: Configured via environment variables
+### **Backend Architecture**
+- **Backend Repository**: https://github.com/svadrutk/songranker-backend.git
+- **Database**: PostgreSQL (hosted on Supabase)
+- **Database Host**: https://loqddpjjjakaqgtuvoyn.supabase.co
+- **Client Library**: @supabase/supabase-js 2.90.1 (used in frontend)
+- **Backend Work**: Database schema, SQL functions, stored procedures, views, migrations
+- **Connection**: Configured via environment variables in frontend
+
+**Note**: Backend work is developed in the backend git repository, deployed to Supabase, and tracked in this frontend repository's documentation. Git logs from the backend repo can be analyzed to automatically update this documentation.
 
 ### **Development Tools**
 - **Linting**: ESLint 9 with Next.js config
 - **Package Manager**: npm
-- **Version Control**: Git
+- **Version Control**: Git (frontend repository)
 
 ---
 
@@ -402,6 +425,23 @@ Song Ranker/
 
 ## 🗄️ **Database Schema**
 
+### **Backend Implementation Location**
+
+**Backend Repository**: https://github.com/svadrutk/songranker-backend.git  
+**Database Host**: Supabase (https://loqddpjjjakaqgtuvoyn.supabase.co)
+
+**Important**: Database schema, SQL functions, and all backend work is:
+- **Developed** in the backend git repository
+- **Deployed** to Supabase database
+- **Tracked** in this frontend repository's documentation
+
+**How Backend Work is Tracked**:
+- Git logs from backend repository are analyzed to extract changes
+- Database schema changes documented in this PROJECT_PLAN.md
+- SQL functions and stored procedures documented in TECHNICAL_REFERENCE.md
+- Backend decisions documented in DEVELOPMENT_LOG.md
+- Automatic updates possible by reading backend repo git logs
+
 ### **Current Status**: Design Phase
 
 Database schema will be designed to support:
@@ -409,6 +449,8 @@ Database schema will be designed to support:
 - User preference/comparison tracking
 - Ranking results storage
 - Session management
+
+**Implementation Location**: Supabase PostgreSQL database
 
 ### **Planned Tables** (To Be Implemented)
 
@@ -450,11 +492,20 @@ Database schema will be designed to support:
 - **Note**: Strength parameters \(p_i\) are estimated via maximum likelihood from comparisons table
 
 ### **Supabase Configuration**
-- **URL**: https://loqddpjjjakaqgtuvoyn.supabase.co
+
+**Backend Repository**: https://loqddpjjjakaqgtuvoyn.supabase.co
+
+**Frontend Connection**:
 - **Client**: Configured in `lib/supabase.ts`
 - **Environment Variables**: 
   - `NEXT_PUBLIC_SUPABASE_URL`
   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+**Backend Work Location**:
+- Database schema: Created in Supabase SQL Editor
+- SQL functions: Stored in Supabase (can be exported/migrated)
+- Views: Created in Supabase SQL Editor
+- All backend work is tracked in this documentation but implemented in Supabase
 
 ---
 

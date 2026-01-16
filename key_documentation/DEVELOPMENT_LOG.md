@@ -44,23 +44,29 @@ This section tracks **major architectural and strategic decisions** made during 
 **Commit**: `30fad3d` - "added docs" (includes Supabase setup)
 
 **What Changed**:
-- Added @supabase/supabase-js dependency
+- Added @supabase/supabase-js dependency to frontend
 - Created lib/supabase.ts with Supabase client configuration
-- Connected to Supabase project: https://loqddpjjjakaqgtuvoyn.supabase.co
+- Connected frontend to backend repository: https://github.com/svadrutk/songranker-backend.git
+- Database hosted on Supabase: https://loqddpjjjakaqgtuvoyn.supabase.co
 - Configured environment variables (NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY)
+- Established separate backend git repository for database work
 
 **Why**:
 - Need database backend for storing songs, comparisons, and rankings
 - Supabase provides PostgreSQL with easy client-side access
 - Supports real-time features if needed later
 - Simpler than setting up separate backend server
+- Backend work (SQL, schema) happens in Supabase, tracked in frontend docs
 
 **Impact**:
 - Database connectivity established
-- PostgreSQL backend selected (via Supabase)
+- PostgreSQL backend selected (hosted on Supabase)
+- Backend git repository separated from frontend repository
+- Backend work can be tracked via git logs from backend repo
 - Foundation for data storage layer
 - Ready for Bradley-Terry algorithm data collection
 - Enables hybrid SQL/TypeScript architecture
+- **Important**: Backend work is developed in backend git repo, deployed to Supabase, and tracked in this frontend documentation
 
 ---
 
@@ -233,9 +239,10 @@ This document should be updated:
 - Technology stack selections
 - Architecture patterns and approaches
 - Algorithm selections
-- Database design decisions
+- Database design decisions (schema, SQL functions, stored procedures)
 - Project organization changes
 - Strategic direction changes
+- Backend work decisions (even though implemented in Supabase)
 
 **What doesn't count?**
 - Routine bug fixes
@@ -243,6 +250,17 @@ This document should be updated:
 - Minor refactoring
 - Documentation updates (unless structural)
 - Feature implementations (tracked in PROJECT_PLAN.md)
+
+**Backend Work Tracking**:
+- **Backend Git Repository**: https://github.com/svadrutk/songranker-backend.git
+- **Database Host**: Supabase (https://loqddpjjjakaqgtuvoyn.supabase.co)
+- All backend work (database schema, SQL functions, views) is developed in backend git repo
+- Backend work is deployed to Supabase database
+- Git logs from backend repository can be analyzed to automatically update documentation
+- All backend decisions and changes should be documented here
+- SQL code can be documented in TECHNICAL_REFERENCE.md
+- Schema changes should be tracked in PROJECT_PLAN.md
+- **Automatic Tracking**: When backend repo is accessible, git logs can be read to extract changes and update documentation
 
 **Format for new decisions**:
 ```markdown
