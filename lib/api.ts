@@ -6,13 +6,14 @@ export interface CoverArtArchive {
   count: number | null;
   darkened: boolean | null;
   front: boolean | null;
+  url?: string;
 }
 
 export interface ReleaseGroup {
-  id: string; // Release Group MBID
+  id: string; // Release Group MBID or Last.fm ID
   title: string;
   type: string;
-  cover_art: CoverArtArchive;
+  cover_art?: CoverArtArchive;
 }
 
 export interface TrackResponse {

@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "*.archive.org",
       },
+      {
+        protocol: "https",
+        hostname: "lastfm.freetls.fastly.net",
+      },
+      {
+        protocol: "https",
+        hostname: "*.lst.fm",
+      },
     ],
   },
 };

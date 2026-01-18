@@ -52,7 +52,9 @@ export function Catalog({ onToggle, onSearchStart, selectedIds }: CatalogProps) 
     onSearchStart?.();
     try {
       const data = await searchArtistReleaseGroups(query);
-      setResults(data);
+      // Deduplicate results by ID to prevent duplicate key errors
+      const uniqueData = Array.from(new Map(data.map(item => [item.id, item])).values());
+      setResults(uniqueData);
     } catch (error) {
       console.error("Search failed:", error);
     } finally {
@@ -70,9 +72,11 @@ export function Catalog({ onToggle, onSearchStart, selectedIds }: CatalogProps) 
 
   const filteredResults = useMemo(() => {
     return results.filter(release => {
-      const type = release.type as ReleaseType;
-      if (activeFilters.includes(type)) return true;
-      if (activeFilters.includes("Other") && !["Album", "EP", "Single"].includes(type)) return true;
+      const type = (release.type || "Other").toLowerCase();
+      const activeFiltersLower = activeFilters.map(f => f.toLowerCase());
+      
+      if (activeFiltersLower.includes(type)) return true;
+      if (activeFiltersLower.includes("other") && !["album", "ep", "single"].includes(type)) return true;
       return false;
     });
   }, [results, activeFilters]);
@@ -161,7 +165,7 @@ export function Catalog({ onToggle, onSearchStart, selectedIds }: CatalogProps) 
                 ))}
               </div>
             </div>
-            {filteredResults.map((release) => {
+            {filteredResults.map((release, index) => {
               const isSelected = selectedIds.includes(release.id);
               const isExpanded = expandedId === release.id;
               const hasTracks = !!tracksCache[release.id];
@@ -169,7 +173,7 @@ export function Catalog({ onToggle, onSearchStart, selectedIds }: CatalogProps) 
 
               return (
                 <div
-                  key={release.id}
+                  key={`${release.id}-${index}`}
                   onClick={() => handleSelect(release)}
                   className={`group flex flex-col p-1.5 rounded-md border transition-all cursor-pointer relative ${
                     isSelected 
@@ -182,6 +186,7 @@ export function Catalog({ onToggle, onSearchStart, selectedIds }: CatalogProps) 
                       <CoverArt 
                         id={release.id} 
                         title={release.title} 
+                        url={release.cover_art?.url}
                         className="rounded-sm h-full w-full"
                       />
                       {isLoading && (
@@ -196,7 +201,7 @@ export function Catalog({ onToggle, onSearchStart, selectedIds }: CatalogProps) 
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter opacity-70">
-                          {release.type}
+                          {release.type || "Other"}
                         </span>
                         {hasTracks && !isExpanded && (
                           <span className="flex items-center gap-1 text-[9px] text-green-600 font-bold uppercase tracking-tighter">
