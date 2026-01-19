@@ -27,9 +27,9 @@ export function RankingCard({ song, onClick, isActive }: RankingCardProps) {
     >
       {/* Artwork Section */}
       <div className="relative h-48 w-full bg-muted/30 flex items-center justify-center overflow-hidden border-b">
-        {song.cover_url && song.cover_url !== "null" && !imageError ? (
+        {(song.cover_url || song.spotify_id) && !imageError ? (
           <Image
-            src={song.cover_url}
+            src={song.cover_url || `https://i.scdn.co/image/${song.spotify_id}`}
             alt={song.name}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-110"
