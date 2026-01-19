@@ -38,6 +38,29 @@ export interface TrackResponse {
   tracks: string[];
 }
 
+export interface SessionSong {
+  song_id: string;
+  name: string;
+  artist: string;
+  album: string | null;
+  spotify_id: string | null;
+  local_elo: number;
+  bt_strength: number | null;
+}
+
+export interface ComparisonCreate {
+  song_a_id: string;
+  song_b_id: string;
+  winner_id: string | null;
+  is_tie: boolean;
+}
+
+export interface ComparisonResponse {
+  success: boolean;
+  new_elo_a: number;
+  new_elo_b: number;
+}
+
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
 
 export async function searchArtistReleaseGroups(query: string): Promise<ReleaseGroup[]> {
@@ -98,6 +121,45 @@ export async function createSession(payload: SessionCreate): Promise<SessionResp
     return await response.json();
   } catch (error) {
     console.error("[API] Error in createSession:", error);
+    throw error;
+  }
+}
+
+export async function getSessionSongs(sessionId: string): Promise<SessionSong[]> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}/songs`, {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch session songs: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error in getSessionSongs:", error);
+    return [];
+  }
+}
+
+export async function createComparison(sessionId: string, payload: ComparisonCreate): Promise<ComparisonResponse> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}/comparisons`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || `Failed to create comparison: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error in createComparison:", error);
     throw error;
   }
 }

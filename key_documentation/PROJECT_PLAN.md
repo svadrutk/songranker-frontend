@@ -1,8 +1,8 @@
 # Song Ranker - Project Plan
 
 **Last Updated**: January 18, 2026  
-**Status**: 🚧 **In Development** - Deduplication & Review Phase  
-**Current Phase**: Phase 1 - Deduplication & Review (Frontend)
+**Status**: 🚧 **In Development** - Phase 4: Bradley-Terry Sync  
+**Current Phase**: Phase 4 - Bradley-Terry & Model Sync (Backend)
 
 ---
 
@@ -22,7 +22,9 @@ Song Ranker is an interactive web application for ranking songs through pairwise
 - ✅ Hybrid Elo/Bradley-Terry architecture framework established
 - ✅ UI component system (shadcn/ui) and dark mode implemented
 - ✅ Phase 1: Deduplication & Review (Frontend) - **COMPLETED**
-- 🚧 Phase 2: Session & Data Persistence (Backend) - **PLANNED**
+- ✅ Phase 2: Session & Data Persistence (Backend) - **COMPLETED**
+- ✅ Phase 3: The Ranking Loop & Elo (Frontend) - **COMPLETED**
+- 🚧 Phase 4: Bradley-Terry & Model Sync (Backend) - **IN PROGRESS**
 
 ---
 
@@ -49,17 +51,20 @@ Song Ranker is an interactive web application for ranking songs through pairwise
 - **Fuzzy Matching**: Identify potential duplicates with uncertainty scores.
 - **UI**: Implement the "Review & Merge" modal before session initialization.
 
-### **Phase 2: Session & Data Persistence (Backend)** 📋 **PLANNED**
+### **Phase 2: Session & Data Persistence (Backend)** ✅ **COMPLETED**
 - **Supabase Schema**: Implement `sessions`, `comparisons`, and `songs` tables.
 - **API**: 
   - `POST /sessions`: Initialize session with deduplicated song list.
   - `BackgroundTasks`: Trigger deep fuzzy matching and update session "aliases."
+  - `GET /sessions/{id}/songs`: Fetch session tracks with local Elo.
+  - `POST /sessions/{id}/comparisons`: Record duels and update ratings.
 
-### **Phase 3: The Ranking Loop & Elo (Frontend)** 📋 **PLANNED**
-- **Logic**: Implement `lib/elo.ts` for real-time rating updates.
-- **UI**: Transform `RankingWidget` into an active duel interface with "Song A", "Song B", and "Tie" options.
+### **Phase 3: The Ranking Loop & Elo (Frontend)** ✅ **COMPLETED**
+- **Logic**: Implement `lib/elo.ts` for real-time rating updates and `lib/pairing.ts` for similar-Elo pairing.
+- **UI**: Transform `RankingWidget` into an active duel interface with "Song A", "Song B", "Tie", and "Skip" options.
+- **UX**: Implement optimistic UI updates for instant feedback.
 
-### **Phase 4: Bradley-Terry & Model Sync (Backend)** 📋 **PLANNED**
+### **Phase 4: Bradley-Terry & Model Sync (Backend)** 🚧 **IN PROGRESS**
 - **Algorithm**: Implement Bradley-Terry MM in the backend.
 - **Sync**: Return BT strengths to frontend; recalibrate local Elo ratings to match BT ordering.
 

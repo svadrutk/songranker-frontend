@@ -147,6 +147,108 @@
         }
       }
     },
+    "/sessions/{session_id}/songs": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Get Session Songs",
+        "description": "Retrieve all songs for a session with their current ratings.",
+        "operationId": "get_session_songs_sessions__session_id__songs_get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionSong"
+                  },
+                  "title": "Response Get Session Songs Sessions  Session Id  Songs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{session_id}/comparisons": {
+      "post": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Create Comparison",
+        "description": "Record a duel result and update local Elo ratings.",
+        "operationId": "create_comparison_sessions__session_id__comparisons_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sessions": {
       "post": {
         "tags": [
@@ -208,6 +310,66 @@
   },
   "components": {
     "schemas": {
+      "ComparisonCreate": {
+        "properties": {
+          "song_a_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Song A Id"
+          },
+          "song_b_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Song B Id"
+          },
+          "winner_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Winner Id"
+          },
+          "is_tie": {
+            "type": "boolean",
+            "title": "Is Tie",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "song_a_id",
+          "song_b_id"
+        ],
+        "title": "ComparisonCreate"
+      },
+      "ComparisonResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "new_elo_a": {
+            "type": "number",
+            "title": "New Elo A"
+          },
+          "new_elo_b": {
+            "type": "number",
+            "title": "New Elo B"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "new_elo_a",
+          "new_elo_b"
+        ],
+        "title": "ComparisonResponse"
+      },
       "CoverArtArchive": {
         "properties": {
           "artwork": {
@@ -383,6 +545,68 @@
           "count"
         ],
         "title": "SessionResponse"
+      },
+      "SessionSong": {
+        "properties": {
+          "song_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Song Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "album": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album"
+          },
+          "spotify_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Spotify Id"
+          },
+          "local_elo": {
+            "type": "number",
+            "title": "Local Elo"
+          },
+          "bt_strength": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bt Strength"
+          }
+        },
+        "type": "object",
+        "required": [
+          "song_id",
+          "name",
+          "artist",
+          "local_elo"
+        ],
+        "title": "SessionSong"
       },
       "SongInput": {
         "properties": {

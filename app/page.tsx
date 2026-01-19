@@ -103,10 +103,7 @@ export default function Home() {
       {/* Right Panel: Ranking */}
       <div className="flex-1 h-full p-8 overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative">
         <RankingWidget 
-          selectedReleases={selectedReleases} 
-          allTracks={allTracks}
           isRanking={view === "ranking"}
-          finalSongList={finalSongList}
           sessionId={sessionId}
         />
 

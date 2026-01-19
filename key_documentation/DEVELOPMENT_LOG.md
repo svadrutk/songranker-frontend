@@ -1,11 +1,33 @@
 # Song Ranker - Development Log
 
 **Last Updated**: January 18, 2026  
-**Status**: ✅ **ACTIVE** - Ongoing decision and change tracking
+**Status**: ✅ **ACTIVE** - Phase 3 Complete
 
 ---
 
 ## 📋 **Decision Log**
+
+### **Decision #8: Optimistic Elo Updates & Similar-Elo Pairing**
+**Date**: January 18, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- Implemented `lib/elo.ts` to replicate backend Elo logic ($K=32$) on the frontend.
+- Implemented `lib/pairing.ts` using a "closest-Elo" strategy to maximize information gain.
+- Updated `RankingWidget.tsx` to fetch session songs and run the ranking loop.
+- Added "Tie" and "Skip" functionality to the duel interface.
+
+**Why**:
+- **Snappy UX**: Optimistic updates ensure the UI responds instantly to user choices without waiting for backend confirmation.
+- **Efficiency**: Similar-Elo pairing ensures that duels are meaningful and help converge the ranking faster.
+- **Resilience**: The frontend handles its own pairing and rating state, syncing with the backend in the background.
+
+**Impact**:
+- Functional ranking loop implemented.
+- Immediate visual feedback on song ratings (visible on hover).
+- Seamless transition from deduplication to ranking.
+
+---
 
 ### **Decision #7: Robust Deduplication & Normalization Logic**
 **Date**: January 18, 2026

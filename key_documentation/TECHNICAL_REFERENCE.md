@@ -1,8 +1,8 @@
 # Song Ranker - Technical Reference
 
-**Last Updated**: January 16, 2025  
+**Last Updated**: January 18, 2026  
 **Purpose**: Complete technical documentation for developers  
-**Status**: ✅ **ACTIVE** - Technical reference guide
+**Status**: ✅ **ACTIVE** - Phase 3 Complete
 
 ---
 
@@ -52,6 +52,10 @@ Song Ranker/
 │   ├── page.tsx           # Home page
 │   └── globals.css        # Global styles
 ├── lib/                   # Utility libraries
+│   ├── api.ts            # Backend API client
+│   ├── elo.ts            # Frontend Elo calculations
+│   ├── pairing.ts        # Duel pairing logic
+│   ├── deduplication.ts  # Track cleaning & fuzzy matching
 │   └── supabase.ts       # Supabase client singleton
 ├── public/                # Static assets
 └── [config files]        # Next.js, TypeScript, ESLint configs
