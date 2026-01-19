@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
+import { ShareButton } from "@/components/ShareButton";
 import type { SessionSong } from "@/lib/api";
 
 type LeaderboardProps = {
@@ -65,14 +66,17 @@ export function Leaderboard({ songs, onContinue }: LeaderboardProps): JSX.Elemen
       </div>
 
       <div className="pt-4 md:pt-8 flex flex-col items-center gap-4 shrink-0">
-        <Button
-          onClick={onContinue}
-          variant="outline"
-          className="px-8 md:px-12 py-5 md:py-6 rounded-xl font-mono uppercase tracking-widest text-[10px] md:text-xs font-black"
-        >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Keep Ranking
-        </Button>
+        <div className="flex gap-4">
+          <Button
+            onClick={onContinue}
+            variant="outline"
+            className="px-8 md:px-12 py-5 md:py-6 rounded-xl font-mono uppercase tracking-widest text-[10px] md:text-xs font-black"
+          >
+            <RotateCcw className="h-4 w-4 mr-2" />
+            Keep Ranking
+          </Button>
+          <ShareButton songs={sortedSongs} />
+        </div>
         <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest text-center max-w-sm">
           Rankings become more accurate the more you duel.
         </p>

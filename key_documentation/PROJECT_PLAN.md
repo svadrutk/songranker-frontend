@@ -27,7 +27,8 @@ Song Ranker is an interactive web application for ranking songs through pairwise
 - ✅ Phase 4: Session Management & UI Refinement - **COMPLETED**
 - ✅ Phase 5: Results & Polish - **COMPLETED**
 - ✅ Phase 6: Bradley-Terry & Model Sync (Backend) - **COMPLETED**
-- 🚧 Phase 7: Future Enhancements (Global Rankings, Social Sharing) - **PLANNED**
+- ✅ Phase 7: Social Sharing & Visuals - **COMPLETED**
+- 🚧 Phase 8: Global Rankings & Analytics - **PLANNED**
 
 ---
 

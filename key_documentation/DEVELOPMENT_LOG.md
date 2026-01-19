@@ -167,6 +167,27 @@
 
 ---
 
+### **Decision #14: High-Fidelity Social Sharing**
+**Date**: January 19, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- **Share Card Generation**: Implemented a "Share" button using `html-to-image` to generate a vertical (1080x1920) social media card.
+- **Visual Design**: Created `ShareVisual.tsx` which features a large artwork for the #1 song and a sleek numbered list for songs 2–10, optimized for Instagram Stories.
+- **Sharing API**: Integrated the **Web Share API** for native sharing on mobile devices, with a high-quality PNG download fallback for desktop.
+- **Celebration**: Added `canvas-confetti` to provide positive reinforcement when a user generates their results card.
+
+**Why**:
+- **Virality**: Providing users with a "pretty" visual (similar to Spotify Wrapped) encourages sharing, which is the primary driver for growth in music-related apps.
+- **Closure**: Generating a final card gives the user a sense of "completion" for their ranking session.
+- **Performance**: Rendering the card off-screen and capturing it as an image is more efficient than building a complex canvas-based renderer.
+
+**Impact**:
+- Increased user engagement and potential for organic social sharing.
+- Professional, polished feel for the session completion state.
+
+---
+
 ## 🐛 **Issues Tracking**
 
 ### **Issue: Total Removal of Duplicated Songs (RESOLVED)**
