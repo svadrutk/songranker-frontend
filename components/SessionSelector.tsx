@@ -22,12 +22,31 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const loadSessions = useCallback(async () => {
+  const loadSessions = useCallback(async (showLoading = true) => {
     if (!user) return;
-    setLoading(true);
+    
+    const cacheKey = `sr_sessions_${user.id}`;
+    
+    // 1. Try to load from cache first
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
+      try {
+        const parsed = JSON.parse(cachedData);
+        setSessions(parsed);
+        // If we have cache, we don't necessarily need to show the main loader
+        if (showLoading) setLoading(false);
+      } catch (e) {
+        console.error("Failed to parse cached sessions:", e);
+      }
+    } else if (showLoading) {
+      setLoading(true);
+    }
+
+    // 2. Always fetch fresh data from API
     try {
       const data = await getUserSessions(user.id);
       setSessions(data);
+      localStorage.setItem(cacheKey, JSON.stringify(data));
     } catch (error) {
       console.error("Failed to load sessions:", error);
     } finally {
@@ -45,7 +64,7 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
   };
 
   const handleConfirmDelete = async () => {
-    if (!confirmDeleteId) return;
+    if (!confirmDeleteId || !user) return;
 
     const sessionId = confirmDeleteId;
     setConfirmDeleteId(null);
@@ -53,7 +72,11 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
     try {
       const success = await deleteSession(sessionId);
       if (success) {
-        setSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
+        setSessions((prev) => {
+          const updated = prev.filter((s) => s.session_id !== sessionId);
+          localStorage.setItem(`sr_sessions_${user.id}`, JSON.stringify(updated));
+          return updated;
+        });
         onDelete?.(sessionId);
       }
     } catch (error) {

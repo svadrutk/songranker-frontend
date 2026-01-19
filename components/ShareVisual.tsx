@@ -36,7 +36,7 @@ export function ShareVisual({ songs }: ShareVisualProps): JSX.Element {
             Song Ranker
           </p>
           <h1 className="text-7xl font-black tracking-tighter uppercase italic">
-            My Definitive Top 10
+            My Favorite Tracks
           </h1>
         </div>
 

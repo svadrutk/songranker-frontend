@@ -188,6 +188,46 @@
 
 ---
 
+### **Decision #15: Local Session Caching & SWR Pattern**
+**Date**: January 19, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- **Caching Mechanism**: Implemented `localStorage` caching for the "My Sessions" view in `SessionSelector.tsx`.
+- **SWR Implementation**: Adopted a "Stale-While-Revalidate" pattern. The UI now loads cached sessions instantly on mount, then performs a background API fetch to update the list and refresh the cache.
+- **Cache Invalidation**: Added logic to `app/page.tsx` to clear the local session cache whenever a new ranking session is successfully created.
+- **Data Integrity**: Ensured that deleting a session from the UI also updates the local cache immediately.
+
+**Why**:
+- **Performance**: Fetching the full session list from the API on every view switch created a noticeable delay and a "flickering" loading state.
+- **Perceived Speed**: Instant loading of cached data makes the application feel more responsive and "app-like."
+- **Efficiency**: Reduces unnecessary API calls when the user is simply toggling between search and sessions.
+
+**Impact**:
+- Near-instant switching between "Search" and "My Sessions" views.
+- Improved user experience for returning users with many sessions.
+- Reduced load on the backend for session list retrieval.
+
+---
+
+### **Decision #16: Conditional Toast Notifications**
+**Date**: January 19, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- **Toast Logic**: Updated `RankingWidget.tsx` to suppress the "Top 10 Rankings Updated!" toast notification until the convergence score (or optimistic progress) reaches the 90% stability threshold.
+- **Dependency Tracking**: Included `displayScore` in the `useEffect` dependency array to ensure accurate threshold checking.
+
+**Why**:
+- **Reducing Noise**: During the early stages of a ranking session, the Top 10 shifts very frequently. Repeatedly showing "Updated!" notifications while the user is still in the "Calibrating" or "Establishing Order" phases is distracting and provides little value.
+- **Meaningful Feedback**: By waiting until the 90% threshold is met, the notification only triggers when the rankings have reached a high level of statistical stability, making any subsequent shift much more significant and noteworthy.
+
+**Impact**:
+- Cleaner, less intrusive UI during the bulk of the ranking process.
+- Higher signal-to-noise ratio for rank-related notifications.
+
+---
+
 ## 🐛 **Issues Tracking**
 
 ### **Issue: Total Removal of Duplicated Songs (RESOLVED)**

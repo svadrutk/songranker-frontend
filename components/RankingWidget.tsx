@@ -42,6 +42,11 @@ export function RankingWidget({
     };
   }, []);
 
+  const quantityTarget = Math.max(1, songs.length * 1.5);
+  const quantityProgress = Math.min(100, (totalDuels / quantityTarget) * 100);
+  const optimisticMin = Math.min(40, quantityProgress);
+  const displayScore = Math.max(convergence, optimisticMin);
+
   // Track Top 10 changes
   useEffect(() => {
     if (songs.length === 0) return;
@@ -60,7 +65,8 @@ export function RankingWidget({
         currentTop10.length !== prevTop10Ref.current.length ||
         currentTop10.some((id, i) => id !== prevTop10Ref.current[i]);
 
-      if (isDifferent) {
+      // Only show the toast once we've reached the convergence requirement (90%)
+      if (isDifferent && displayScore >= 90) {
         setShowRankUpdate(true);
         const timer = setTimeout(() => setShowRankUpdate(false), 3000);
         return () => clearTimeout(timer);
@@ -68,12 +74,7 @@ export function RankingWidget({
     }
 
     prevTop10Ref.current = currentTop10;
-  }, [songs]);
-  
-  const quantityTarget = Math.max(1, songs.length * 1.5);
-  const quantityProgress = Math.min(100, (totalDuels / quantityTarget) * 100);
-  const optimisticMin = Math.min(40, quantityProgress);
-  const displayScore = Math.max(convergence, optimisticMin);
+  }, [songs, displayScore]);
 
   useEffect(() => {
     if (!isRanking || !sessionId) return;

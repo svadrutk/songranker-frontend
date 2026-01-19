@@ -70,6 +70,12 @@ export default function Home(): JSX.Element {
           user_id: user?.id,
           songs: songInputs,
         });
+        
+        // Clear sessions cache to ensure the new session appears when opening "My Sessions"
+        if (user?.id) {
+          localStorage.removeItem(`sr_sessions_${user.id}`);
+        }
+        
         setSessionId(session.session_id);
         setView("ranking");
       } catch (err) {
