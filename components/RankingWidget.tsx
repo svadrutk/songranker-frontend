@@ -153,8 +153,34 @@ export function RankingWidget({
   );
 
   const handleSkip = useCallback((): void => {
-    setCurrentPair(getNextPair(songs));
-  }, [songs]);
+    if (!currentPair || !sessionId) return;
+    const [songA, songB] = currentPair;
+
+    // Apply "double loss" penalty in local state for immediate feedback
+    const [newEloA] = calculateNewRatings(songA.local_elo, songB.local_elo, 0);
+    const [, newEloB] = calculateNewRatings(songA.local_elo, songB.local_elo, 1);
+
+    setSongs((prevSongs) => {
+      const updated = prevSongs.map((s) => {
+        if (s.song_id === songA.song_id) return { ...s, local_elo: newEloA };
+        if (s.song_id === songB.song_id) return { ...s, local_elo: newEloB };
+        return s;
+      });
+      setCurrentPair(getNextPair(updated));
+      return updated;
+    });
+
+    setTotalDuels((prev) => prev + 1);
+
+    // Persist skip to backend
+    createComparison(sessionId, {
+      song_a_id: songA.song_id,
+      song_b_id: songB.song_id,
+      winner_id: null,
+      is_tie: false,
+    }).catch(err => console.error("Failed to record skip:", err));
+
+  }, [currentPair, sessionId]);
 
   const getConvergenceLabel = (score: number) => {
     if (score < 30) return "Calibrating Rankings...";

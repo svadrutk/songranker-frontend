@@ -30,7 +30,7 @@ export function Leaderboard({ songs, onContinue }: LeaderboardProps): JSX.Elemen
           <div className="h-[1px] md:h-[2px] w-8 md:w-12 bg-primary/20 rounded-full" />
         </div>
         <h2 className="text-2xl md:text-4xl font-black tracking-tighter uppercase italic">
-          The Definitive Order
+          Your Favorite Tracks
         </h2>
       </div>
 
@@ -64,7 +64,7 @@ export function Leaderboard({ songs, onContinue }: LeaderboardProps): JSX.Elemen
         ))}
       </div>
 
-      <div className="pt-4 md:pt-8 flex gap-4 shrink-0">
+      <div className="pt-4 md:pt-8 flex flex-col items-center gap-4 shrink-0">
         <Button
           onClick={onContinue}
           variant="outline"
@@ -73,6 +73,9 @@ export function Leaderboard({ songs, onContinue }: LeaderboardProps): JSX.Elemen
           <RotateCcw className="h-4 w-4 mr-2" />
           Keep Ranking
         </Button>
+        <p className="text-[10px] font-mono text-muted-foreground/40 uppercase tracking-widest text-center max-w-xs animate-pulse">
+          Rankings become more accurate the more you duel.
+        </p>
       </div>
     </div>
   );
