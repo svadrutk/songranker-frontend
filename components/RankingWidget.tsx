@@ -9,7 +9,7 @@ import {
 } from "@/lib/api";
 import { getNextPair } from "@/lib/pairing";
 import { calculateNewRatings } from "@/lib/elo";
-import { Music, LogIn, Loader2, Trophy, Scale, RotateCcw } from "lucide-react";
+import { Music, LogIn, Loader2, Trophy, Scale, RotateCcw, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { RankingCard } from "@/components/RankingCard";
 
@@ -150,94 +150,117 @@ export function RankingWidget({
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full gap-8">
-      <div className="flex flex-col items-center gap-12 animate-in fade-in zoom-in duration-500">
+    <div className="flex flex-col items-center justify-center h-full w-full gap-8 max-w-7xl mx-auto">
+      <div className="flex flex-col items-center gap-10 animate-in fade-in zoom-in duration-700 w-full">
         {/* Header Section */}
-        <div className="text-center space-y-3 relative">
-          <div className="flex items-center justify-center gap-3 mb-1">
-             <div className="h-px w-8 bg-primary/20" />
-             <p className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">
-               {totalDuels === 0 ? "Battle Phase" : `Duel Sequence #${totalDuels + 1}`}
+        <div className="text-center space-y-4 relative">
+          <div className="flex items-center justify-center gap-4 mb-2">
+             <div className="h-[2px] w-12 bg-primary/20 rounded-full" />
+             <p className="text-[11px] font-black text-primary uppercase tracking-[0.3em] font-mono">
+               {totalDuels === 0 ? "Initial Encounter" : `Duel #${totalDuels + 1}`}
              </p>
-             <div className="h-px w-8 bg-primary/20" />
+             <div className="h-[2px] w-12 bg-primary/20 rounded-full" />
           </div>
           
-          <h2 className="text-3xl font-bold tracking-tight bg-linear-to-b from-foreground to-foreground/70 bg-clip-text text-transparent">
+          <h2 className="text-4xl font-black tracking-tighter uppercase italic">
             Make Your Choice
           </h2>
           
-          <div className="flex items-center justify-center gap-6 text-[10px] font-mono text-muted-foreground/60 uppercase">
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-muted/20">
-              <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
+          <div className="flex items-center justify-center gap-8 text-[11px] font-mono text-muted-foreground/60 uppercase font-bold">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-border/40 bg-muted/10 backdrop-blur-sm">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               <span>{songs.length} Tracks Pool</span>
             </div>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-border/50 bg-muted/20">
-              <Trophy className="h-3 w-3 text-primary/60" />
-              <span>{totalDuels} Decisions Made</span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full border border-border/40 bg-muted/10 backdrop-blur-sm">
+              <Trophy className="h-3.5 w-3.5 text-primary/60" />
+              <span>{totalDuels} Decisions</span>
             </div>
           </div>
         </div>
         
         {/* Duel Area */}
-        <div className="flex items-center gap-8 lg:gap-16">
+        <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-16 w-full justify-center">
           {currentPair ? (
             <>
-              <RankingCard 
-                song={currentPair[0]} 
-                onClick={() => handleChoice(currentPair[0])} 
-              />
+              <div className="animate-in slide-in-from-left-8 duration-700">
+                <RankingCard 
+                  song={currentPair[0]} 
+                  onClick={() => handleChoice(currentPair[0])} 
+                />
+              </div>
               
-              <div className="flex flex-col gap-4 items-center">
-                <div className="h-12 w-12 rounded-full border-2 border-primary/20 flex items-center justify-center bg-background/50 backdrop-blur-sm relative z-10 group">
-                  <span className="text-xs font-mono font-bold text-primary/40 group-hover:text-primary transition-colors">VS</span>
-                  <div className="absolute inset-0 rounded-full bg-primary/5 animate-ping opacity-20" />
+              <div className="flex flex-col gap-6 items-center shrink-0">
+                <div className="relative group">
+                   <div className="h-14 w-14 rounded-full border-2 border-primary/30 flex items-center justify-center bg-background/80 backdrop-blur-xl relative z-10 shadow-2xl">
+                     <span className="text-sm font-mono font-black text-primary italic">VS</span>
+                   </div>
+                   <div className="absolute inset-[-4px] rounded-full border border-primary/10 animate-pulse" />
+                   <div className="absolute inset-0 rounded-full bg-primary/5 animate-ping opacity-20" />
                 </div>
                 
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-4">
                   <Button 
                     variant="outline" 
                     onClick={() => handleChoice(null, true)}
-                    className="h-12 w-32 rounded-xl border-border/50 hover:border-primary/50 transition-all bg-muted/20 hover:bg-primary/5 group"
+                    className="h-14 w-36 rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-muted/10 hover:bg-primary/5 group shadow-sm hover:shadow-primary/5"
                   >
-                    <div className="flex items-center gap-2">
-                      <Scale className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Tie</span>
+                    <div className="flex items-center gap-3">
+                      <Scale className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-xs font-mono uppercase tracking-widest font-black">Tie</span>
                     </div>
                   </Button>
                   
                   <Button 
                     variant="outline"
                     onClick={() => setCurrentPair(getNextPair(songs))}
-                    className="h-12 w-32 rounded-xl border-border/50 hover:border-primary/50 transition-all bg-muted/20 hover:bg-primary/5 group"
+                    className="h-14 w-36 rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-muted/10 hover:bg-primary/5 group shadow-sm hover:shadow-primary/5"
                   >
-                    <div className="flex items-center gap-2">
-                      <RotateCcw className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <span className="text-[10px] font-mono uppercase tracking-widest font-bold">Skip</span>
+                    <div className="flex items-center gap-3">
+                      <RotateCcw className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                      <span className="text-xs font-mono uppercase tracking-widest font-black">Skip</span>
                     </div>
                   </Button>
                 </div>
               </div>
               
-              <RankingCard 
-                song={currentPair[1]} 
-                onClick={() => handleChoice(currentPair[1])} 
-              />
+              <div className="animate-in slide-in-from-right-8 duration-700">
+                <RankingCard 
+                  song={currentPair[1]} 
+                  onClick={() => handleChoice(currentPair[1])} 
+                />
+              </div>
             </>
           ) : (
-            <div className="h-80 w-[40rem] flex flex-col items-center justify-center gap-4 rounded-3xl border-2 border-dashed border-primary/10 bg-primary/[0.02]">
-              <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
-              <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground animate-pulse">
-                Recalibrating Pairing Matrix...
-              </p>
+            <div className="h-[28rem] w-full max-w-4xl flex flex-col items-center justify-center gap-6 rounded-[2.5rem] border-2 border-dashed border-primary/10 bg-primary/[0.01] animate-in fade-in duration-1000">
+              <div className="h-16 w-16 rounded-full border-4 border-t-primary border-primary/10 animate-spin" />
+              <div className="text-center space-y-2">
+                <p className="text-[12px] font-mono uppercase tracking-[0.4em] text-primary/60 font-black">
+                  Optimizing Pairing Matrix
+                </p>
+                <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest opacity-40">
+                  Selecting the most impactful encounter
+                </p>
+              </div>
             </div>
           )}
         </div>
         
         {/* Footer/Progress */}
-        <div className="flex flex-col items-center gap-4">
-          <p className="text-[10px] text-muted-foreground/40 font-mono uppercase tracking-[0.3em] animate-pulse">
-            Session active • Awaiting input
-          </p>
+        <div className="flex flex-col items-center gap-8 mt-4">
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
+            <p className="text-[10px] text-muted-foreground/50 font-mono uppercase tracking-[0.4em] font-bold">
+              Session Live • Awaiting Selection
+            </p>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground hover:text-primary transition-colors gap-2 group"
+          >
+            <CheckCircle2 className="h-3 w-3 opacity-40 group-hover:opacity-100" />
+            Complete & View Leaderboard
+          </Button>
         </div>
       </div>
     </div>
