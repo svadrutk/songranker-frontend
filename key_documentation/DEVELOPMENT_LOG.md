@@ -145,6 +145,28 @@
 
 ---
 
+### **Decision #13: Adaptive Pairing & Leaderboard Enrichment**
+**Date**: January 19, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- **Adaptive Pairing**: Updated `lib/pairing.ts` to utilize Bradley-Terry strengths ($p_i$) when available. This ensures that as the session progresses, the system selects pairs with similar "true" strengths, maximizing the mathematical information gained from each duel.
+- **Leaderboard Data**: Enhanced the `Leaderboard` view to display either the BT Strength percentage or the local Elo rating, providing users with transparency into the "why" behind the ranking.
+- **Early Termination**: Added a "Finish" button that appears after 15 duels if the user wants to view their results before reaching the 90% convergence threshold.
+- **Pairing Fallback**: Implemented a normalized Elo-based fallback for pairing when BT strengths are not yet computed by the backend worker.
+
+**Why**:
+- **Efficiency**: Purely random or Elo-based pairing is less efficient than BT-based pairing for statistical convergence in later stages of a session.
+- **UX**: Users often feel they've seen enough after 15-20 duels; forcing them to 90% convergence (which might take 50+ duels for large sets) can be frustrating.
+- **Transparency**: Seeing the "Strength" percentage makes the "Definitive Order" feel more scientific and grounded in the data they provided.
+
+**Impact**:
+- Faster ranking convergence through smarter pairing.
+- More flexible user flow with early-finish options.
+- Improved data visualization in the results screen.
+
+---
+
 ## 🐛 **Issues Tracking**
 
 ### **Issue: Total Removal of Duplicated Songs (RESOLVED)**

@@ -192,6 +192,16 @@ export default function Home(): JSX.Element {
 
       {/* Right Panel: Ranking */}
       <main className="flex-1 h-full overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative">
+        <AnimatePresence>
+          {isCreatingSession && <LoadingOverlay />}
+          {error && (
+            <ErrorOverlay
+              error={error}
+              onDismiss={() => setError(null)}
+              onRetry={() => handleStartRanking()}
+            />
+          )}
+        </AnimatePresence>
         <RankingWidget isRanking={view === "ranking"} sessionId={sessionId} />
       </main>
 

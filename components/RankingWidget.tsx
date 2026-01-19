@@ -331,6 +331,16 @@ export function RankingWidget({
                             disabled={!!winnerId || isTie}
                           />
                         </div>
+                        {totalDuels >= 15 && displayScore < 90 && (
+                          <div className="flex-1 md:flex-none animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <RankingControlButton
+                              icon={<Check className="h-4 w-4 lg:h-5 lg:w-5 text-green-500/60" />}
+                              label="Finish"
+                              onClick={() => setIsFinished(true)}
+                              disabled={!!winnerId || isTie}
+                            />
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -507,6 +517,16 @@ function Leaderboard({ songs, onContinue }: LeaderboardProps): JSX.Element {
               <p className="text-[9px] md:text-[10px] font-mono text-muted-foreground/60 uppercase truncate">
                 {song.artist} • {song.album}
               </p>
+            </div>
+            <div className="text-right shrink-0">
+              <div className="text-[10px] font-mono font-bold text-primary">
+                {song.bt_strength != null 
+                  ? `${(song.bt_strength * 100).toFixed(1)}%` 
+                  : Math.round(song.local_elo)}
+              </div>
+              <div className="text-[8px] font-mono text-muted-foreground/40 uppercase tracking-tighter">
+                {song.bt_strength != null ? "Strength" : "Elo Rating"}
+              </div>
             </div>
           </motion.div>
         ))}

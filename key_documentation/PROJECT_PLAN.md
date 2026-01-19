@@ -1,8 +1,8 @@
 # Song Ranker - Project Plan
 
 **Last Updated**: January 19, 2026  
-**Status**: 🚧 **In Development** - Phase 5: Bradley-Terry Sync  
-**Current Phase**: Phase 5 - Bradley-Terry & Model Sync (Backend)
+**Status**: ✅ **ACTIVE** - Core Features Complete  
+**Current Phase**: Phase 7 - Future Enhancements
 
 ---
 
@@ -25,7 +25,9 @@ Song Ranker is an interactive web application for ranking songs through pairwise
 - ✅ Phase 2: Session & Data Persistence (Backend) - **COMPLETED**
 - ✅ Phase 3: The Ranking Loop & Elo (Frontend) - **COMPLETED**
 - ✅ Phase 4: Session Management & UI Refinement - **COMPLETED**
-- 🚧 Phase 5: Bradley-Terry & Model Sync (Backend) - **IN PROGRESS**
+- ✅ Phase 5: Results & Polish - **COMPLETED**
+- ✅ Phase 6: Bradley-Terry & Model Sync (Backend) - **COMPLETED**
+- 🚧 Phase 7: Future Enhancements (Global Rankings, Social Sharing) - **PLANNED**
 
 ---
 
@@ -34,8 +36,8 @@ Song Ranker is an interactive web application for ranking songs through pairwise
 ### **Frontend (Interactivity & Speed)**
 - **Framework**: Next.js 16 (App Router), TypeScript, Tailwind CSS 4.
 - **Deduplication**: Regex-based normalization and fuzzy matching (Levenshtein) with a "Confidence Score" to catch near-duplicates before session start.
-- **Ranking Engine**: Local **Elo Rating System** (starting at 1500).
-- **Pairing Strategy**: Selection of pairs with similar Elo ratings to maximize information gain per duel.
+- **Ranking Engine**: Local **Elo Rating System** (starting at 1500) and **Adaptive Pairing** based on Bradley-Terry strengths.
+- **Pairing Strategy**: Selection of pairs with similar Elo/BT ratings to maximize information gain per duel.
 
 ### **Backend (Accuracy & Persistence)**
 - **Framework**: FastAPI (Python), Supabase (PostgreSQL).
@@ -70,9 +72,10 @@ Song Ranker is an interactive web application for ranking songs through pairwise
 - **Accessibility**: Optimized interactive elements for keyboard and screen reader support.
 - **Organization**: Refactored core components for better maintainability and code clarity.
 
-### **Phase 6: Bradley-Terry & Model Sync (Backend)** 🚧 **IN PROGRESS**
+### **Phase 6: Bradley-Terry & Model Sync (Backend)** ✅ **COMPLETED**
 - **Algorithm**: Implement Bradley-Terry MM in the backend.
 - **Sync**: Return BT strengths to frontend; recalibrate local Elo ratings to match BT ordering.
+- **Adaptive Pairing**: Updated frontend to use BT strengths for more efficient pair selection.
 
 ---
 
