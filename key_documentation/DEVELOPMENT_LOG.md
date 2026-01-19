@@ -7,6 +7,27 @@
 
 ## 📋 **Decision Log**
 
+### **Decision #11: VS Button Refinement & Centering Fix**
+**Date**: January 19, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- **Typography**: Removed the `italic` style from the "VS" text to ensure it looks perfectly centered and balanced.
+- **Emphasis**: Increased the "VS" circle size to `h-16 w-16` and added a thicker `border-[3px] border-primary`.
+- **Simplification**: Removed various experimental animations (blobs, spikes, visualizers) in favor of a clean, static, high-contrast circular design.
+- **Centering**: Adjusted text tracking and removed directional skewing to ensure the "VS" label is optically and mathematically centered.
+
+**Why**:
+- **Legibility**: Italicized text often appears off-center in small circular containers due to the slant; switching to a bold upright font resolves the visual imbalance.
+- **Visual Hierarchy**: The "VS" button is the focal point between the two choices; making it larger and cleaner improves its role as a divider.
+- **Stability**: Removing distracting animations ensures the user focuses on the song choices during the duel.
+
+**Impact**:
+- Cleaner, more professional duel interface.
+- Resolved user feedback regarding the "off-center" look of the central divider.
+
+---
+
 ### **Decision #10: Advanced Duel Animations & Polished Deletion UX**
 **Date**: January 19, 2026
 **Author**: opencode (Interactive Agent)
