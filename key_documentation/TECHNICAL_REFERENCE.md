@@ -63,7 +63,27 @@ Song Ranker/
 
 ### **Key Files**
 
+#### **`lib/api.ts`**
+**Purpose**: Backend API client for session and song management.
+
+**Key Operations**:
+- `createSession(payload)`: Initialize a new ranking session.
+- `getUserSessions(userId)`: List all past sessions for a user, including comparison counts.
+- `getSessionDetail(sessionId)`: Fetch full session metadata, songs, and total decisions made.
+- `deleteSession(sessionId)`: Permanently remove a session and all associated data.
+- `createComparison(sessionId, payload)`: Record a duel result and sync with backend.
+
+**API Reference**:
+
+*   `POST /sessions`: Create session.
+*   `GET /users/{user_id}/sessions`: List user sessions.
+*   `GET /sessions/{session_id}`: Get session detail.
+*   `DELETE /sessions/{session_id}`: Delete session.
+*   `GET /sessions/{session_id}/songs`: Get songs in session.
+*   `POST /sessions/{session_id}/comparisons`: Record a comparison.
+
 #### **`lib/supabase.ts`**
+
 **Purpose**: Supabase client configuration and singleton instance
 
 **Key Features**:

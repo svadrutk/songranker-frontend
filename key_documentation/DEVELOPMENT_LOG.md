@@ -7,6 +7,30 @@
 
 ## 📋 **Decision Log**
 
+### **Decision #9: Session Management & Dynamic Sidebar Layout**
+**Date**: January 19, 2026
+**Author**: opencode (Interactive Agent)
+
+**What Changed**:
+- Implemented `getUserSessions` in `lib/api.ts` to fetch past sessions via `GET /users/{user_id}/sessions`.
+- Created `SessionSelector.tsx` for browsing and selecting past ranking sessions.
+- Added a view toggle in `Catalog.tsx` to switch between "Search" and "My Sessions".
+- Implemented an animated, collapsible sidebar in `app/page.tsx` using `framer-motion`.
+- Added auto-collapse logic when a ranking session starts to maximize focus on the duel screen.
+- Added a manual toggle and a floating "Expand" button to manage sidebar visibility.
+
+**Why**:
+- **Persistence**: Users need a way to resume past rankings without re-searching and deduplicating.
+- **Immersion**: Collapsing the sidebar during duels removes visual clutter and allows the user to focus solely on the ranking task.
+- **Flexibility**: The manual toggle ensures users can still access the catalog or switch sessions without resetting the app.
+
+**Impact**:
+- Enhanced session management flow.
+- Polished, interactive UI with smooth layout transitions.
+- Improved "Duel" experience through full-screen focus.
+
+---
+
 ### **Decision #8: Optimistic Elo Updates & Similar-Elo Pairing**
 **Date**: January 18, 2026
 **Author**: opencode (Interactive Agent)

@@ -1,6 +1,7 @@
 "use client";
 
-import { type SessionSong } from "@/lib/api";
+import type { JSX } from "react";
+import type { SessionSong } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { CoverArt } from "@/components/CoverArt";
 
@@ -10,13 +11,18 @@ type RankingCardProps = Readonly<{
   isActive?: boolean;
 }>;
 
-export function RankingCard({ song, onClick, isActive }: RankingCardProps) {
+export function RankingCard({
+  song,
+  onClick,
+  isActive,
+}: RankingCardProps): JSX.Element {
   return (
     <button
       onClick={onClick}
       className={cn(
         "group relative flex flex-col w-80 h-[28rem] rounded-3xl border-2 transition-all duration-500 overflow-hidden text-left outline-none",
-        "bg-card border-border hover:border-primary/50 hover:bg-primary/[0.02] hover:shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] dark:hover:shadow-[0_0_50px_-12px_rgba(255,255,255,0.1)]",
+        "bg-card border-border hover:border-primary/50 hover:bg-primary/[0.02]",
+        "hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.05)]",
         "focus-visible:ring-2 focus-visible:ring-primary/50",
         isActive && "border-primary bg-primary/[0.05] ring-2 ring-primary/20"
       )}

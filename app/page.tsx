@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, type JSX } from "react";
 import { Catalog } from "@/components/Catalog";
 import { RankingWidget } from "@/components/RankingWidget";
 import { createSession, type ReleaseGroup } from "@/lib/api";
@@ -12,12 +12,13 @@ import {
   type DuplicateGroup,
   prepareSongInputs,
 } from "@/lib/deduplication";
-import { Loader2, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
 
 type ViewState = "catalog" | "dedupe" | "ranking";
 
-export default function Home() {
+export default function Home(): JSX.Element {
   const { user } = useAuth();
   const [selectedReleases, setSelectedReleases] = useState<ReleaseGroup[]>([]);
   const [allTracks, setAllTracks] = useState<Record<string, string[]>>({});
@@ -27,20 +28,25 @@ export default function Home() {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  // Auto-collapse sidebar when ranking starts
+  useEffect(() => {
+    if (view === "ranking") {
+      setIsSidebarCollapsed(true);
+    }
+  }, [view]);
 
   const handleToggle = useCallback((release: ReleaseGroup, tracks: string[]) => {
-    setSelectedReleases((prev) => {
-      const isSelected = prev.some((r) => r.id === release.id);
-      if (isSelected && tracks.length === 0) {
-        return prev.filter((r) => r.id !== release.id);
-      } else if (isSelected) {
-        setAllTracks((t) => ({ ...t, [release.id]: tracks }));
-        return prev;
-      } else {
-        setAllTracks((t) => ({ ...t, [release.id]: tracks }));
-        return [...prev, release];
-      }
-    });
+    if (tracks.length === 0) {
+      setSelectedReleases((prev) => prev.filter((r) => r.id !== release.id));
+      return;
+    }
+
+    setAllTracks((prev) => ({ ...prev, [release.id]: tracks }));
+    setSelectedReleases((prev) => 
+      prev.some((r) => r.id === release.id) ? prev : [...prev, release]
+    );
   }, []);
 
   const handleSearchStart = useCallback(() => {
@@ -98,17 +104,76 @@ export default function Home() {
     [startRankingSession]
   );
 
+  const handleSessionSelect = useCallback((id: string) => {
+    setSessionId(id);
+    setView("ranking");
+  }, []);
+
+  const handleSessionDelete = useCallback((id: string) => {
+    if (sessionId === id) {
+      setSessionId(null);
+      setView("catalog");
+    }
+  }, [sessionId]);
+
   return (
-    <div key={user?.id || "guest"} className="flex h-full w-full overflow-hidden bg-background">
+    <div key={user?.id || "guest"} className="flex h-full w-full overflow-hidden bg-background relative">
+      {/* Sidebar Collapse Toggle (Only when collapsed) */}
+      <AnimatePresence>
+        {isSidebarCollapsed && (
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-50"
+          >
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setIsSidebarCollapsed(false)}
+              className="h-10 w-10 rounded-full border-primary/20 bg-background/80 backdrop-blur-xl shadow-2xl hover:bg-primary/5 group"
+            >
+              <ChevronRight className="h-5 w-5 text-primary group-hover:translate-x-0.5 transition-transform" />
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Left Panel: Catalog */}
-      <aside className="w-1/3 min-w-[320px] max-w-md border-r bg-muted/10 p-6 flex flex-col h-full">
-        <Catalog
-          onToggle={handleToggle}
-          onSearchStart={handleSearchStart}
-          onStartRanking={handleStartRanking}
-          selectedIds={selectedReleases.map((r) => r.id)}
-        />
-      </aside>
+      <motion.aside 
+        initial={false}
+        animate={{ 
+          width: isSidebarCollapsed ? 0 : "33.333333%",
+          minWidth: isSidebarCollapsed ? 0 : "320px",
+          opacity: isSidebarCollapsed ? 0 : 1,
+          marginRight: isSidebarCollapsed ? 0 : 0,
+        }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="max-w-md border-r bg-muted/10 flex flex-col h-full overflow-hidden relative"
+      >
+        <div className="p-6 h-full flex flex-col w-[320px] md:w-full">
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-mono font-black uppercase tracking-[0.2em] text-primary/60">Navigator</h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsSidebarCollapsed(true)}
+              className="h-8 w-8 text-muted-foreground hover:text-primary"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+          </div>
+          <Catalog
+            onToggle={handleToggle}
+            onSearchStart={handleSearchStart}
+            onStartRanking={handleStartRanking}
+            onSessionSelect={handleSessionSelect}
+            onSessionDelete={handleSessionDelete}
+            selectedIds={selectedReleases.map((r) => r.id)}
+            activeSessionId={sessionId}
+          />
+        </div>
+      </motion.aside>
 
       {/* Right Panel: Ranking */}
       <main className="flex-1 h-full p-8 overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative">
@@ -138,7 +203,7 @@ export default function Home() {
   );
 }
 
-function LoadingOverlay() {
+function LoadingOverlay(): JSX.Element {
   return (
     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300">
       <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -154,15 +219,17 @@ function LoadingOverlay() {
   );
 }
 
+type ErrorOverlayProps = Readonly<{
+  error: string;
+  onDismiss: () => void;
+  onRetry: () => void;
+}>;
+
 function ErrorOverlay({
   error,
   onDismiss,
   onRetry,
-}: {
-  error: string;
-  onDismiss: () => void;
-  onRetry: () => void;
-}) {
+}: ErrorOverlayProps): JSX.Element {
   return (
     <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-6 animate-in fade-in duration-300 p-8 text-center">
       <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">

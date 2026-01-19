@@ -35,6 +35,20 @@ export type SessionResponse = {
   count: number;
 };
 
+export type SessionSummary = {
+  session_id: string;
+  created_at: string;
+  primary_artist: string;
+  song_count: number;
+  comparison_count: number;
+};
+
+export type SessionDetail = {
+  session_id: string;
+  songs: SessionSong[];
+  comparison_count: number;
+};
+
 export type TrackResponse = {
   tracks: string[];
 };
@@ -127,6 +141,23 @@ export async function createSession(payload: SessionCreate): Promise<SessionResp
   }
 }
 
+export async function getUserSessions(userId: string): Promise<SessionSummary[]> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/users/${userId}/sessions`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user sessions: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error in getUserSessions:", error);
+    return [];
+  }
+}
+
 export async function getSessionSongs(sessionId: string): Promise<SessionSong[]> {
   try {
     const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}/songs`, {
@@ -141,6 +172,40 @@ export async function getSessionSongs(sessionId: string): Promise<SessionSong[]>
   } catch (error) {
     console.error("[API] Error in getSessionSongs:", error);
     return [];
+  }
+}
+
+export async function getSessionDetail(sessionId: string): Promise<SessionDetail | null> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch session detail: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("[API] Error in getSessionDetail:", error);
+    return null;
+  }
+}
+
+export async function deleteSession(sessionId: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+      method: "DELETE",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete session: ${response.statusText}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error("[API] Error in deleteSession:", error);
+    return false;
   }
 }
 

@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { Search, Loader2, CheckCircle2, ChevronDown, ChevronUp, Layers, X, Lock } from "lucide-react";
+import { useState, useMemo, type JSX } from "react";
+import { Search, Loader2, CheckCircle2, ChevronDown, ChevronUp, Layers, X, Lock, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
 import { searchArtistReleaseGroups, getReleaseGroupTracks, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
+import { SessionSelector } from "@/components/SessionSelector";
+import { cn } from "@/lib/utils";
 
 type ReleaseType = "Album" | "EP" | "Single" | "Other";
+type CatalogView = "search" | "sessions";
 
-function LoadingSkeleton() {
+function LoadingSkeleton(): JSX.Element {
   return (
     <div className="w-full space-y-1">
       {[...Array(12)].map((_, i) => (
@@ -28,15 +31,59 @@ function LoadingSkeleton() {
   );
 }
 
-interface CatalogProps {
+type CatalogProps = Readonly<{
   onToggle: (release: ReleaseGroup, tracks: string[]) => void;
   onSearchStart?: () => void;
   onStartRanking?: () => void;
+  onSessionSelect?: (sessionId: string) => void;
+  onSessionDelete?: (sessionId: string) => void;
   selectedIds: string[];
+  activeSessionId: string | null;
+}>;
+
+type ViewToggleProps = Readonly<{
+  view: CatalogView;
+  setView: (view: CatalogView) => void;
+}>;
+
+function ViewToggle({ view, setView }: ViewToggleProps): JSX.Element {
+  return (
+    <div className="flex bg-muted/20 p-1 rounded-lg border border-border/40">
+      <button
+        onClick={() => setView("search")}
+        className={cn(
+          "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
+          view === "search" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <Search className="h-3 w-3" />
+        Search
+      </button>
+      <button
+        onClick={() => setView("sessions")}
+        className={cn(
+          "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
+          view === "sessions" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <History className="h-3 w-3" />
+        My Sessions
+      </button>
+    </div>
+  );
 }
 
-export function Catalog({ onToggle, onSearchStart, onStartRanking, selectedIds }: CatalogProps) {
+export function Catalog({ 
+  onToggle, 
+  onSearchStart, 
+  onStartRanking, 
+  onSessionSelect,
+  onSessionDelete,
+  selectedIds,
+  activeSessionId
+}: CatalogProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
+  const [view, setView] = useState<CatalogView>("search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ReleaseGroup[]>([]);
   const [loading, setLoading] = useState(false);
@@ -79,13 +126,13 @@ export function Catalog({ onToggle, onSearchStart, onStartRanking, selectedIds }
   };
 
   const filteredResults = useMemo(() => {
-    return results.filter(release => {
+    const activeFiltersLower = new Set(activeFilters.map((f) => f.toLowerCase()));
+    const mainTypes = new Set(["album", "ep", "single"]);
+
+    return results.filter((release) => {
       const type = (release.type || "Other").toLowerCase();
-      const activeFiltersLower = activeFilters.map(f => f.toLowerCase());
-      
-      if (activeFiltersLower.includes(type)) return true;
-      if (activeFiltersLower.includes("other") && !["album", "ep", "single"].includes(type)) return true;
-      return false;
+      if (activeFiltersLower.has(type)) return true;
+      return activeFiltersLower.has("other") && !mainTypes.has(type);
     });
   }, [results, activeFilters]);
 
@@ -137,153 +184,168 @@ export function Catalog({ onToggle, onSearchStart, onStartRanking, selectedIds }
 
   return (
     <div className="flex flex-col h-full gap-6 overflow-hidden relative">
-      <div className="w-full">
-        <form onSubmit={handleSearch} className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search artist..."
-              className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm transition-all focus-visible:outline-none focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
-            />
-          </div>
-          <Button type="submit" disabled={loading} className="px-5 h-10 bg-neutral-300 hover:bg-neutral-400 text-black font-mono relative group">
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : !user ? (
-              <div className="flex items-center gap-2">
-                <Lock className="h-3 w-3" />
-                <span>Search</span>
-              </div>
-            ) : (
-              "Search"
-            )}
-          </Button>
-        </form>
+      <div className="flex flex-col gap-4">
+        {/* View Toggle */}
+        <ViewToggle view={view} setView={setView} />
+
+        {view === "search" && (
+          <form onSubmit={handleSearch} className="flex gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search artist..."
+                className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm transition-all focus-visible:outline-none focus-visible:border-white/20 focus-visible:ring-1 focus-visible:ring-white/10 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+              />
+            </div>
+            <Button type="submit" disabled={loading} className="px-5 h-10 bg-neutral-300 hover:bg-neutral-400 text-black font-mono relative group">
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : !user ? (
+                <div className="flex items-center gap-2">
+                  <Lock className="h-3 w-3" />
+                  <span>Search</span>
+                </div>
+              ) : (
+                "Search"
+              )}
+            </Button>
+          </form>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar pb-24">
-        {loading ? (
-          <div className="space-y-3">
-            <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Catalog Loading...</h2>
-            <LoadingSkeleton />
-          </div>
-        ) : results.length > 0 ? (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between px-1 mb-3">
-              <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                Releases ({filteredResults.length})
-              </h2>
-              <div className="flex gap-1">
-                {(["Album", "EP", "Single", "Other"] as ReleaseType[]).map(type => (
-                  <button
-                    key={type}
-                    onClick={() => toggleFilter(type)}
-                    className={`text-[9px] px-1.5 py-0.5 rounded-sm border transition-all font-bold uppercase ${
-                      activeFilters.includes(type)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-muted text-muted-foreground border-transparent hover:border-muted-foreground/20"
+        {view === "search" ? (
+          loading ? (
+            <div className="space-y-3">
+              <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Catalog Loading...</h2>
+              <LoadingSkeleton />
+            </div>
+          ) : results.length > 0 ? (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between px-1 mb-3">
+                <h2 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  Releases ({filteredResults.length})
+                </h2>
+                <div className="flex gap-1">
+                  {(["Album", "EP", "Single", "Other"] as ReleaseType[]).map(type => (
+                    <button
+                      key={type}
+                      onClick={() => toggleFilter(type)}
+                      className={`text-[9px] px-1.5 py-0.5 rounded-sm border transition-all font-bold uppercase ${
+                        activeFilters.includes(type)
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted text-muted-foreground border-transparent hover:border-muted-foreground/20"
+                      }`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {filteredResults.map((release, index) => {
+                const isSelected = selectedIds.includes(release.id);
+                const isExpanded = expandedId === release.id;
+                const hasTracks = !!tracksCache[release.id];
+                const isLoading = loadingTracks[release.id];
+
+                return (
+                  <div
+                    key={`${release.id}-${index}`}
+                    onClick={() => handleSelect(release)}
+                    className={`group flex flex-col p-1.5 rounded-md border transition-all cursor-pointer relative ${
+                      isSelected 
+                        ? "border-white bg-white/5 shadow-xs" 
+                        : "bg-card border-transparent text-card-foreground hover:bg-muted/50 hover:border-border"
                     }`}
                   >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            </div>
-            {filteredResults.map((release, index) => {
-              const isSelected = selectedIds.includes(release.id);
-              const isExpanded = expandedId === release.id;
-              const hasTracks = !!tracksCache[release.id];
-              const isLoading = loadingTracks[release.id];
-
-              return (
-                <div
-                  key={`${release.id}-${index}`}
-                  onClick={() => handleSelect(release)}
-                  className={`group flex flex-col p-1.5 rounded-md border transition-all cursor-pointer relative ${
-                    isSelected 
-                      ? "border-white bg-white/5 shadow-xs" 
-                      : "bg-card border-transparent text-card-foreground hover:bg-muted/50 hover:border-border"
-                  }`}
-                >
-                  <div className="flex items-center gap-3 w-full">
-                    <div className="relative h-8 w-8 shrink-0">
-                      <CoverArt 
-                        id={release.id} 
-                        title={release.title} 
-                        url={release.cover_art?.url}
-                        className="rounded-sm h-full w-full"
-                      />
-                      {isLoading && (
-                        <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-sm">
-                          <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                    <div className="flex items-center gap-3 w-full">
+                      <div className="relative h-8 w-8 shrink-0">
+                        <CoverArt 
+                          id={release.id} 
+                          title={release.title} 
+                          url={release.cover_art?.url}
+                          className="rounded-sm h-full w-full"
+                        />
+                        {isLoading && (
+                          <div className="absolute inset-0 bg-background/60 flex items-center justify-center rounded-sm">
+                            <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex flex-col flex-1 overflow-hidden">
+                        <span className={`font-mono text-xs font-medium truncate ${isSelected ? "text-white" : ""}`}>
+                          {release.title}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter opacity-70">
+                            {release.type || "Other"}
+                          </span>
+                          {hasTracks && !isExpanded && (
+                            <span className="flex items-center gap-1 text-[9px] text-green-600 font-bold uppercase tracking-tighter">
+                              <CheckCircle2 className="h-2 w-2" />
+                              {tracksCache[release.id].length} songs
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      {isSelected && (
+                        <div className="flex items-center gap-2 pr-1 text-muted-foreground">
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
+                          <button 
+                            onClick={(e) => handleRemove(e, release)}
+                            className="hover:text-destructive transition-colors ml-1 flex items-center justify-center"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-col flex-1 overflow-hidden">
-                      <span className={`font-mono text-xs font-medium truncate ${isSelected ? "text-white" : ""}`}>
-                        {release.title}
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[9px] text-muted-foreground uppercase font-bold tracking-tighter opacity-70">
-                          {release.type || "Other"}
-                        </span>
-                        {hasTracks && !isExpanded && (
-                          <span className="flex items-center gap-1 text-[9px] text-green-600 font-bold uppercase tracking-tighter">
-                            <CheckCircle2 className="h-2 w-2" />
-                            {tracksCache[release.id].length} songs
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {isSelected && (
-                      <div className="flex items-center gap-2 pr-1 text-muted-foreground">
-                        {isExpanded ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                        <button 
-                          onClick={(e) => handleRemove(e, release)}
-                          className="hover:text-destructive transition-colors ml-1 flex items-center justify-center"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
+
+                    {isSelected && isExpanded && hasTracks && (
+                      <div className="mt-2 pl-11 pr-2 pb-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                        {tracksCache[release.id].map((track, i) => (
+                          <div key={i} className="flex items-center gap-2 group/track">
+                            <span className="text-[10px] font-mono text-muted-foreground w-4 shrink-0 text-right">{i + 1}</span>
+                            <span className="text-[10px] font-mono truncate text-muted-foreground group-hover/track:text-white transition-colors">
+                              {track}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
-
-                  {isSelected && isExpanded && hasTracks && (
-                    <div className="mt-2 pl-11 pr-2 pb-2 space-y-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                      {tracksCache[release.id].map((track, i) => (
-                        <div key={i} className="flex items-center gap-2 group/track">
-                          <span className="text-[10px] font-mono text-muted-foreground w-4 shrink-0 text-right">{i + 1}</span>
-                          <span className="text-[10px] font-mono truncate text-muted-foreground group-hover/track:text-white transition-colors">
-                            {track}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : query && !loading ? (
-          <div className="text-center py-12">
-            <p className="text-xs text-muted-foreground font-mono">No results found for &quot;{query}&quot;.</p>
-          </div>
+                );
+              })}
+            </div>
+          ) : query && !loading ? (
+            <div className="text-center py-12">
+              <p className="text-xs text-muted-foreground font-mono">No results found for &quot;{query}&quot;.</p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-full opacity-20 py-20">
+              <Search className="h-10 w-10 mb-4" />
+              <p className="text-xs font-mono">Search to browse catalog</p>
+            </div>
+          )
         ) : (
-          <div className="flex flex-col items-center justify-center h-full opacity-20 py-20">
-            <Search className="h-10 w-10 mb-4" />
-            <p className="text-xs font-mono">Search to browse catalog</p>
+          <div className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+            <SessionSelector 
+              onSelect={(id) => onSessionSelect?.(id)} 
+              onDelete={(id) => onSessionDelete?.(id)}
+              activeSessionId={activeSessionId}
+            />
           </div>
         )}
       </div>
 
-      {selectedIds.length > 0 && (
+      {view === "search" && selectedIds.length > 0 && (
         <div className="absolute bottom-6 left-0 right-0 px-6 animate-in slide-in-from-bottom-4">
           <Button 
             onClick={() => onStartRanking?.()}
