@@ -2,68 +2,80 @@
  * Utility for normalizing song titles and identifying potential duplicates.
  */
 
-const SUFFIXES_TO_STRIP = [
-  /\(instrumental\)/gi,
-  /\(a capella\)/gi,
-  /\(acapella\)/gi,
-  /\(live.*\)/gi,
-  /\(demo.*\)/gi,
-  /\(remastered.*\)/gi,
-  /\[remastered.*\]/gi,
-  /\(edit.*\)/gi,
-  /\(version.*\)/gi,
-  /\(feat\..*\)/gi,
-  /\(with.*\)/gi,
-  /- instrumental/gi,
-  /- live/gi,
-  /- demo/gi,
-  /- remastered/gi,
-  /- [0-9]{4} remaster/gi,
-  /\([0-9]{4} remaster\)/gi,
-];
+const SUFFIXES_REGEX = new RegExp(
+  [
+    "\\(instrumental\\)",
+    "\\(a capella\\)",
+    "\\(acapella\\)",
+    "\\(live.*\\)",
+    "\\(demo.*\\)",
+    "\\(remastered.*\\)",
+    "\\[remastered.*\\]",
+    "\\(edit.*\\)",
+    "\\(version.*\\)",
+    "\\(feat\\..*\\)",
+    "\\(with.*\\)",
+    "- instrumental",
+    "- live",
+    "- demo",
+    "- remastered",
+    "- [0-9]{4} remaster",
+    "\\([0-9]{4} remaster\\)",
+  ].join("|"),
+  "gi"
+);
+
+/**
+ * Checks if a track should be excluded from ranking (e.g., instrumentals, a capella).
+ */
+export function isExcludedTrack(title: string): boolean {
+  const exclusionPatterns = /\b(instrumental|acapella|a capella|a cappella)\b|[\(\[].*(instrumental|acapella|a capella|a cappella).*[\)\]]|- instrumental/i;
+  return exclusionPatterns.test(title);
+}
+
+/**
+ * Filters a list of tracks to remove excluded types.
+ */
+export function filterTracks(tracks: string[]): string[] {
+  return tracks.filter(track => !isExcludedTrack(track));
+}
+
 
 /**
  * Cleans a song title by removing common suffixes and extra whitespace.
  */
 export function normalizeTitle(title: string): string {
-  let normalized = title.toLowerCase();
-  
-  // Apply regex filters for common suffixes
-  for (const regex of SUFFIXES_TO_STRIP) {
-    normalized = normalized.replace(regex, "");
-  }
-
-  // Remove common punctuation that might vary
-  normalized = normalized.replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, " ");
-  
-  // Remove extra whitespace and trim
-  return normalized.replace(/\s+/g, " ").trim();
+  return title
+    .toLowerCase()
+    .replace(SUFFIXES_REGEX, "")
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Calculates the Levenshtein distance between two strings.
+ * Calculates the Levenshtein distance between two strings with O(N) memory complexity.
  */
 function levenshteinDistance(a: string, b: string): number {
-  const matrix: number[][] = [];
+  if (a.length < b.length) [a, b] = [b, a];
+  if (b.length === 0) return a.length;
 
-  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
-  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  let prevRow = Array.from({ length: b.length + 1 }, (_, i) => i);
 
-  for (let i = 1; i <= b.length; i++) {
-    for (let j = 1; j <= a.length; j++) {
-      if (b.charAt(i - 1) === a.charAt(j - 1)) {
-        matrix[i][j] = matrix[i - 1][j - 1];
-      } else {
-        matrix[i][j] = Math.min(
-          matrix[i - 1][j - 1] + 1, // substitution
-          matrix[i][j - 1] + 1,     // insertion
-          matrix[i - 1][j] + 1      // deletion
-        );
-      }
+  for (let i = 1; i <= a.length; i++) {
+    const currentRow = [i];
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      currentRow[j] = Math.min(
+        currentRow[j - 1] + 1,
+        prevRow[j] + 1,
+        prevRow[j - 1] + cost
+      );
     }
+    prevRow = currentRow;
   }
 
-  return matrix[b.length][a.length];
+  return prevRow[b.length];
 }
 
 /**

@@ -20,7 +20,7 @@ export function DeduplicationModal({
   duplicateGroups,
   allSongs,
 }: DeduplicationModalProps) {
-  const [resolutions, setResolutions] = useState<Record<number, boolean>>(
+  const [resolutions, setResolutions] = useState<Record<number, boolean>>(() =>
     duplicateGroups.reduce((acc, _, idx) => ({ ...acc, [idx]: true }), {})
   );
 
@@ -29,19 +29,13 @@ export function DeduplicationModal({
   };
 
   const handleConfirm = () => {
-    // Collect indices of songs to remove
-    const indicesToRemove = new Set<number>();
-    
-    duplicateGroups.forEach((group, idx) => {
-      if (resolutions[idx]) {
-        // Merge: Keep the first one (canonical), remove others by their original index
-        group.matchIndices.slice(1).forEach(originalIdx => indicesToRemove.add(originalIdx));
-      }
-    });
+    const indicesToRemove = new Set(
+      duplicateGroups
+        .filter((_, idx) => resolutions[idx])
+        .flatMap(group => group.matchIndices.slice(1))
+    );
 
-    // Filter allSongs by index
-    const finalSongs = allSongs.filter((_, idx) => !indicesToRemove.has(idx));
-    onConfirm(finalSongs);
+    onConfirm(allSongs.filter((_, idx) => !indicesToRemove.has(idx)));
   };
 
   if (!isOpen) return null;

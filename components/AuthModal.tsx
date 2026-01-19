@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase, getRedirectURL } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 
 interface AuthModalProps {
@@ -52,7 +52,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login" }: AuthModalP
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: window.location.origin,
+          redirectTo: `${getRedirectURL()}/auth/callback`,
         },
       });
       if (error) throw error;

@@ -6,16 +6,15 @@ import { RankingWidget } from "@/components/RankingWidget";
 import { type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { DeduplicationModal } from "@/components/DeduplicationModal";
-import { findPotentialDuplicates, type DuplicateGroup } from "@/lib/deduplication";
+import { findPotentialDuplicates, filterTracks, type DuplicateGroup } from "@/lib/deduplication";
 
 export default function Home() {
   const { user } = useAuth();
   const [selectedReleases, setSelectedReleases] = useState<ReleaseGroup[]>([]);
   const [allTracks, setAllTracks] = useState<Record<string, string[]>>({});
-  const [isDedupeModalOpen, setIsDedupeModalOpen] = useState(false);
+  const [view, setView] = useState<"catalog" | "dedupe" | "ranking">("catalog");
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroup[]>([]);
   const [finalSongList, setFinalSongList] = useState<string[]>([]);
-  const [isRanking, setIsRanking] = useState(false);
 
   const handleToggle = (release: ReleaseGroup, tracks: string[]) => {
     setSelectedReleases(prev => {
@@ -38,11 +37,12 @@ export default function Home() {
   const handleSearchStart = () => {
     setSelectedReleases([]);
     setAllTracks({});
-    setIsRanking(false);
+    setView("catalog");
   };
 
   const handleStartRanking = () => {
-    const flatTracks = selectedReleases.flatMap(r => allTracks[r.id] || []);
+    const rawTracks = selectedReleases.flatMap(r => allTracks[r.id] || []);
+    const flatTracks = filterTracks(rawTracks);
     const groups = findPotentialDuplicates(flatTracks);
     
     // Simulate background deep deduplication trigger (Phase 2 Roadmap)
@@ -50,18 +50,18 @@ export default function Home() {
 
     if (groups.length > 0) {
       setDuplicateGroups(groups);
-      setIsDedupeModalOpen(true);
+      setFinalSongList(flatTracks); // We use flatTracks as the base for the modal
+      setView("dedupe");
     } else {
       // No duplicates found, go straight to ranking
       setFinalSongList(Array.from(new Set(flatTracks)));
-      setIsRanking(true);
+      setView("ranking");
     }
   };
 
   const handleConfirmDeduplication = (songs: string[]) => {
     setFinalSongList(songs);
-    setIsDedupeModalOpen(false);
-    setIsRanking(true);
+    setView("ranking");
   };
 
   return (
@@ -81,17 +81,17 @@ export default function Home() {
         <RankingWidget 
           selectedReleases={selectedReleases} 
           allTracks={allTracks}
-          isRanking={isRanking}
+          isRanking={view === "ranking"}
           finalSongList={finalSongList}
         />
       </div>
 
       <DeduplicationModal
-        isOpen={isDedupeModalOpen}
-        onClose={() => setIsDedupeModalOpen(false)}
+        isOpen={view === "dedupe"}
+        onClose={() => setView("catalog")}
         onConfirm={handleConfirmDeduplication}
         duplicateGroups={duplicateGroups}
-        allSongs={selectedReleases.flatMap(r => allTracks[r.id] || [])}
+        allSongs={finalSongList}
       />
     </div>
   );
