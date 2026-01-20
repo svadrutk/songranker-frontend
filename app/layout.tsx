@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/app/providers";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -20,18 +20,26 @@ export const metadata: Metadata = {
   description: "Rank your favorite songs with ease.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning style={{ colorScheme: 'dark' }}>
+    <html lang="en" suppressHydrationWarning style={{ colorScheme: 'dark' }} className="h-full w-full">
       <head>
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full overflow-hidden`}
       >
         <ThemeProvider
           attribute="class"
@@ -40,7 +48,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <div className="flex flex-col h-[100dvh] overflow-hidden">
+            <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
               <Navbar />
               <main className="flex-1 min-h-0 overflow-hidden relative">
                 {children}

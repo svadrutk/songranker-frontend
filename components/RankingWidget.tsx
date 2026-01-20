@@ -264,10 +264,10 @@ export function RankingWidget({
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-7xl mx-auto px-4 py-4 md:px-6 md:py-6 lg:px-8 lg:py-8">
-      <div className="flex flex-col items-center gap-4 md:gap-6 lg:gap-8 animate-in fade-in zoom-in duration-700 w-full h-full">
+    <div className="flex flex-col h-full w-full max-w-7xl mx-auto px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:px-8 lg:py-8 overflow-hidden">
+      <div className="flex flex-col items-center gap-4 md:gap-6 lg:gap-8 animate-in fade-in zoom-in duration-700 w-full h-full min-h-0">
         {/* Header Section */}
-        <div className="text-center space-y-1.5 md:space-y-3 relative shrink-0">
+        <div className="text-center space-y-2 md:space-y-3 relative shrink-0">
           <div className="hidden md:flex items-center justify-center gap-3 mb-0 md:mb-1">
             <div className="h-[1px] md:h-[2px] w-6 md:w-12 bg-primary/20 rounded-full" />
             <p className="text-[10px] md:text-[11px] font-black text-primary uppercase tracking-[0.2em] md:tracking-[0.3em] font-mono">
@@ -297,7 +297,7 @@ export function RankingWidget({
         </div>
 
         {/* Progress Section */}
-        <div className="w-full max-w-xl space-y-1.5 md:space-y-2 lg:space-y-3 px-6 md:px-4 shrink-0 relative">
+        <div className="w-full max-w-xl space-y-2 px-6 md:px-4 shrink-0 relative">
           <AnimatePresence>
             {showRankUpdate && (
               <motion.div
@@ -314,10 +314,10 @@ export function RankingWidget({
             )}
           </AnimatePresence>
           <div className="flex items-center justify-between px-1">
-             <p className="text-[10px] md:text-[10px] font-mono font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-primary/60">
+             <p className="text-[8px] md:text-[10px] font-mono font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-primary/60">
                {getConvergenceLabel(displayScore)}
              </p>
-             <p className="text-[10px] md:text-[10px] font-mono font-bold text-muted-foreground/40">
+             <p className="text-[8px] md:text-[10px] font-mono font-bold text-muted-foreground/40">
                {Math.round(displayScore)}%
              </p>
           </div>
@@ -336,7 +336,7 @@ export function RankingWidget({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="flex justify-center pt-4"
+                className="flex justify-center pt-2 md:pt-4"
               >
                 <Button 
                   onClick={() => setIsFinished(true)}
@@ -351,12 +351,14 @@ export function RankingWidget({
         </div>
 
         {/* Duel Area */}
-        <div className="flex-1 flex flex-col md:flex-row items-center gap-4 md:gap-12 lg:gap-16 w-full justify-center px-4">
+        <div className="flex-1 flex flex-col md:flex-row items-center gap-3 md:gap-12 lg:gap-16 w-full justify-center px-4 min-h-0 overflow-hidden">
           {!currentPair ? (
             <PairingLoader />
           ) : (
-            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 lg:gap-16 w-full justify-center">
+            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-12 lg:gap-16 w-full justify-center h-full min-h-0">
               {[0, 1].map((index) => (
+
+
                 <Fragment key={index}>
                   <AnimatePresence mode="wait">
                     <motion.div
@@ -365,7 +367,10 @@ export function RankingWidget({
                       animate={{ opacity: 1, x: 0, filter: "blur(0px)" }}
                       exit={{ opacity: 0, x: index === 0 ? -40 : 40, filter: "blur(12px)" }}
                       transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-                      className="w-full flex justify-center"
+                      className={cn(
+                        "w-full flex-1 min-h-0 flex justify-center",
+                        index === 0 ? "items-end md:items-center" : "items-start md:items-center"
+                      )}
                     >
                       <RankingCard
                         song={currentPair[index]}
@@ -377,7 +382,7 @@ export function RankingWidget({
                   </AnimatePresence>
 
                   {index === 0 && (
-                    <div className="flex flex-row md:flex-col gap-3 md:gap-4 lg:gap-6 items-center shrink-0 w-full md:w-auto justify-center px-4 md:px-0">
+                    <div className="flex flex-row md:flex-col gap-2 md:gap-4 lg:gap-6 items-center shrink-0 w-full md:w-auto justify-center px-4 md:px-0">
                       <div className="relative hidden md:block">
                         <div className="h-10 w-10 lg:h-16 lg:w-16 rounded-full border-2 md:border-[3px] border-primary flex items-center justify-center bg-background shadow-lg relative z-10">
                           <span className="text-xs lg:text-lg font-mono font-black text-primary select-none">
@@ -389,7 +394,7 @@ export function RankingWidget({
                       <div className="flex flex-row md:flex-col gap-2 md:gap-3 lg:gap-4 w-full md:w-auto">
                         <div className="flex-1 md:flex-none">
                           <RankingControlButton
-                            icon={<Scale className="h-4 w-4 lg:h-5 lg:w-5" />}
+                            icon={<Scale className="h-3.5 w-3.5 lg:h-5 lg:w-5" />}
                             label="Tie"
                             onClick={() => handleChoice(null, true)}
                             disabled={!!winnerId || isTie}
@@ -397,7 +402,7 @@ export function RankingWidget({
                         </div>
                         <div className="flex-1 md:flex-none">
                           <RankingControlButton
-                            icon={<RotateCcw className="h-4 w-4 lg:h-5 lg:w-5" />}
+                            icon={<RotateCcw className="h-3.5 w-3.5 lg:h-5 lg:w-5" />}
                             label="Skip"
                             onClick={handleSkip}
                             disabled={!!winnerId || isTie}
@@ -411,7 +416,6 @@ export function RankingWidget({
             </div>
           )}
         </div>
-
       </div>
     </div>
   );
@@ -513,7 +517,7 @@ function RankingControlButton({
       variant="outline"
       onClick={onClick}
       disabled={disabled}
-      className="h-11 md:h-14 w-full md:w-36 rounded-xl md:rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-muted/10 hover:bg-primary/5 group shadow-sm hover:shadow-primary/5 px-4 md:px-0"
+      className="h-10 md:h-14 w-full md:w-36 rounded-xl md:rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-muted/10 hover:bg-primary/5 group shadow-sm hover:shadow-primary/5 px-4 md:px-0"
     >
       <div className="flex items-center gap-3">
         {icon && (

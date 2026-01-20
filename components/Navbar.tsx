@@ -9,12 +9,12 @@ export function Navbar() {
 
   return (
     <nav className="w-full border-b bg-background/95 backdrop-blur-md sticky top-0 z-40">
-      <div className="w-full px-6 h-16 flex items-center justify-between">
+      <div className="w-full px-4 md:px-6 h-12 md:h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <Music2 className="h-5 w-5 text-primary" />
+          <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg">
+            <Music2 className="h-4 w-4 md:h-5 md:w-5 text-primary" />
           </div>
-          <h1 className="font-mono text-lg font-bold tracking-tighter uppercase">
+          <h1 className="font-mono text-base md:text-lg font-bold tracking-tighter uppercase">
             Song<span className="text-primary">Ranker</span>
           </h1>
         </div>

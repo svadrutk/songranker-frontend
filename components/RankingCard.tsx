@@ -31,7 +31,7 @@ export function RankingCard({
       whileTap={!disabled ? { scale: 0.98 } : {}}
       transition={{ duration: 0.4, ease: "easeOut" }}
       className={cn(
-        "group relative flex flex-col w-full max-w-[240px] md:max-w-[320px] md:w-80 h-[13.5rem] md:h-[26rem] lg:h-[28rem] rounded-xl md:rounded-3xl border-2 transition-all duration-500 overflow-hidden text-left outline-none",
+        "group relative flex flex-row md:flex-col w-full max-w-md md:max-w-[320px] md:w-80 h-full max-h-[190px] md:max-h-none md:h-[30rem] lg:h-[32rem] rounded-xl md:rounded-3xl border-2 transition-all duration-500 overflow-hidden text-left outline-none",
         "bg-card border-border hover:border-primary/50 hover:bg-primary/[0.02]",
         "hover:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.3)] dark:hover:shadow-[0_20px_50px_-12px_rgba(255,255,255,0.05)]",
         "focus-visible:ring-2 focus-visible:ring-primary/50",
@@ -41,7 +41,7 @@ export function RankingCard({
       )}
     >
       {/* Artwork Section */}
-      <div className="relative h-32 md:aspect-square md:h-auto w-full bg-muted/30 flex items-center justify-center overflow-hidden border-b border-border/50">
+      <div className="relative h-full aspect-square md:w-full md:h-auto md:aspect-square bg-muted/30 flex items-center justify-center overflow-hidden border-r md:border-r-0 md:border-b border-border/50 shrink-0">
         <CoverArt
           title={song.name}
           url={song.cover_url}
@@ -72,29 +72,23 @@ export function RankingCard({
       </div>
 
       {/* Info Section */}
-      <div className="flex flex-col flex-1 p-3 md:p-6 justify-between relative bg-linear-to-b from-transparent to-muted/5">
-        <div className="space-y-1">
-          <h3 className="font-black text-sm md:text-lg leading-tight line-clamp-1 md:line-clamp-2 tracking-tight group-hover:text-primary transition-colors duration-300">
+      <div className="flex flex-col flex-1 p-3 md:p-6 justify-center text-left md:text-center relative bg-linear-to-r md:bg-linear-to-b from-transparent to-muted/5 min-w-0">
+        <div className="space-y-0.5 md:space-y-1">
+          <h3 className="font-black text-sm md:text-lg leading-tight truncate md:line-clamp-2 tracking-tight group-hover:text-primary transition-colors duration-300">
             {song.name}
           </h3>
-          <p className="text-[10px] md:text-[11px] font-mono text-muted-foreground uppercase tracking-[0.1em] md:tracking-[0.15em] font-bold opacity-80">
+          <p className="text-[10px] md:text-[11px] font-mono text-muted-foreground uppercase tracking-[0.1em] md:tracking-[0.15em] font-bold opacity-80 truncate">
             {song.artist}
           </p>
         </div>
 
-        <div className="flex items-end justify-between mt-2 md:mt-4">
-          <div className="flex flex-col">
-            <span className="text-[8px] md:text-[9px] font-mono text-muted-foreground/50 uppercase tracking-widest font-black">
-              Album
-            </span>
-            <span className="text-[9px] md:text-[10px] font-mono font-bold line-clamp-1 opacity-60 group-hover:opacity-100 transition-opacity">
-              {song.album || "Unknown Release"}
-            </span>
-          </div>
-
-          <div className="h-6 w-6 md:h-8 md:w-8 rounded-full border border-primary/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-x-4 group-hover:translate-x-0">
-            <div className="h-1.5 w-1.5 md:h-2 md:w-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_var(--primary)]" />
-          </div>
+        <div className="flex flex-row md:flex-col items-center gap-2 md:gap-0 mt-1 md:mt-4">
+          <span className="hidden md:inline text-[7px] md:text-[9px] font-mono text-muted-foreground/50 uppercase tracking-widest font-black">
+            Album
+          </span>
+          <span className="text-[9px] md:text-[10px] font-mono font-bold truncate opacity-60 group-hover:opacity-100 transition-opacity">
+            {song.album || "Unknown Release"}
+          </span>
         </div>
       </div>
 
