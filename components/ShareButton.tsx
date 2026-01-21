@@ -17,9 +17,12 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
 
   const handleShare = async () => {
     if (isGenerating) return;
+    
+    console.log('[ShareButton] Button clicked, starting generation...');
     setIsGenerating(true);
 
     try {
+      console.log('[ShareButton] Preparing request data...');
       // Prepare data for backend
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-US", {
@@ -36,6 +39,9 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
       // Random order ID (or could be session ID based if we had it)
       const orderId = Math.floor(Math.random() * 9000) + 1000;
 
+      console.log(`[ShareButton] Fetching from: ${BACKEND_URL}/generate-receipt`);
+      console.log(`[ShareButton] Sending ${songs.length} songs`);
+      
       const response = await fetch(`${BACKEND_URL}/generate-receipt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -47,14 +53,21 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
         }),
       });
 
+      console.log(`[ShareButton] Response status: ${response.status}`);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[ShareButton] Error response: ${errorText}`);
         throw new Error(`Failed to generate image: ${response.statusText}`);
       }
 
+      console.log('[ShareButton] Converting response to blob...');
       const blob = await response.blob();
+      console.log(`[ShareButton] Blob size: ${blob.size} bytes`);
       const file = new File([blob], "my-top-10.png", { type: "image/png" });
 
       // Trigger confetti
+      console.log('[ShareButton] Triggering confetti...');
       confetti({
         particleCount: 150,
         spread: 70,
@@ -79,8 +92,10 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
         URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error("Failed to generate share image:", error);
+      console.error("[ShareButton] Failed to generate share image:", error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
+      console.log('[ShareButton] Finished, resetting state');
       setIsGenerating(false);
     }
   };
@@ -89,7 +104,7 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
     <Button
       onClick={handleShare}
       disabled={isGenerating}
-      className="px-8 md:px-12 py-5 md:py-6 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-mono uppercase tracking-widest text-[10px] md:text-xs font-black group relative overflow-hidden"
+      className="px-8 md:px-12 py-5 md:py-6 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-mono uppercase tracking-widest text-[10px] md:text-xs font-black group relative overflow-hidden"
     >
       {isGenerating ? (
         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -100,6 +115,10 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
       
       {!isGenerating && (
         <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+      )}
+      
+      {isGenerating && (
+        <div className="absolute inset-0 bg-blue-500/20 animate-pulse" />
       )}
     </Button>
   );
