@@ -1,126 +1,113 @@
 "use client";
 
-import type { JSX } from "react";
-import { Music } from "lucide-react";
+import { useMemo, type JSX } from "react";
 import type { SessionSong } from "@/lib/api";
 
 type ShareVisualProps = {
   songs: SessionSong[];
+  orderId: number;
+  dateStr: string;
+  timeStr: string;
 };
 
-export function ShareVisual({ songs }: ShareVisualProps): JSX.Element {
-  const top1 = songs[0];
-  const others = songs.slice(1, 10);
+export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualProps): JSX.Element {
+  const top10 = songs.slice(0, 10);
+  
+  const barcodePattern = useMemo(() => {
+    // Generate a pseudo-random but stable pattern based on the songs
+    const seed = songs.reduce((acc, s) => acc + s.name.length, 0);
+    return [...Array(80)].map((_, i) => ({
+      width: [1, 2, 4, 6][(seed + i) % 4],
+      visible: ((seed * (i + 1)) % 10) > 1
+    }));
+  }, [songs]);
 
   return (
     <div 
       id="share-visual"
-      className="w-[1080px] h-[1920px] bg-black text-white p-12 flex flex-col items-center justify-between relative overflow-hidden"
-      style={{
-        background: `linear-gradient(135deg, #000000 0%, #1a1a1a 100%)`,
-      }}
+      className="w-[1080px] bg-black p-20 flex flex-col items-center justify-start font-mono"
+      style={{ minHeight: '1200px' }}
     >
-      {/* Dynamic Background Glow */}
-      <div 
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[50%] opacity-30 blur-[120px] rounded-full"
-        style={{
-          background: `radial-gradient(circle, var(--color-primary) 0%, transparent 70%)`,
-          backgroundColor: '#3b82f6', // Fallback blue
-        }}
-      />
-
-      <div className="w-full space-y-16 relative z-10 flex flex-col items-center">
-        {/* Header */}
-        <div className="text-center space-y-4">
-          <p className="text-2xl font-mono font-black uppercase tracking-[0.4em] text-blue-400">
-            Song Ranker
-          </p>
-          <h1 className="text-7xl font-black tracking-tighter uppercase italic">
-            My Definitive Top 10
-          </h1>
-        </div>
-
-        {/* Number 1 Spot */}
-        {top1 && (
-          <div className="flex flex-col items-center gap-10 w-full animate-in fade-in zoom-in duration-1000">
-            <div className="relative">
-              <div className="absolute -inset-4 bg-blue-500/20 blur-2xl rounded-3xl" />
-              {top1.cover_url ? (
-                <img
-                  src={top1.cover_url}
-                  alt={top1.name}
-                  className="w-96 h-96 rounded-3xl object-cover shadow-2xl relative z-10 border-4 border-white/10"
-                  crossOrigin="anonymous"
-                />
-              ) : (
-                <div className="w-96 h-96 rounded-3xl bg-white/5 flex items-center justify-center relative z-10 border-4 border-white/10">
-                  <Music className="w-32 h-32 text-white/20" />
-                </div>
-              )}
-              <div className="absolute -top-6 -left-6 w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center text-4xl font-black italic shadow-lg z-20">
-                #1
-              </div>
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-5xl font-black uppercase tracking-tight max-w-2xl px-4">
-                {top1.name}
-              </h2>
-              <p className="text-3xl font-mono text-white/60 uppercase tracking-widest">
-                {top1.artist}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* The Rest of the Top 10 */}
-        <div className="w-full max-w-3xl space-y-4">
-          {others.map((song, index) => (
-            <div 
-              key={song.song_id} 
-              className="flex items-center gap-6 p-6 rounded-2xl bg-white/5 border border-white/10"
-            >
-              <div className="w-20 text-4xl font-black font-mono text-white/20 italic">
-                #{index + 2}
-              </div>
-              {song.cover_url ? (
-                <img
-                  src={song.cover_url}
-                  alt={song.name}
-                  className="w-20 h-20 rounded-lg object-cover shadow-lg"
-                  crossOrigin="anonymous"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-lg bg-white/5 flex items-center justify-center">
-                  <Music className="w-8 h-8 text-white/20" />
-                </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <h3 className="text-3xl font-bold truncate uppercase tracking-tight">
-                  {song.name}
-                </h3>
-                <p className="text-xl font-mono text-white/40 uppercase truncate">
-                  {song.artist}
-                </p>
-              </div>
-            </div>
+      {/* Receipt Paper */}
+      <div className="w-[850px] bg-[#1a1a1a] text-white flex flex-col relative shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
+        {/* Top Jagged Edge */}
+        <div className="absolute -top-6 left-0 w-full h-6 overflow-hidden flex">
+          {[...Array(30)].map((_, i) => (
+            <div key={i} className="w-8 h-8 bg-[#1a1a1a] rotate-45 transform origin-bottom-left shrink-0" style={{ marginTop: '16px' }} />
           ))}
         </div>
-      </div>
 
-      {/* Footer */}
-      <div className="w-full flex justify-between items-end border-t border-white/10 pt-12 relative z-10">
-        <div className="space-y-1">
-          <p className="text-xl font-mono text-white/40 uppercase tracking-widest">
-            Ranked with
-          </p>
-          <p className="text-3xl font-black uppercase tracking-tighter text-blue-400">
-            SongRanker.io
-          </p>
+        {/* Receipt Header */}
+        <div className="p-16 text-center border-b-2 border-dashed border-white/10">
+          <h1 className="text-6xl font-black tracking-tighter uppercase mb-4">SongRanker</h1>
+          <div className="space-y-1 text-2xl font-bold opacity-40">
+            <p>ORDER #SR-{orderId}</p>
+            <p>{dateStr} @ {timeStr}</p>
+          </div>
         </div>
-        <div className="text-right">
-          <p className="text-xl font-mono text-white/40 uppercase tracking-widest">
-            {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-          </p>
+
+        {/* List Section */}
+        <div className="px-16 py-12 space-y-10">
+          <div className="flex justify-between text-3xl font-black uppercase border-b-2 border-white/5 pb-6">
+            <span>TRACK / ARTIST</span>
+            <span>QTY</span>
+          </div>
+          
+          <div className="space-y-12">
+            {top10.map((song, index) => (
+              <div key={song.song_id} className="flex justify-between items-center">
+                <div className="flex items-center gap-6 flex-1 min-w-0 pr-8">
+                  <div className="w-20 h-20 shrink-0 border border-white/10 overflow-hidden bg-white/5">
+                    {song.cover_url ? (
+                      <img 
+                        src={song.cover_url} 
+                        alt={song.name} 
+                        className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center opacity-20">
+                        ?
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-start gap-4 min-w-0">
+                    <span className="text-4xl font-black opacity-20 w-12 shrink-0">{index + 1}</span>
+                    <div className="min-w-0">
+                      <p className="text-4xl font-black uppercase tracking-tight leading-none mb-2 truncate">
+                        {song.name}
+                      </p>
+                      <p className="text-2xl font-bold opacity-40 uppercase tracking-widest truncate">
+                        {song.artist}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <span className="text-3xl font-black opacity-20 shrink-0">1x</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Barcode / Footer */}
+        <div className="px-16 pb-20 pt-10 flex flex-col items-center gap-10">
+          <div className="w-full flex flex-col gap-3">
+             <div className="w-full h-32 flex items-stretch gap-1">
+                {barcodePattern.map((bar, i) => (
+                  <div 
+                    key={i} 
+                    className="bg-white flex-1" 
+                    style={{ 
+                      opacity: bar.visible ? 0.9 : 0,
+                      flexGrow: bar.width
+                    }} 
+                  />
+                ))}
+              </div>
+              <p className="text-center text-2xl font-bold opacity-20 tracking-[1em] ml-[1em]">
+                SONGRANKER.APP
+              </p>
+          </div>
         </div>
       </div>
     </div>
