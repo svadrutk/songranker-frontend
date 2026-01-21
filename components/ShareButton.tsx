@@ -5,12 +5,11 @@ import { Share2, Loader2 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import type { SessionSong } from "@/lib/api";
+import { generateShareImage } from "@/lib/share-actions";
 
 type ShareButtonProps = {
   songs: SessionSong[];
 };
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
   const [isGenerating, setIsGenerating] = useState(false);
@@ -39,30 +38,23 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
       // Random order ID (or could be session ID based if we had it)
       const orderId = Math.floor(Math.random() * 9000) + 1000;
 
-      console.log(`[ShareButton] Fetching from: ${BACKEND_URL}/generate-receipt`);
-      console.log(`[ShareButton] Sending ${songs.length} songs`);
+      console.log(`[ShareButton] Calling Server Action with ${songs.length} songs`);
       
-      const response = await fetch(`${BACKEND_URL}/generate-receipt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          songs, 
-          orderId, 
-          dateStr, 
-          timeStr 
-        }),
-      });
+      // Call Server Action instead of fetching directly
+      const result = await generateShareImage(songs, orderId, dateStr, timeStr);
 
-      console.log(`[ShareButton] Response status: ${response.status}`);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[ShareButton] Error response: ${errorText}`);
-        throw new Error(`Failed to generate image: ${response.statusText}`);
+      if (!result.success) {
+        throw new Error(result.error);
       }
 
-      console.log('[ShareButton] Converting response to blob...');
-      const blob = await response.blob();
+      console.log('[ShareButton] Converting base64 to blob...');
+      // Convert base64 back to blob
+      const binaryString = atob(result.imageData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: "image/png" });
       console.log(`[ShareButton] Blob size: ${blob.size} bytes`);
       const file = new File([blob], "my-top-10.png", { type: "image/png" });
 
