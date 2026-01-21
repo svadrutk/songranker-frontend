@@ -5,6 +5,8 @@ import { ThemeProvider } from "@/app/providers";
 import { AuthProvider } from "@/components/AuthProvider";
 import { Navbar } from "@/components/Navbar";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { DebugPanel } from "@/components/DebugPanel";
+import { ErrorBanner } from "@/components/ErrorBanner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -41,6 +43,7 @@ export default function RootLayout({
         >
           <AuthProvider>
             <div className="fixed inset-0 flex flex-col overflow-hidden bg-background">
+              <ErrorBanner />
               <Navbar />
               <main className="flex-1 min-h-0 overflow-hidden relative">
                 {children}
@@ -49,6 +52,8 @@ export default function RootLayout({
               <div className="fixed bottom-4 right-4 z-[60]">
                 <ThemeToggle />
               </div>
+              {/* Debug Panel (dev only) */}
+              <DebugPanel />
             </div>
           </AuthProvider>
         </ThemeProvider>

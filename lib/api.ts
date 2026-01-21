@@ -78,23 +78,51 @@ export type ComparisonCreate = {
   is_tie: boolean;
 };
 
-const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8000";
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+
+// Log backend URL on module load
+console.log('[API] Backend URL configured as:', BACKEND_URL);
+console.log('[API] User agent:', typeof navigator !== 'undefined' ? navigator.userAgent : 'SSR');
+
+// Helper to show errors visually
+function triggerErrorBanner(message: string) {
+  if (typeof window !== 'undefined') {
+    // Dynamic import to avoid SSR issues
+    import('@/components/ErrorBanner').then(({ showError }) => {
+      showError(message);
+    });
+  }
+}
 
 export async function searchArtistReleaseGroups(query: string): Promise<ReleaseGroup[]> {
   if (!query) return [];
 
   try {
-    const response = await fetch(`${BACKEND_URL}/search?query=${encodeURIComponent(query)}`, {
+    const url = `${BACKEND_URL}/search?query=${encodeURIComponent(query)}`;
+    console.log('[API] searchArtistReleaseGroups fetching:', url);
+    
+    const response = await fetch(url, {
       cache: "no-store",
     });
 
+    console.log('[API] searchArtistReleaseGroups response:', response.status, response.statusText);
+
     if (!response.ok) {
-      throw new Error(`Backend error: ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('[API] searchArtistReleaseGroups error:', errorText);
+      const errorMsg = `Search failed: ${response.status} ${response.statusText}`;
+      triggerErrorBanner(errorMsg);
+      throw new Error(errorMsg);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`[API] searchArtistReleaseGroups returned ${data.length} results`);
+    return data;
   } catch (error) {
-    console.error("Error searching artists:", error);
+    console.error("[API] Error searching artists:", error);
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      triggerErrorBanner(`Cannot reach backend at ${BACKEND_URL}. Check network connection.`);
+    }
     return [];
   }
 }
