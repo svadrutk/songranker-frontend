@@ -1,3 +1,5 @@
+"use server";
+
 export type CoverArtArchive = {
   artwork: boolean | null;
   back: boolean | null;
