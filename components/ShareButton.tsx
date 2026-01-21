@@ -63,18 +63,39 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
       // 1. Prepare images
       preparedSongs = await prepareImages();
       
-      // 2. Wait for images to load in the hidden DOM
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      // 2. Wait for fonts and images to be fully ready
+      await document.fonts.ready;
+      
       const element = document.getElementById("share-visual");
       if (!element) throw new Error("Share visual element not found");
 
+      // 3. Ensure all images inside the element are loaded
+      const images = Array.from(element.querySelectorAll("img"));
+      await Promise.all(
+        images.map((img) => {
+          if (img.complete) return Promise.resolve();
+          return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+        })
+      );
+
+      // 4. Cap pixel ratio for mobile to prevent crashes/missing images
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const pixelRatio = isMobile ? 2 : 3;
+
       const dataUrl = await toPng(element, {
         quality: 1.0,
-        cacheBust: false,
-        pixelRatio: 2, 
+        cacheBust: true,
+        pixelRatio,
         height: element.scrollHeight,
         width: 1080,
+        style: {
+          transform: "scale(1)",
+          left: "0",
+          top: "0",
+        }
       });
 
       // Trigger confetti

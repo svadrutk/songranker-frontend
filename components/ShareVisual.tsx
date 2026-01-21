@@ -25,8 +25,12 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
   return (
     <div 
       id="share-visual"
-      className="w-[1080px] bg-black p-20 flex flex-col items-center justify-start font-mono"
-      style={{ minHeight: '1200px' }}
+      className="w-[1080px] bg-black p-20 flex flex-col items-center justify-start"
+      style={{ 
+        minHeight: '1200px',
+        backgroundColor: '#000000', // Explicit hex for mobile safety
+        fontFamily: "'GeistMono-Export-Regular', monospace" 
+      }}
     >
       {/* Receipt Paper */}
       <div className="w-[850px] bg-[#1a1a1a] text-white flex flex-col relative shadow-[0_50px_100px_rgba(0,0,0,0.5)]">
@@ -39,8 +43,16 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
 
         {/* Receipt Header */}
         <div className="p-16 text-center border-b-2 border-dashed border-white/10">
-          <h1 className="text-6xl font-black tracking-tighter uppercase mb-4">SongRanker</h1>
-          <div className="space-y-1 text-2xl font-bold opacity-40">
+          <h1 
+            className="text-6xl tracking-tighter uppercase mb-4"
+            style={{ fontFamily: "'Geist-Export-Black', sans-serif", fontWeight: 900 }}
+          >
+            SongRanker
+          </h1>
+          <div 
+            className="space-y-1 text-2xl font-bold opacity-40"
+            style={{ fontFamily: "'GeistMono-Export-Bold', monospace" }}
+          >
             <p>ORDER #SR-{orderId}</p>
             <p>{dateStr} @ {timeStr}</p>
           </div>
@@ -48,7 +60,10 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
 
         {/* List Section */}
         <div className="px-16 py-12 space-y-10">
-          <div className="flex justify-between text-3xl font-black uppercase border-b-2 border-white/5 pb-6">
+          <div 
+            className="flex justify-between text-3xl uppercase border-b-2 border-white/5 pb-6"
+            style={{ fontFamily: "'GeistMono-Export-Bold', monospace" }}
+          >
             <span>TRACK / ARTIST</span>
             <span>QTY</span>
           </div>
@@ -64,6 +79,8 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
                         alt={song.name} 
                         className="w-full h-full object-cover"
                         crossOrigin="anonymous"
+                        loading="eager"
+                        decoding="sync"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center opacity-20">
@@ -72,18 +89,34 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
                     )}
                   </div>
                   <div className="flex items-start gap-4 min-w-0">
-                    <span className="text-4xl font-black opacity-20 w-12 shrink-0">{index + 1}</span>
+                    <span 
+                      className="text-4xl opacity-20 w-12 shrink-0"
+                      style={{ fontFamily: "'GeistMono-Export-Bold', monospace" }}
+                    >
+                      {index + 1}
+                    </span>
                     <div className="min-w-0">
-                      <p className="text-4xl font-black uppercase tracking-tight leading-none mb-2 truncate">
+                      <p 
+                        className="text-4xl uppercase tracking-tight leading-none mb-2 truncate"
+                        style={{ fontFamily: "'Geist-Export-Black', sans-serif", fontWeight: 900 }}
+                      >
                         {song.name}
                       </p>
-                      <p className="text-2xl font-bold opacity-40 uppercase tracking-widest truncate">
+                      <p 
+                        className="text-2xl opacity-40 uppercase tracking-widest truncate"
+                        style={{ fontFamily: "'GeistMono-Export-Bold', monospace" }}
+                      >
                         {song.artist}
                       </p>
                     </div>
                   </div>
                 </div>
-                <span className="text-3xl font-black opacity-20 shrink-0">1x</span>
+                <span 
+                  className="text-3xl opacity-20 shrink-0"
+                  style={{ fontFamily: "'GeistMono-Export-Bold', monospace" }}
+                >
+                  1x
+                </span>
               </div>
             ))}
           </div>
@@ -104,7 +137,10 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
                   />
                 ))}
               </div>
-              <p className="text-center text-2xl font-bold opacity-20 tracking-[1em] ml-[1em]">
+              <p 
+                className="text-center text-2xl opacity-20 tracking-[1em] ml-[1em]"
+                style={{ fontFamily: "'GeistMono-Export-Bold', monospace" }}
+              >
                 SONGRANKER.APP
               </p>
           </div>
