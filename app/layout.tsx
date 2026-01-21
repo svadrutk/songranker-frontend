@@ -1,20 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { ThemeProvider } from "@/app/providers";
 import { AuthProvider } from "@/components/AuthProvider";
 import { Navbar } from "@/components/Navbar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Song Ranker",
@@ -35,12 +26,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="h-full w-full">
+    <html lang="en" suppressHydrationWarning className={`h-full w-full ${GeistSans.variable} ${GeistMono.variable}`}>
       <head>
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full overflow-hidden`}
+        className="antialiased h-full w-full overflow-hidden"
       >
         <ThemeProvider
           attribute="class"
