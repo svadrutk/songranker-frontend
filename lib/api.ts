@@ -144,15 +144,24 @@ export async function createSession(payload: SessionCreate): Promise<SessionResp
 
 export async function getUserSessions(userId: string): Promise<SessionSummary[]> {
   try {
+    console.log(`[API] getUserSessions called with userId: ${userId}`);
+    console.log(`[API] Fetching from: ${BACKEND_URL}/users/${userId}/sessions`);
+    
     const response = await fetch(`${BACKEND_URL}/users/${userId}/sessions`, {
       cache: "no-store",
     });
 
+    console.log(`[API] getUserSessions response status: ${response.status}`);
+
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[API] getUserSessions error response: ${errorText}`);
       throw new Error(`Failed to fetch user sessions: ${response.statusText}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+    console.log(`[API] getUserSessions returned ${data.length} sessions`);
+    return data;
   } catch (error) {
     console.error("[API] Error in getUserSessions:", error);
     return [];

@@ -23,7 +23,10 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const loadSessions = useCallback(async (showLoading = true) => {
+    console.log('[SessionSelector] loadSessions called, user:', user ? user.id : 'null');
+    
     if (!user) {
+      console.log('[SessionSelector] No user, skipping session load');
       setLoading(false);
       return;
     }
@@ -47,11 +50,14 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
 
     // 2. Always fetch fresh data from API
     try {
+      console.log('[SessionSelector] Fetching sessions from API...');
       const data = await getUserSessions(user.id);
+      console.log(`[SessionSelector] Received ${data.length} sessions`);
       setSessions(data);
       localStorage.setItem(cacheKey, JSON.stringify(data));
+      console.log('[SessionSelector] Sessions cached successfully');
     } catch (error) {
-      console.error("Failed to load sessions:", error);
+      console.error("[SessionSelector] Failed to load sessions:", error);
     } finally {
       setLoading(false);
     }
