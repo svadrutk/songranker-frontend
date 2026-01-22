@@ -25,10 +25,7 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const loadSessions = useCallback(async (showLoading = true) => {
-    console.log('[SessionSelector] loadSessions called, user:', user ? user.id : 'null');
-    
     if (!user) {
-      console.log('[SessionSelector] No user, skipping session load');
       setLoading(false);
       return;
     }
@@ -40,49 +37,39 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
     if (cachedData) {
       try {
         const parsed = JSON.parse(cachedData);
-        console.log(`[SessionSelector] Loaded ${parsed.length} sessions from cache`);
-        setSessions(parsed);
-        // If we have cache, we don't necessarily need to show the main loader
-        if (showLoading) setLoading(false);
+        // Check if cached data is missing the convergence_score field
+        const needsUpdate = parsed.length > 0 && !('convergence_score' in parsed[0]);
+        if (!needsUpdate) {
+          setSessions(parsed);
+          if (showLoading) setLoading(false);
+        }
       } catch (e) {
-        console.error("[SessionSelector] Failed to parse cached sessions, clearing cache:", e);
         localStorage.removeItem(cacheKey);
       }
     } else if (showLoading) {
       setLoading(true);
     }
 
-    // 2. Always fetch fresh data from API
+    // 2. Fetch fresh data from API
     try {
-      console.log('[SessionSelector] Fetching sessions from API...');
       const data = await getUserSessions(user.id);
-      console.log(`[SessionSelector] Received ${data.length} sessions`);
       
-      // Validate data before caching
-      if (!Array.isArray(data)) {
-        console.error('[SessionSelector] API returned non-array data:', data);
-        throw new Error('Invalid session data from API');
-      }
-      
-      setSessions(data);
-      
-      // Only cache if we got valid data
-      if (data.length > 0) {
-        localStorage.setItem(cacheKey, JSON.stringify(data));
-        console.log('[SessionSelector] Sessions cached successfully');
-      } else {
-        console.log('[SessionSelector] No sessions to cache');
-        // Clear cache if API returned empty array (user might have deleted all sessions)
-        localStorage.removeItem(cacheKey);
+      if (Array.isArray(data)) {
+        setSessions(data);
+        if (data.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify(data));
+        } else {
+          localStorage.removeItem(cacheKey);
+        }
       }
     } catch (error) {
       console.error("[SessionSelector] Failed to load sessions:", error);
-      // On error, clear cache to prevent stale data
       localStorage.removeItem(cacheKey);
     } finally {
       setLoading(false);
     }
   }, [user]);
+
 
   useEffect(() => {
     loadSessions();
@@ -126,7 +113,7 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
   }
 
   if (sessions.length === 0) {
-    if (!user) return <div className="py-12" />; // Don't show anything if not logged in and not loading
+    if (!user) return <div className="py-12" />; 
     
     return (
       <div className="flex flex-col items-center justify-center py-12 gap-4 text-center px-4">
@@ -160,9 +147,9 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
               }
             }}
             className={cn(
-              "w-full group flex items-center gap-3 p-3 rounded-md border transition-all text-left relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "w-full group flex items-center gap-3 p-3 rounded-md border transition-all text-left relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary overflow-hidden",
               activeSessionId === session.session_id
-                ? "border-primary bg-primary/5 shadow-xs"
+                ? "border-primary/40 bg-primary/5 shadow-xs"
                 : "bg-card border-transparent hover:bg-muted/50 hover:border-border"
             )}
           >
@@ -200,48 +187,69 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
 
             <div className="flex flex-col flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1.5">
-              <span className={cn(
-                "font-mono text-xs font-bold truncate flex-1",
-                activeSessionId === session.session_id ? "text-primary" : ""
-              )}>
-                {session.primary_artist}
-              </span>
-              <div className="flex items-center gap-2">
-                {deletingId === session.session_id ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-destructive" />
-                ) : (
-                  <button
-                    onClick={(e) => handleDeleteClick(e, session.session_id)}
-                    className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-colors"
-                    title="Delete Ranking"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                <span className={cn(
+                  "font-mono text-xs font-bold truncate flex-1",
+                  activeSessionId === session.session_id ? "text-primary" : ""
+                )}>
+                  {session.primary_artist}
+                </span>
+                <div className="flex items-center gap-2">
+                  {deletingId === session.session_id ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-destructive" />
+                  ) : (
+                    <button
+                      onClick={(e) => handleDeleteClick(e, session.session_id)}
+                      className="p-1 rounded-md hover:bg-destructive/10 text-muted-foreground/40 hover:text-destructive transition-colors"
+                      title="Delete Ranking"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                  {(session.convergence_score || 0) >= 90 ? (
+                    <CheckCircle2 className={cn(
+                      "h-4 w-4 text-green-500 transition-transform group-hover:scale-110 shadow-[0_0_10px_rgba(34,197,94,0.2)]",
+                      activeSessionId === session.session_id ? "opacity-100" : "opacity-80"
+                    )} />
+                  ) : (
+                    <PlayCircle className={cn(
+                      "h-4 w-4 transition-transform group-hover:scale-110",
+                      activeSessionId === session.session_id ? "text-primary" : "text-muted-foreground/40"
+                    )} />
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                  <Calendar className="h-3 w-3 opacity-50" />
+                  {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(session.created_at))}
+                </div>
+                <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
+                  <Layers className="h-3 w-3 opacity-50" />
+                  {session.song_count} songs
+                </div>
+                <div className="flex items-center gap-1 text-[9px] text-primary/60 uppercase font-bold tracking-tighter">
+                  <CheckCircle2 className="h-3 w-3 opacity-50" />
+                  {session.comparison_count} duels
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="absolute bottom-1.5 left-3 right-3 h-[1.5px] bg-primary/10 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${session.convergence_score || 0}%` }}
+                className={cn(
+                  "h-full transition-all duration-1000 ease-out",
+                  (session.convergence_score || 0) <= 33 ? "bg-red-500/60" : 
+                  (session.convergence_score || 0) <= 66 ? "bg-yellow-500/60" : 
+                  "bg-green-500/60"
                 )}
-                <PlayCircle className={cn(
-                  "h-4 w-4 transition-transform group-hover:scale-110",
-                  activeSessionId === session.session_id ? "text-primary" : "text-muted-foreground/40"
-                )} />
-              </div>
+              />
             </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
-                <Calendar className="h-3 w-3 opacity-50" />
-                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(session.created_at))}
-              </div>
-              <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
-                <Layers className="h-3 w-3 opacity-50" />
-                {session.song_count} songs
-              </div>
-              <div className="flex items-center gap-1 text-[9px] text-primary/60 uppercase font-bold tracking-tighter">
-                <CheckCircle2 className="h-3 w-3 opacity-50" />
-                {session.comparison_count} duels
-               </div>
-             </div>
-            </div>
-           </div>
-         ))}
+          </div>
+        ))}
       </div>
 
       <DeleteConfirmationModal
@@ -267,14 +275,14 @@ function DeleteConfirmationModal({
   onConfirm, 
   artistName 
 }: DeleteConfirmationModalProps): JSX.Element | null {
-  const [mounted, setMounted] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
+    setIsMounted(true);
   }, []);
 
-  if (!mounted) return null;
+  if (!isMounted) return null;
+
 
   return createPortal(
     <AnimatePresence>

@@ -41,6 +41,7 @@ export type SessionSummary = {
   primary_artist: string;
   song_count: number;
   comparison_count: number;
+  convergence_score: number;
   top_album_covers: string[];
 };
 
@@ -95,102 +96,74 @@ function triggerErrorBanner(message: string) {
   }
 }
 
-export async function searchArtistReleaseGroups(query: string): Promise<ReleaseGroup[]> {
-  if (!query) return [];
-
+async function fetchBackend<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${BACKEND_URL}${endpoint}`;
   try {
-    const url = `${BACKEND_URL}/search?query=${encodeURIComponent(query)}`;
-    console.log('[API] searchArtistReleaseGroups fetching:', url);
-    
     const response = await fetch(url, {
-      cache: "no-store",
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     });
 
-    console.log('[API] searchArtistReleaseGroups response:', response.status, response.statusText);
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[API] searchArtistReleaseGroups error:', errorText);
-      const errorMsg = `Search failed: ${response.status} ${response.statusText}`;
-      triggerErrorBanner(errorMsg);
-      throw new Error(errorMsg);
+      const errorData = await response.json().catch(() => ({}));
+      const message = errorData.detail || `API Error: ${response.status} ${response.statusText}`;
+      throw new Error(message);
     }
 
-    const data = await response.json();
-    console.log(`[API] searchArtistReleaseGroups returned ${data.length} results`);
-    return data;
+    return await response.json();
+  } catch (error) {
+    if (error instanceof TypeError && error.message.includes("fetch")) {
+      const message = `Cannot reach backend at ${BACKEND_URL}. Check connection.`;
+      triggerErrorBanner(message);
+      throw new Error(message);
+    }
+    throw error;
+  }
+}
+
+export async function searchArtistReleaseGroups(query: string): Promise<ReleaseGroup[]> {
+  if (!query) return [];
+  try {
+    return await fetchBackend<ReleaseGroup[]>(`/search?query=${encodeURIComponent(query)}`, {
+      cache: "no-store",
+    });
   } catch (error) {
     console.error("[API] Error searching artists:", error);
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      triggerErrorBanner(`Cannot reach backend at ${BACKEND_URL}. Check network connection.`);
-    }
     return [];
   }
 }
 
 export async function getReleaseGroupTracks(id: string): Promise<string[]> {
   if (!id) return [];
-
   try {
-    const response = await fetch(`${BACKEND_URL}/tracks/${id}`, {
+    const data = await fetchBackend<TrackResponse>(`/tracks/${id}`, {
       cache: "no-store",
     });
-
-    if (!response.ok) {
-      throw new Error(`Backend error: ${response.statusText}`);
-    }
-
-    const data: TrackResponse = await response.json();
     return data.tracks;
   } catch (error) {
-    console.error("Error fetching tracks:", error);
+    console.error("[API] Error fetching tracks:", error);
     return [];
   }
 }
 
 export async function createSession(payload: SessionCreate): Promise<SessionResponse> {
-  try {
-    const response = await fetch(`${BACKEND_URL}/sessions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error("[API] Session creation failed:", errorData);
-      throw new Error(errorData.detail || `Failed to create session: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("[API] Error in createSession:", error);
-    throw error;
-  }
+  return fetchBackend<SessionResponse>("/sessions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 export async function getUserSessions(userId: string): Promise<SessionSummary[]> {
   try {
-    console.log(`[API] getUserSessions called with userId: ${userId}`);
-    console.log(`[API] Fetching from: ${BACKEND_URL}/users/${userId}/sessions`);
-    
-    const response = await fetch(`${BACKEND_URL}/users/${userId}/sessions`, {
+    return await fetchBackend<SessionSummary[]>(`/users/${userId}/sessions`, {
       cache: "no-store",
     });
-
-    console.log(`[API] getUserSessions response status: ${response.status}`);
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[API] getUserSessions error response: ${errorText}`);
-      throw new Error(`Failed to fetch user sessions: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log(`[API] getUserSessions returned ${data.length} sessions`);
-    return data;
   } catch (error) {
     console.error("[API] Error in getUserSessions:", error);
     return [];
@@ -199,15 +172,9 @@ export async function getUserSessions(userId: string): Promise<SessionSummary[]>
 
 export async function getSessionSongs(sessionId: string): Promise<SessionSong[]> {
   try {
-    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}/songs`, {
+    return await fetchBackend<SessionSong[]>(`/sessions/${sessionId}/songs`, {
       cache: "no-store",
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch session songs: ${response.statusText}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("[API] Error in getSessionSongs:", error);
     return [];
@@ -216,15 +183,9 @@ export async function getSessionSongs(sessionId: string): Promise<SessionSong[]>
 
 export async function getSessionDetail(sessionId: string): Promise<SessionDetail | null> {
   try {
-    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+    return await fetchBackend<SessionDetail>(`/sessions/${sessionId}`, {
       cache: "no-store",
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch session detail: ${response.statusText}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error("[API] Error in getSessionDetail:", error);
     return null;
@@ -233,14 +194,9 @@ export async function getSessionDetail(sessionId: string): Promise<SessionDetail
 
 export async function deleteSession(sessionId: string): Promise<boolean> {
   try {
-    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}`, {
+    await fetchBackend(`/sessions/${sessionId}`, {
       method: "DELETE",
     });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete session: ${response.statusText}`);
-    }
-
     return true;
   } catch (error) {
     console.error("[API] Error in deleteSession:", error);
@@ -252,24 +208,10 @@ export async function createComparison(
   sessionId: string,
   payload: ComparisonCreate
 ): Promise<ComparisonResponse> {
-  try {
-    const response = await fetch(`${BACKEND_URL}/sessions/${sessionId}/comparisons`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.detail || `Failed to create comparison: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error("[API] Error in createComparison:", error);
-    throw error;
-  }
+  return fetchBackend<ComparisonResponse>(`/sessions/${sessionId}/comparisons`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
+
 

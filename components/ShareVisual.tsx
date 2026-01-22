@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, type JSX } from "react";
+import Image from "next/image";
 import type { SessionSong } from "@/lib/api";
 
 type ShareVisualProps = {
@@ -10,17 +11,23 @@ type ShareVisualProps = {
   timeStr: string;
 };
 
+type BarcodeItem = {
+  width: number;
+  visible: boolean;
+};
+
 export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualProps): JSX.Element {
   const top10 = songs.slice(0, 10);
   
-  const barcodePattern = useMemo(() => {
+  const barcodePattern = useMemo<BarcodeItem[]>(() => {
     // Generate a pseudo-random but stable pattern based on the songs
     const seed = songs.reduce((acc, s) => acc + s.name.length, 0);
-    return [...Array(80)].map((_, i) => ({
+    return Array.from({ length: 80 }, (_, i) => ({
       width: [1, 2, 4, 6][(seed + i) % 4],
       visible: ((seed * (i + 1)) % 10) > 1
     }));
   }, [songs]);
+
 
   return (
     <div 
@@ -59,11 +66,13 @@ export function ShareVisual({ songs, orderId, dateStr, timeStr }: ShareVisualPro
                 <div className="flex items-center gap-6 flex-1 min-w-0 pr-8">
                   <div className="w-20 h-20 shrink-0 border border-white/10 overflow-hidden bg-white/5">
                     {song.cover_url ? (
-                      <img 
+                      <Image 
                         src={song.cover_url} 
                         alt={song.name} 
+                        width={80}
+                        height={80}
                         className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
+                        unoptimized
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center opacity-20">
