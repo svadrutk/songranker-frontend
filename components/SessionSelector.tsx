@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, type JSX } from "react";
 import { Calendar, Layers, Loader2, PlayCircle, History, CheckCircle2, Trash2, AlertTriangle, X } from "lucide-react";
+import Image from "next/image";
 import { getUserSessions, type SessionSummary, deleteSession } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,7 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
 
   const loadSessions = useCallback(async (showLoading = true) => {
     console.log('[SessionSelector] loadSessions called, user:', user ? user.id : 'null');
@@ -158,13 +160,46 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
               }
             }}
             className={cn(
-              "w-full group flex flex-col p-3 rounded-md border transition-all text-left relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "w-full group flex items-center gap-3 p-3 rounded-md border transition-all text-left relative cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-primary",
               activeSessionId === session.session_id
                 ? "border-primary bg-primary/5 shadow-xs"
                 : "bg-card border-transparent hover:bg-muted/50 hover:border-border"
             )}
           >
-            <div className="flex items-center justify-between mb-1.5">
+            {/* Album Cover Stack */}
+            <div className="relative w-10 h-10 shrink-0">
+              {(session.top_album_covers || []).length === 0 || imageErrors[session.session_id] ? (
+                <div className="w-full h-full bg-muted/20 flex items-center justify-center">
+                  <Layers className="h-5 w-5 text-muted-foreground/40" />
+                </div>
+              ) : (
+                <>
+                  <Image
+                    src={(session.top_album_covers || [])[0]}
+                    alt="Album cover"
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover shadow-sm relative z-10"
+                    onError={() => setImageErrors(prev => ({ ...prev, [session.session_id]: true }))}
+                    unoptimized
+                  />
+                  {(session.top_album_covers || []).length > 1 && (
+                    <Image
+                      src={(session.top_album_covers || [])[1]}
+                      alt="Album cover"
+                      width={40}
+                      height={40}
+                      className="absolute left-2 top-2 w-full h-full object-cover shadow-sm border-2 border-background z-0"
+                      onError={() => setImageErrors(prev => ({ ...prev, [session.session_id]: true }))}
+                      unoptimized
+                    />
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1.5">
               <span className={cn(
                 "font-mono text-xs font-bold truncate flex-1",
                 activeSessionId === session.session_id ? "text-primary" : ""
@@ -202,10 +237,11 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
               <div className="flex items-center gap-1 text-[9px] text-primary/60 uppercase font-bold tracking-tighter">
                 <CheckCircle2 className="h-3 w-3 opacity-50" />
                 {session.comparison_count} duels
-              </div>
+               </div>
+             </div>
             </div>
-          </div>
-        ))}
+           </div>
+         ))}
       </div>
 
       <DeleteConfirmationModal

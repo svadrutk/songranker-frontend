@@ -41,6 +41,7 @@ export type SessionSummary = {
   primary_artist: string;
   song_count: number;
   comparison_count: number;
+  top_album_covers: string[];
 };
 
 export type SessionDetail = {
