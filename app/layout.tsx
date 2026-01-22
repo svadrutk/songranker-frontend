@@ -19,8 +19,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Song Ranker",
+  title: "Chorusboard",
   description: "Rank your favorite songs with ease.",
+  icons: {
+    icon: '/logo/logo.svg',
+  },
 };
 
 export const viewport: Viewport = {

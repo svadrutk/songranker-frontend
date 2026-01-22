@@ -2,7 +2,8 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, Music2 } from "lucide-react";
+import { LogOut } from "lucide-react";
+import Image from "next/image";
 
 export function Navbar() {
   const { user, signOut, openAuthModal } = useAuth();
@@ -11,11 +12,17 @@ export function Navbar() {
     <nav className="w-full border-b bg-background/95 backdrop-blur-md sticky top-0 z-40">
       <div className="w-full px-4 md:px-6 h-12 md:h-16 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 md:p-2 bg-primary/10 rounded-lg">
-            <Music2 className="h-4 w-4 md:h-5 md:w-5 text-primary" />
+          <div className="p-2">
+            <Image
+              src="/logo/logo.svg"
+              alt="Chorusboard Logo"
+              width={36}
+              height={36}
+              className="h-7 w-7 md:h-9 md:w-9"
+            />
           </div>
-          <h1 className="font-mono text-base md:text-lg font-bold tracking-tighter uppercase">
-            Song<span className="text-primary">Ranker</span>
+          <h1 className="font-mono text-xl md:text-2xl font-bold tracking-tighter lowercase">
+            chorusboard
           </h1>
         </div>
 
