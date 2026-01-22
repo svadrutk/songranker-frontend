@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { getSessionDetail, createComparison, type SessionSong } from "@/lib/api";
 import { getNextPair } from "@/lib/pairing";
 import { calculateNewRatings } from "@/lib/elo";
-import { Music, LogIn, Loader2, Trophy, Scale, RotateCcw, Check, Sparkles, Sword } from "lucide-react";
+import { Music, LogIn, Loader2, Trophy, Scale, RotateCcw, Check, Sword, ChartNetwork } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { RankingCard } from "@/components/RankingCard";
 import { Leaderboard } from "@/components/Leaderboard";
@@ -36,11 +36,21 @@ export function RankingWidget({
   const [isSkipping, setIsSkipping] = useState(false);
   const [showRankUpdate, setShowRankUpdate] = useState(false);
   const [showProgressHint, setShowProgressHint] = useState(false);
+  const notificationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerRankUpdateNotification = useCallback(() => {
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
+    setShowRankUpdate(true);
+    notificationTimerRef.current = setTimeout(() => {
+      if (isMounted.current) setShowRankUpdate(false);
+    }, 4000);
+  }, []);
 
   useEffect(() => {
     isMounted.current = true;
     return () => {
       isMounted.current = false;
+      if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     };
   }, []);
 
@@ -57,6 +67,7 @@ export function RankingWidget({
     setIsTie(false);
     setIsSkipping(false);
     setShowRankUpdate(false);
+    if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
     prevTop10Ref.current = [];
 
     let isCurrent = true;
@@ -92,35 +103,6 @@ export function RankingWidget({
   const quantityProgress = Math.min(100, (totalDuels / quantityTarget) * 100);
   const optimisticMin = Math.min(40, quantityProgress);
   const displayScore = Math.max(convergence, optimisticMin);
-
-  // Track Top 10 changes
-  useEffect(() => {
-    if (songs.length === 0) return;
-
-    const currentTop10 = [...songs]
-      .sort((a, b) => {
-        const scoreA = a.bt_strength ?? a.local_elo / 3000;
-        const scoreB = b.bt_strength ?? b.local_elo / 3000;
-        return scoreB - scoreA;
-      })
-      .slice(0, 10)
-      .map((s) => s.song_id);
-
-    if (prevTop10Ref.current.length > 0) {
-      const isDifferent =
-        currentTop10.length !== prevTop10Ref.current.length ||
-        currentTop10.some((id, i) => id !== prevTop10Ref.current[i]);
-
-      // Only show the toast once we've reached the convergence requirement (90%)
-      if (isDifferent && displayScore >= 90) {
-        setShowRankUpdate(true);
-        const timer = setTimeout(() => setShowRankUpdate(false), 3000);
-        return () => clearTimeout(timer);
-      }
-    }
-
-    prevTop10Ref.current = currentTop10;
-  }, [songs, displayScore]);
 
   // Detect when progress is stuck at 40% and show hint after delay
   useEffect(() => {
@@ -175,7 +157,12 @@ export function RankingWidget({
         if (response.success) {
           const newScore = response.convergence_score ?? 0;
           if (isMounted.current) {
-            setConvergence(prev => Math.max(prev, newScore));
+            setConvergence(prev => {
+              if (newScore > prev && newScore >= 90) {
+                triggerRankUpdateNotification();
+              }
+              return Math.max(prev, newScore);
+            });
           }
 
           if (response.sync_queued) {
@@ -198,7 +185,12 @@ export function RankingWidget({
                   }
                   
                   const detailScore = detail.convergence_score ?? 0;
-                  setConvergence(prev => Math.max(prev, detailScore));
+                  setConvergence(prev => {
+                    if (detailScore > prev && detailScore >= 90) {
+                      triggerRankUpdateNotification();
+                    }
+                    return Math.max(prev, detailScore);
+                  });
                   setTotalDuels(prev => Math.max(prev, detail.comparison_count));
                 }
               } catch (error) {
@@ -214,7 +206,7 @@ export function RankingWidget({
         console.error("Failed to sync comparison:", error);
       }
     },
-    [currentPair, sessionId, winnerId]
+    [currentPair, sessionId, winnerId, triggerRankUpdateNotification]
   );
 
   const handleSkip = useCallback(async (): Promise<void> => {
@@ -360,6 +352,28 @@ function KeyboardShortcutsHelp(): JSX.Element {
   return (
     <div className="flex flex-col h-full w-full max-w-7xl mx-auto px-4 pt-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:px-6 md:py-6 lg:px-8 lg:py-8 overflow-hidden">
       <KeyboardShortcutsHelp />
+      
+      <AnimatePresence>
+        {showRankUpdate && (
+          <motion.div
+            initial={{ opacity: 0, x: 20, y: -10 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, x: 20, scale: 0.98 }}
+            className="fixed top-16 md:top-20 right-4 md:right-8 z-50 flex items-center gap-4 px-6 py-4 rounded-md bg-zinc-950 text-zinc-100 shadow-2xl border border-white/10 backdrop-blur-md"
+          >
+            <ChartNetwork className="h-5 w-5 text-primary/80" />
+            <div className="flex flex-col gap-0.5">
+              <span className="text-xs font-mono font-black uppercase tracking-[0.15em] leading-none">
+                Rankings Refined
+              </span>
+              <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-tight">
+                Model synchronization complete
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-col items-center gap-4 md:gap-6 lg:gap-8 animate-in fade-in zoom-in duration-700 w-full h-full min-h-0">
         {/* Header Section */}
         <div className="text-center space-y-2 md:space-y-3 relative shrink-0">
@@ -393,21 +407,6 @@ function KeyboardShortcutsHelp(): JSX.Element {
 
         {/* Progress Section */}
         <div className="w-full max-w-xl space-y-2 px-6 md:px-4 shrink-0 relative">
-          <AnimatePresence>
-            {showRankUpdate && (
-              <motion.div
-                initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                className="absolute -top-8 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-xl border border-primary/20"
-              >
-                <Sparkles className="h-3 w-3" />
-                <span className="text-[10px] font-mono font-black uppercase tracking-widest whitespace-nowrap">
-                  Top 10 Rankings Updated!
-                </span>
-              </motion.div>
-            )}
-          </AnimatePresence>
           <div className="flex items-center justify-between px-1">
              <p className="text-[8px] md:text-[10px] font-mono font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-primary/60">
                {getConvergenceLabel(displayScore)}
