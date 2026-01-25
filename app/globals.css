@@ -127,3 +127,18 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  @keyframes scroll-left {
+    0%, 10% {
+      transform: translateX(0);
+    }
+    90%, 100% {
+      transform: translateX(calc(-100% + 100px));
+    }
+  }
+  
+  .animate-scroll-left {
+    animation: scroll-left 8s ease-in-out infinite;
+  }
+}

@@ -78,19 +78,19 @@ export function GlobalLeaderboard({
         <h2 className="text-xl font-black uppercase tracking-tighter italic">
           Global Leaderboard
         </h2>
-        <div className="flex items-center gap-4 text-[10px] font-mono text-muted-foreground uppercase tracking-wider">
-          <span>
+        <div className="flex items-center gap-4 text-[10px] font-mono uppercase tracking-wider">
+          <span className="text-muted-foreground">
             {data.total_comparisons.toLocaleString()} Comparisons
-            {data.pending_comparisons > 0 && (
-              <span className="ml-1.5 text-orange-500">
-                (+{data.pending_comparisons} pending)
-              </span>
-            )}
           </span>
+          {data.pending_comparisons > 0 && (
+            <span className="text-orange-500">
+              +{data.pending_comparisons} pending
+            </span>
+          )}
           {data.last_updated && (
             <>
               <span className="h-1 w-1 rounded-full bg-muted-foreground/30" />
-              <span>
+              <span className="text-muted-foreground">
                 Updated {new Date(data.last_updated).toLocaleDateString()} at{" "}
                 {new Date(data.last_updated).toLocaleTimeString([], { 
                   hour: '2-digit', 
@@ -126,13 +126,17 @@ export function GlobalLeaderboard({
               />
             </div>
 
-            <div className="flex-1 min-w-0">
-              <h3 className="font-bold text-xs uppercase tracking-tight text-foreground/90 group-hover:text-primary transition-colors truncate whitespace-nowrap overflow-hidden text-ellipsis">
-                {song.name}
-              </h3>
-              <p className="text-[9px] font-mono text-muted-foreground uppercase truncate whitespace-nowrap overflow-hidden text-ellipsis">
-                {song.album || "Unknown Album"}
-              </p>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <div className="overflow-hidden">
+                <h3 className="font-bold text-xs uppercase tracking-tight text-foreground/90 group-hover:text-primary transition-colors whitespace-nowrap group-hover:animate-scroll-left inline-block">
+                  {song.name}
+                </h3>
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-[9px] font-mono text-muted-foreground uppercase whitespace-nowrap group-hover:animate-scroll-left inline-block">
+                  {song.album || "Unknown Album"}
+                </p>
+              </div>
             </div>
           </motion.div>
         ))}
