@@ -5,6 +5,7 @@ import { AuthProvider } from "@/components/AuthProvider";
 import { Navbar } from "@/components/Navbar";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { DebugPanel } from "@/components/DebugPanel";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import "./globals.css";
 
@@ -66,6 +67,8 @@ export default function RootLayout({
               </div>
               {/* Debug Panel (dev only) */}
               <DebugPanel />
+              {/* Feedback Button */}
+              <FeedbackButton />
             </div>
           </AuthProvider>
         </ThemeProvider>
