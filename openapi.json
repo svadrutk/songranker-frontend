@@ -147,6 +147,138 @@
         }
       }
     },
+    "/users/{user_id}/sessions": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Get User Sessions",
+        "description": "Retrieve all sessions for a specific user with summaries.",
+        "operationId": "get_user_sessions_users__user_id__sessions_get",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SessionSummary"
+                  },
+                  "title": "Response Get User Sessions Users  User Id  Sessions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{session_id}": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Get Session Detail",
+        "description": "Retrieve session metadata, songs, and comparison count.",
+        "operationId": "get_session_detail_sessions__session_id__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Delete Session",
+        "description": "Delete a session and all its associated data.",
+        "operationId": "delete_session_sessions__session_id__delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sessions/{session_id}/songs": {
       "get": {
         "tags": [
@@ -291,10 +423,181 @@
         }
       }
     },
+    "/generate-receipt": {
+      "post": {
+        "tags": [
+          "image-generation"
+        ],
+        "summary": "Generate Receipt",
+        "operationId": "generate_receipt_generate_receipt_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReceiptRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard/{artist}": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Get Global Leaderboard",
+        "description": "Get the global leaderboard for a specific artist.\nReturns the top songs ranked by global_elo across all user sessions.\n\n- **artist**: The artist name (must match exactly as stored in the database)\n- **limit**: Maximum number of songs to return (default: 100, max: 500)",
+        "operationId": "get_global_leaderboard_leaderboard__artist__get",
+        "parameters": [
+          {
+            "name": "artist",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Artist"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Number of songs to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Number of songs to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderboardResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard/{artist}/stats": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Get Artist Leaderboard Stats",
+        "description": "Get statistics about an artist's global leaderboard.\nReturns metadata without the full song list (lighter weight than full leaderboard).",
+        "operationId": "get_artist_leaderboard_stats_leaderboard__artist__stats_get",
+        "parameters": [
+          {
+            "name": "artist",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Artist"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health Check",
         "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/redis": {
+      "get": {
+        "summary": "Redis Health Check",
+        "description": "Check Redis connection for worker queue.",
+        "operationId": "redis_health_check_health_redis_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/worker": {
+      "get": {
+        "summary": "Worker Health Check",
+        "description": "Check worker status and queue.",
+        "operationId": "worker_health_check_health_worker_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -338,6 +641,17 @@
             "type": "boolean",
             "title": "Is Tie",
             "default": false
+          },
+          "decision_time_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Time Ms"
           }
         },
         "type": "object",
@@ -360,6 +674,22 @@
           "new_elo_b": {
             "type": "number",
             "title": "New Elo B"
+          },
+          "sync_queued": {
+            "type": "boolean",
+            "title": "Sync Queued",
+            "default": false
+          },
+          "convergence_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Convergence Score"
           }
         },
         "type": "object",
@@ -455,6 +785,141 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "LeaderboardResponse": {
+        "properties": {
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "songs": {
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardSong"
+            },
+            "type": "array",
+            "title": "Songs"
+          },
+          "total_comparisons": {
+            "type": "integer",
+            "title": "Total Comparisons"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artist",
+          "songs",
+          "total_comparisons"
+        ],
+        "title": "LeaderboardResponse",
+        "description": "Response for the global leaderboard."
+      },
+      "LeaderboardSong": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "album": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album"
+          },
+          "album_art_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Album Art Url"
+          },
+          "global_elo": {
+            "type": "number",
+            "title": "Global Elo"
+          },
+          "global_bt_strength": {
+            "type": "number",
+            "title": "Global Bt Strength"
+          },
+          "global_votes_count": {
+            "type": "integer",
+            "title": "Global Votes Count"
+          },
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "artist",
+          "global_elo",
+          "global_bt_strength",
+          "global_votes_count",
+          "rank"
+        ],
+        "title": "LeaderboardSong",
+        "description": "A song entry in the global leaderboard."
+      },
+      "ReceiptRequest": {
+        "properties": {
+          "songs": {
+            "items": {
+              "$ref": "#/components/schemas/SongData"
+            },
+            "type": "array",
+            "title": "Songs"
+          },
+          "orderId": {
+            "type": "integer",
+            "title": "Orderid"
+          },
+          "dateStr": {
+            "type": "string",
+            "title": "Datestr"
+          },
+          "timeStr": {
+            "type": "string",
+            "title": "Timestr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "songs",
+          "orderId",
+          "dateStr",
+          "timeStr"
+        ],
+        "title": "ReceiptRequest"
+      },
       "ReleaseGroupResponse": {
         "properties": {
           "id": {
@@ -527,6 +992,44 @@
         ],
         "title": "SessionCreate"
       },
+      "SessionDetail": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Session Id"
+          },
+          "songs": {
+            "items": {
+              "$ref": "#/components/schemas/SessionSong"
+            },
+            "type": "array",
+            "title": "Songs"
+          },
+          "comparison_count": {
+            "type": "integer",
+            "title": "Comparison Count"
+          },
+          "convergence_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Convergence Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "songs",
+          "comparison_count"
+        ],
+        "title": "SessionDetail"
+      },
       "SessionResponse": {
         "properties": {
           "session_id": {
@@ -554,12 +1057,28 @@
             "title": "Song Id"
           },
           "name": {
-            "type": "string",
-            "title": "Name"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "default": "Unknown Track"
           },
           "artist": {
-            "type": "string",
-            "title": "Artist"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Artist",
+            "default": "Unknown Artist"
           },
           "album": {
             "anyOf": [
@@ -583,6 +1102,17 @@
             ],
             "title": "Spotify Id"
           },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          },
           "local_elo": {
             "type": "number",
             "title": "Local Elo"
@@ -602,11 +1132,97 @@
         "type": "object",
         "required": [
           "song_id",
-          "name",
-          "artist",
           "local_elo"
         ],
         "title": "SessionSong"
+      },
+      "SessionSummary": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Session Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "primary_artist": {
+            "type": "string",
+            "title": "Primary Artist"
+          },
+          "song_count": {
+            "type": "integer",
+            "title": "Song Count"
+          },
+          "comparison_count": {
+            "type": "integer",
+            "title": "Comparison Count"
+          },
+          "convergence_score": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Convergence Score",
+            "default": 0
+          },
+          "top_album_covers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Top Album Covers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "created_at",
+          "primary_artist",
+          "song_count",
+          "comparison_count"
+        ],
+        "title": "SessionSummary"
+      },
+      "SongData": {
+        "properties": {
+          "song_id": {
+            "type": "string",
+            "title": "Song Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "song_id",
+          "name",
+          "artist"
+        ],
+        "title": "SongData"
       },
       "SongInput": {
         "properties": {
@@ -639,6 +1255,17 @@
               }
             ],
             "title": "Spotify Id"
+          },
+          "cover_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Url"
           }
         },
         "type": "object",

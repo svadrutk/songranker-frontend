@@ -73,20 +73,20 @@ export function RankingCard({
 
       {/* Info Section */}
       <div className="flex flex-col flex-1 p-3 md:p-6 justify-center text-left md:text-center relative bg-linear-to-r md:bg-linear-to-b from-transparent to-muted/5 min-w-0">
-        <div className="space-y-0.5 md:space-y-1">
-          <h3 className="font-black text-sm md:text-lg leading-tight truncate md:line-clamp-2 tracking-tight group-hover:text-primary transition-colors duration-300">
+        <div className="space-y-0.5 md:space-y-1 min-w-0">
+          <h3 className="font-black text-sm md:text-lg leading-tight tracking-tight group-hover:text-primary transition-colors duration-300 truncate whitespace-nowrap overflow-hidden text-ellipsis">
             {song.name}
           </h3>
-          <p className="text-[10px] md:text-[11px] font-mono text-muted-foreground uppercase tracking-[0.1em] md:tracking-[0.15em] font-bold opacity-80 truncate">
+          <p className="text-[10px] md:text-[11px] font-mono text-muted-foreground uppercase tracking-[0.1em] md:tracking-[0.15em] font-bold opacity-80 truncate whitespace-nowrap overflow-hidden text-ellipsis">
             {song.artist}
           </p>
         </div>
 
-        <div className="flex flex-row md:flex-col items-center gap-2 md:gap-0 mt-1 md:mt-4">
+        <div className="flex flex-row md:flex-col items-center gap-2 md:gap-0 mt-1 md:mt-4 min-w-0">
           <span className="hidden md:inline text-[7px] md:text-[9px] font-mono text-muted-foreground/50 uppercase tracking-widest font-black">
             Album
           </span>
-          <span className="text-[9px] md:text-[10px] font-mono font-bold truncate opacity-60 group-hover:opacity-100 transition-opacity">
+          <span className="text-[9px] md:text-[10px] font-mono font-bold opacity-60 group-hover:opacity-100 transition-opacity truncate whitespace-nowrap overflow-hidden text-ellipsis max-w-full">
             {song.album || "Unknown Release"}
           </span>
         </div>

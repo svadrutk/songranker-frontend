@@ -127,10 +127,10 @@ export function GlobalLeaderboard({
             </div>
 
             <div className="flex-1 min-w-0">
-              <h3 className="font-bold truncate text-xs uppercase tracking-tight text-foreground/90 group-hover:text-primary transition-colors">
+              <h3 className="font-bold text-xs uppercase tracking-tight text-foreground/90 group-hover:text-primary transition-colors truncate whitespace-nowrap overflow-hidden text-ellipsis">
                 {song.name}
               </h3>
-              <p className="text-[9px] font-mono text-muted-foreground uppercase truncate">
+              <p className="text-[9px] font-mono text-muted-foreground uppercase truncate whitespace-nowrap overflow-hidden text-ellipsis">
                 {song.album || "Unknown Album"}
               </p>
             </div>
