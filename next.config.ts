@@ -1,7 +1,26 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "coverartarchive.org",
+      },
+      {
+        protocol: "https",
+        hostname: "*.archive.org",
+      },
+      {
+        protocol: "https",
+        hostname: "lastfm.freetls.fastly.net",
+      },
+      {
+        protocol: "https",
+        hostname: "*.lst.fm",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

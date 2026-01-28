@@ -119,7 +119,25 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    @apply h-full w-full overflow-hidden;
+    overscroll-behavior: none;
+  }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Text truncate scroll - parent hover support
+   * When parent with .text-scroll-group is hovered, trigger scroll on all child .text-truncate-scroll elements
+   * This works by matching the library's hover selector pattern
+   */
+  .text-scroll-group:hover .text-truncate-scroll > span {
+    width: auto !important;
+  }
+  
+  .text-scroll-group:hover .text-truncate-scroll > span > span {
+    width: auto !important;
   }
 }

@@ -1,8 +1,8 @@
 # Song Ranker - Technical Reference
 
-**Last Updated**: January 16, 2025  
+**Last Updated**: January 19, 2026  
 **Purpose**: Complete technical documentation for developers  
-**Status**: ✅ **ACTIVE** - Technical reference guide
+**Status**: ✅ **ACTIVE** - Phase 4 Integration Complete
 
 ---
 
@@ -58,6 +58,18 @@ Backend Repository → Supabase Database
 - **Implementation**: All backend work done in Supabase SQL Editor
 - **Documentation**: Tracked in this repository's key documentation
 
+### **Release Type Categorization (Spotify)**
+
+Since Spotify's API primarily returns `album`, `single`, and `compilation`, the backend implements custom logic to identify EPs and ensure consistent filtering in the frontend.
+
+**EP Detection Logic**:
+A release is categorized as an **EP** if any of the following are true:
+1.  Spotify explicitly returns the type as `"ep"`.
+2.  The `total_tracks` is between 4 and 7 (inclusive).
+3.  The title contains "EP" keywords (e.g., `" - EP"`, `" (EP)"`).
+
+Otherwise, the type is derived from Spotify's `album_type` (capitalized).
+
 ---
 
 ## 📁 **Code Organization**
@@ -70,6 +82,10 @@ Song Ranker/
 │   ├── page.tsx           # Home page
 │   └── globals.css        # Global styles
 ├── lib/                   # Utility libraries
+│   ├── api.ts            # Backend API client
+│   ├── elo.ts            # Frontend Elo calculations
+│   ├── pairing.ts        # Duel pairing logic
+│   ├── deduplication.ts  # Track cleaning & fuzzy matching
 │   └── supabase.ts       # Supabase client singleton
 ├── public/                # Static assets
 └── [config files]        # Next.js, TypeScript, ESLint configs
@@ -77,7 +93,27 @@ Song Ranker/
 
 ### **Key Files**
 
+#### **`lib/api.ts`**
+**Purpose**: Backend API client for session and song management.
+
+**Key Operations**:
+- `createSession(payload)`: Initialize a new ranking session.
+- `getUserSessions(userId)`: List all past sessions for a user, including comparison counts.
+- `getSessionDetail(sessionId)`: Fetch full session metadata, songs, total decisions made, and **convergence (0-100)**.
+- `deleteSession(sessionId)`: Permanently remove a session and all associated data.
+- `createComparison(sessionId, payload)`: Record a duel result. Returns updated Elos, **convergence**, and a **sync_queued** flag for background updates.
+
+**API Reference**:
+
+*   `POST /sessions`: Create session.
+*   `GET /users/{user_id}/sessions`: List user sessions.
+*   `GET /sessions/{session_id}`: Get session detail.
+*   `DELETE /sessions/{session_id}`: Delete session.
+*   `GET /sessions/{session_id}/songs`: Get songs in session.
+*   `POST /sessions/{session_id}/comparisons`: Record a comparison.
+
 #### **`lib/supabase.ts`**
+
 **Purpose**: Supabase client configuration and singleton instance
 
 **Key Features**:
@@ -412,6 +448,17 @@ The Bradley-Terry approach excels at:
 
 ---
 
+### **Seamless Sync Architecture**
+
+To maintain a high-performance UI while utilizing sophisticated backend ranking models, the application uses a "Seamless Sync" pattern.
+
+1.  **Optimistic Frontend**: Every duel choice immediately updates a local Elo rating ($K=32$) for instant visual feedback.
+2.  **Background Reconciliation**: After every 10 duels (or when the backend worker finishes a cycle), the `createComparison` API returns `sync_queued: true`.
+3.  **Silent Refresh**: The frontend waits 1 second for worker overhead and then fetches `getSessionDetail` in the background.
+4.  **State Merge**: The local `songs` state is updated with official `bt_strength` and `local_elo` from the backend, ensuring the frontend never drifts far from the "source of truth."
+
+---
+
 ## 🔄 **Hybrid SQL/TypeScript Framework**
 
 This project uses a hybrid approach: **SQL for data operations, TypeScript for algorithms**. This framework balances performance, maintainability, and development speed.
@@ -648,5 +695,5 @@ const { data } = await supabase
 ---
 
 **Document Status**: ✅ **CURRENT** - Technical reference maintained  
-**Last Updated**: January 16, 2025  
+**Last Updated**: January 19, 2026  
 **Next Update**: When code architecture changes or new integrations added
