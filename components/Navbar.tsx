@@ -4,12 +4,11 @@ import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { LogOut, MessageSquarePlus } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
-import { FeedbackModal } from "./FeedbackModal";
+import { useFeedback } from "./FeedbackProvider";
 
 export function Navbar() {
   const { user, signOut, openAuthModal } = useAuth();
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const { openFeedback } = useFeedback();
 
   return (
     <nav className="w-full border-b bg-background/95 backdrop-blur-md sticky top-0 z-40">
@@ -33,7 +32,7 @@ export function Navbar() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsFeedbackOpen(true)}
+            onClick={openFeedback}
             className="font-mono text-[10px] md:text-xs uppercase font-bold tracking-widest text-muted-foreground hover:text-primary gap-2"
           >
             <MessageSquarePlus className="h-3.5 w-3.5 md:h-4 md:w-4" />
@@ -74,7 +73,6 @@ export function Navbar() {
           )}
         </div>
       </div>
-      <FeedbackModal isOpen={isFeedbackOpen} onClose={() => setIsFeedbackOpen(false)} />
     </nav>
   );
 }
