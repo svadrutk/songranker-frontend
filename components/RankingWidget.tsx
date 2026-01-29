@@ -177,6 +177,7 @@ export function RankingWidget({
       const kFactor = calculateKFactor(decisionTime);
       console.log(`[Timer] Final Decision Time: ${decisionTime}ms (K-Factor: ${kFactor})`);
 
+      // Wait for winner animation/overlay before switching
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       const scoreA = tie ? 0.5 : wId === songA.song_id ? 1 : 0;
@@ -192,9 +193,9 @@ export function RankingWidget({
       setCurrentPair(getNextPair(updatedSongs));
       lastPairLoadTime.current = Date.now();
 
-      setTotalDuels((prev) => prev + 1);
       setWinnerId(null);
       setIsTie(false);
+      setTotalDuels((prev) => prev + 1);
 
       try {
         const response = await createComparison(sessionId, {
@@ -598,13 +599,13 @@ function KeyboardShortcutsHelp(): JSX.Element {
 
 
                 <Fragment key={index}>
-                  <AnimatePresence mode="popLayout">
+                  <AnimatePresence mode="wait">
                     <motion.div
                       key={currentPair[index].song_id}
                       initial={{ opacity: 0, filter: "blur(12px)", scale: 0.95 }}
                       animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
                       exit={{ opacity: 0, filter: "blur(12px)", scale: 0.95 }}
-                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
                       className={cn(
                         "flex justify-center flex-1 w-full min-w-0 md:min-w-[240px] max-w-full md:max-w-[360px] transition-all duration-500",
                         index === 0 ? "items-end md:items-center" : "items-start md:items-center"

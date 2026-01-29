@@ -27,6 +27,7 @@ export function RankingCard({
     <motion.button
       onClick={onClick}
       disabled={disabled}
+      initial={false}
       animate={isWinner ? { scale: [1, 1.05, 1] } : {}}
       whileTap={!disabled ? { scale: 0.98 } : {}}
       transition={{ duration: 0.4, ease: "easeOut" }}
