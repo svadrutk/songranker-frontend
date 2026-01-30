@@ -23,6 +23,7 @@ export async function generateShareImage(
         dateStr, 
         timeStr 
       }),
+      signal: AbortSignal.timeout(30000),
     });
 
     console.log(`[generateShareImage] Response status: ${response.status}`);

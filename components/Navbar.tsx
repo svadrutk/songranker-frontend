@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
-import { LogOut, MessageSquarePlus } from "lucide-react";
+import { LogOut, Send } from "lucide-react";
 import Image from "next/image";
 import { useFeedback } from "./FeedbackProvider";
 
@@ -35,7 +35,7 @@ export function Navbar() {
             onClick={openFeedback}
             className="font-mono text-[10px] md:text-xs uppercase font-bold tracking-widest text-muted-foreground hover:text-primary gap-2"
           >
-            <MessageSquarePlus className="h-3.5 w-3.5 md:h-4 md:w-4" />
+            <Send className="h-3.5 w-3.5 md:h-4 md:w-4" />
             <span className="hidden sm:inline">Feedback</span>
           </Button>
 

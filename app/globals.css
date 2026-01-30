@@ -134,8 +134,8 @@
     @apply overflow-hidden whitespace-nowrap;
     container-type: inline-size;
     width: 100%;
-    /* Subtle fade at the edges - reduced left fade to prevent cutoff */
-    mask-image: linear-gradient(to right, black 2%, black 94%, transparent);
+    /* Minimal fade at edges - only 0.5% on each side */
+    mask-image: linear-gradient(to right, transparent 0%, black 0.5%, black 99.5%, transparent 100%);
   }
 
   .hover-scroll-content {
@@ -151,8 +151,17 @@
     80%, 100% { transform: translateX(min(0px, calc(-100% + 100cqw))); }
   }
 
-  /* Only animate when the parent card (.group) is hovered */
-  .group:hover .hover-scroll-content {
-    animation: hover-scroll 4s ease-in-out infinite alternate;
+  /* Always animate overflowing text on mobile only */
+  @media (max-width: 767px) {
+    .hover-scroll-container .hover-scroll-content {
+      animation: hover-scroll 4s ease-in-out infinite alternate;
+    }
+  }
+  
+  /* Desktop: only animate on hover */
+  @media (min-width: 768px) {
+    .group:hover .hover-scroll-content {
+      animation: hover-scroll 4s ease-in-out infinite alternate;
+    }
   }
 }

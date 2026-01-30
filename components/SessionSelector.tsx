@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, type JSX } from "react";
-import { Calendar, Layers, Loader2, PlayCircle, History, CheckCircle2, Trash2, AlertTriangle, X } from "lucide-react";
+import { Calendar, Layers, Loader2, PlayCircle, History, CheckCircle2, Trash2, AlertTriangle, X, Swords } from "lucide-react";
 import Image from "next/image";
 import { getUserSessions, type SessionSummary, deleteSession } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
@@ -229,7 +229,7 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
                   {session.song_count} songs
                 </div>
                 <div className="flex items-center gap-1 text-[9px] text-primary/60 uppercase font-bold tracking-tighter">
-                  <CheckCircle2 className="h-3 w-3 opacity-50" />
+                  <Swords className="h-3 w-3 opacity-50" />
                   {session.comparison_count} duels
                 </div>
               </div>

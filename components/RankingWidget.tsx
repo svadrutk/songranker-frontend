@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { getSessionDetail, createComparison, type SessionSong } from "@/lib/api";
 import { getNextPair } from "@/lib/pairing";
 import { calculateNewRatings, calculateKFactor } from "@/lib/elo";
-import { Music, LogIn, Loader2, Trophy, Scale, RotateCcw, Sword, ChartNetwork, Eye } from "lucide-react";
+import { Music, LogIn, Loader2, Trophy, Scale, Meh, Sword, ChartNetwork, Eye } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { RankingCard } from "@/components/RankingCard";
 import { Leaderboard } from "@/components/Leaderboard";
@@ -425,7 +425,7 @@ function KeyboardShortcutsHelp(): JSX.Element {
         <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">↑</kbd>
       </div>
       <div className="flex items-center justify-end gap-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">Skip</span>
+        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">IDC</span>
         <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">↓</kbd>
       </div>
     </div>
@@ -491,7 +491,7 @@ function KeyboardShortcutsHelp(): JSX.Element {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col items-center gap-3 md:gap-6 lg:gap-8 animate-in fade-in zoom-in duration-700 w-full h-full min-h-0">
+      <div className="flex flex-col items-center gap-3 md:gap-6 lg:gap-8 animate-in fade-in duration-700 w-full h-full min-h-0">
         {/* Header Section */}
         <div className="text-center space-y-1 md:space-y-3 relative shrink-0">
           <div className="hidden md:flex items-center justify-center gap-3 mb-0 md:mb-1">
@@ -604,8 +604,8 @@ function KeyboardShortcutsHelp(): JSX.Element {
                       key={currentPair[index].song_id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
                       className={cn(
                         "flex justify-center flex-1 w-full min-w-0 md:min-w-[240px] max-w-full md:max-w-[360px]",
                         index === 0 ? "items-end md:items-center" : "items-start md:items-center"
@@ -642,8 +642,8 @@ function KeyboardShortcutsHelp(): JSX.Element {
                         </div>
                         <div className="flex-1 md:flex-none min-w-0">
                           <RankingControlButton
-                            icon={<RotateCcw className="h-3 w-3 md:h-5 md:w-5" />}
-                            label="Skip"
+                            icon={<Meh className="h-3 w-3 md:h-5 md:w-5" />}
+                            label="IDC"
                             onClick={handleSkip}
                             disabled={!!winnerId || isTie || isSkipping}
                             isActive={isSkipping}
@@ -712,14 +712,35 @@ function RankingPlaceholder({
   return (
     <div className="flex flex-col items-center justify-center h-full w-full gap-8">
       <div className="flex flex-col items-center gap-12 w-full max-w-2xl text-center">
-        <div className="flex items-center gap-6 opacity-20 grayscale pointer-events-none scale-90 select-none">
-          <div className="h-64 w-64 rounded-2xl border-2 border-dashed border-primary/50" />
-          <div className="flex flex-col gap-6">
-            <div className="h-28 w-44 rounded-xl border-2 border-dashed border-primary/50" />
-            <div className="h-28 w-44 rounded-xl border-2 border-dashed border-primary/50" />
-          </div>
-          <div className="h-64 w-64 rounded-2xl border-2 border-dashed border-primary/50" />
+        {/* Responsive Placeholder Graphic */}
+        <div className="relative flex items-center justify-center gap-4 md:gap-8 opacity-25 grayscale pointer-events-none select-none transform transition-all duration-700 hover:opacity-40 hover:scale-105">
+           {/* Background Glow */}
+           <div className="absolute inset-0 bg-primary/20 blur-[60px] md:blur-[100px] rounded-full z-[-1]" />
+
+           {/* Left Panel (Catalog) - Hidden on Mobile */}
+           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-primary/40 bg-linear-to-b from-primary/5 to-transparent" />
+           
+           {/* Center Panel (Duel) - Always Visible */}
+           <div className="flex flex-col gap-4 md:gap-6 relative">
+             {/* Decorative connection lines */}
+             <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-primary/20 -z-10 hidden md:block" />
+             <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-primary/20 -z-10 md:hidden" />
+
+             {/* Top Card */}
+             <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-primary/60 bg-background/50 backdrop-blur-xs flex items-center justify-center">
+               <div className="h-8 w-8 rounded-full bg-primary/10" />
+             </div>
+             
+             {/* Bottom Card */}
+             <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-primary/60 bg-background/50 backdrop-blur-xs flex items-center justify-center">
+               <div className="h-8 w-8 rounded-full bg-primary/10" />
+             </div>
+           </div>
+
+           {/* Right Panel (Leaderboard) - Hidden on Mobile */}
+           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-primary/40 bg-linear-to-b from-primary/5 to-transparent" />
         </div>
+
         <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold uppercase tracking-tight">{title}</h2>

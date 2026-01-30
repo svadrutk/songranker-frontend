@@ -17,22 +17,33 @@ type GlobalLeaderboardProps = Readonly<{
 }>;
 
 const containerVariants: Variants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 0, x: -20 },
   visible: {
     opacity: 1,
+    x: 0,
     transition: {
-      staggerChildren: 0.02,
+      duration: 0.4,
+      ease: [0.25, 0.1, 0.25, 1],
     },
   },
 };
 
 const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.3 }
+  hidden: { 
+    opacity: 0, 
+    y: 10,
+    scale: 0.95 
   },
+  visible: (index: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.35,
+      delay: index * 0.04,
+      ease: [0.25, 0.1, 0.25, 1],
+    },
+  }),
 };
 
 // Memoized song row for performance
@@ -51,18 +62,25 @@ const SongRow = memo(({
     return "border-b-border";
   };
 
+  const getRankColor = () => {
+    if (index === 0) return "text-yellow-500";
+    if (index === 1) return "text-gray-400";
+    if (index === 2) return "text-orange-400";
+    return "";
+  };
+
   return (
     <motion.div
+      custom={index}
       variants={itemVariants}
       className={cn(
         "flex items-center gap-4 md:gap-6 py-3 md:py-4 px-2 border-b-2 last:border-b-0 transition-colors",
-        // Remove hover effect on mobile for better performance
         "md:hover:bg-accent",
         getBorderColor()
       )}
     >
       {/* Rank - consistent sizing for all rows */}
-      <div className="w-10 md:w-16 shrink-0 font-mono font-black text-right text-foreground text-2xl md:text-4xl">
+      <div className={cn("w-10 md:w-16 shrink-0 font-mono font-black text-right text-foreground text-2xl md:text-4xl", getRankColor())}>
         {song.rank}
       </div>
       
@@ -183,7 +201,7 @@ export function GlobalLeaderboard({
       className="flex flex-col h-full overflow-hidden"
     >
       {/* Header with artist name and stats */}
-      <motion.div variants={itemVariants} className="shrink-0 mb-4 md:mb-8 space-y-2 md:space-y-3 px-2">
+      <motion.div custom={0} variants={itemVariants} className="shrink-0 mb-4 md:mb-8 space-y-2 md:space-y-3 px-2">
         <p className="text-[10px] md:text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1 md:mb-2">
           Global Rankings
         </p>
@@ -211,11 +229,16 @@ export function GlobalLeaderboard({
       </motion.div>
 
       {/* Song list with optimized rendering */}
-      <div className="flex-1 overflow-y-auto">
+      <motion.div 
+        initial="hidden"
+        animate="visible"
+        variants={containerVariants}
+        className="flex-1 overflow-y-auto"
+      >
         {data.songs.map((song, index) => (
           <SongRow key={song.id} song={song} index={index} />
         ))}
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
