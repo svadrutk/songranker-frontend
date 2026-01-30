@@ -114,6 +114,16 @@ export type ArtistSuggestion = {
   name: string;
 };
 
+export type ArtistWithLeaderboard = {
+  artist: string;
+  total_comparisons: number;
+  last_updated: string | null;
+};
+
+export type ArtistsWithLeaderboardsResponse = {
+  artists: ArtistWithLeaderboard[];
+};
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 // Helper to show errors visually
@@ -276,6 +286,19 @@ export async function suggestArtists(query: string): Promise<string[]> {
     return data.map(a => a.name);
   } catch (error) {
     console.error("[API] Error fetching artist suggestions:", error);
+    return [];
+  }
+}
+
+export async function getArtistsWithLeaderboards(limit: number = 50): Promise<ArtistWithLeaderboard[]> {
+  try {
+    const data = await fetchBackend<ArtistsWithLeaderboardsResponse>(
+      `/leaderboard/artists?limit=${limit}`,
+      { cache: "no-store" }
+    );
+    return data.artists ?? [];
+  } catch (error) {
+    console.error("[API] Error fetching artists with leaderboards:", error);
     return [];
   }
 }

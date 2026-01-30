@@ -241,7 +241,7 @@ export default function Home(): JSX.Element {
       </motion.aside>
 
       {/* Right Panel: Ranking or Global Leaderboard */}
-      <main className="flex-1 h-full overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative">
+      <main className="flex-1 min-h-0 h-full overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative">
         <AnimatePresence>
           {isCreatingSession && <LoadingOverlay />}
           {error && (
@@ -254,7 +254,7 @@ export default function Home(): JSX.Element {
         </AnimatePresence>
         
         {view === "global" ? (
-          <div className="flex flex-col h-full w-full max-w-3xl mx-auto py-4 md:py-8 px-4 md:px-6 overflow-hidden">
+          <div className="flex flex-col min-h-0 h-full w-full max-w-3xl mx-auto py-4 md:py-8 px-4 md:px-6 overflow-y-auto">
             <GlobalLeaderboard
               artist={globalArtist || ""}
               data={globalData}

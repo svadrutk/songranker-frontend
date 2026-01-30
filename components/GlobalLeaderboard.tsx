@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import type { LeaderboardResponse } from "@/lib/api";
 import { motion, type Variants } from "framer-motion";
 
+import { TopAlbumsWaffleChart } from "@/components/charts/TopAlbumsWaffleChart";
+
 type GlobalLeaderboardProps = Readonly<{
   artist: string;
   data: LeaderboardResponse | null;
@@ -198,7 +200,7 @@ export function GlobalLeaderboard({
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="flex flex-col h-full overflow-hidden"
+      className="flex flex-col w-full"
     >
       {/* Header with artist name and stats */}
       <motion.div custom={0} variants={itemVariants} className="shrink-0 mb-4 md:mb-8 space-y-2 md:space-y-3 px-2">
@@ -228,12 +230,19 @@ export function GlobalLeaderboard({
         </div>
       </motion.div>
 
-      {/* Song list with optimized rendering */}
-      <motion.div 
+      {/* Top 20 by album: waffle (one cell per song, colored by album; rank 1–3 gold/silver/bronze) */}
+      {data.songs.length >= 2 && (
+        <motion.div custom={0} variants={itemVariants} className="shrink-0 mb-4 md:mb-6">
+          <TopAlbumsWaffleChart songs={data.songs} />
+        </motion.div>
+      )}
+
+      {/* Song list — scrolls with page (parent has overflow-y-auto) */}
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={containerVariants}
-        className="flex-1 overflow-y-auto"
+        className="shrink-0"
       >
         {data.songs.map((song, index) => (
           <SongRow key={song.id} song={song} index={index} />

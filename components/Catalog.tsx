@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, type JSX } from "react";
-import { Search, Loader2, CheckCircle2, ChevronDown, ChevronUp, Layers, X, Lock, History, Globe } from "lucide-react";
+import { Search, Loader2, CheckCircle2, ChevronDown, ChevronUp, Layers, X, Lock, History, Globe, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
 import { 
@@ -15,10 +15,12 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { SessionSelector } from "@/components/SessionSelector";
+import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
+import { DashboardOverview } from "@/components/DashboardOverview";
 import { cn } from "@/lib/utils";
 
 type ReleaseType = "Album" | "EP" | "Single" | "Other";
-type CatalogView = "search" | "rankings" | "global";
+type CatalogView = "search" | "rankings" | "global" | "dashboard";
 
 function LoadingSkeleton(): JSX.Element {
   return (
@@ -58,6 +60,17 @@ type ViewToggleProps = Readonly<{
 function ViewToggle({ view, setView }: ViewToggleProps): JSX.Element {
   return (
     <div className="flex bg-muted/20 p-1 rounded-lg border border-border/40">
+      <button
+        onClick={() => setView("dashboard")}
+        className={cn(
+          "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
+          view === "dashboard" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
+        )}
+      >
+        <LayoutDashboard className="h-3 w-3" />
+        <span className="hidden sm:inline">Dashboard</span>
+        <span className="sm:hidden">Stats</span>
+      </button>
       <button
         onClick={() => setView("search")}
         className={cn(
@@ -105,7 +118,7 @@ export function Catalog({
   activeSessionId
 }: CatalogProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
-  const [view, setView] = useState<CatalogView>("search");
+  const [view, setView] = useState<CatalogView>("dashboard");
   
   // Catalog Search State
   const [query, setQuery] = useState("");
@@ -238,6 +251,11 @@ export function Catalog({
       const errorMsg = err instanceof Error ? err.message : "Failed to load global rankings";
       onGlobalLeaderboardOpen?.(artistName, null, errorMsg);
     }
+  };
+
+  const handleDashboardSelectArtist = (artistName: string) => {
+    setView("global");
+    handleGlobalSearch(artistName);
   };
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -544,6 +562,10 @@ export function Catalog({
               <p className="text-xs font-mono">Search to browse catalog</p>
             </div>
           )
+        ) : view === "dashboard" ? (
+          <div className="animate-in fade-in slide-in-from-bottom-1 duration-300 h-full">
+            <DashboardOverview onSelectArtist={handleDashboardSelectArtist} />
+          </div>
         ) : view === "global" ? (
           <div className="flex flex-col items-center justify-center h-full opacity-20 py-20">
             <Globe className="h-10 w-10 mb-4" />
