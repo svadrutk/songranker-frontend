@@ -9,6 +9,7 @@ import {
   getReleaseGroupTracks, 
   getGlobalLeaderboard,
   getLeaderboardStats,
+  suggestArtists,
   type ReleaseGroup,
   type LeaderboardResponse
 } from "@/lib/api";
@@ -151,21 +152,50 @@ export function Catalog({
   // Debounce for global search suggestions
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (globalQuery.trim().length < 2 || view !== "global" || globalArtist === globalQuery) {
+      const cleanQuery = globalQuery.trim().toLowerCase();
+      if (cleanQuery.length < 2 || view !== "global" || globalArtist?.toLowerCase() === cleanQuery) {
         setSuggestions([]);
         return;
       }
       
+      // 1. Check LocalStorage Cache (Offline/Speed)
+      const CACHE_KEY = "sr_artist_suggestions";
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) {
+        try {
+          const { data, timestamp } = JSON.parse(cached);
+          const isStale = Date.now() - timestamp > 4 * 60 * 60 * 1000; // 4 hours
+          
+          if (!isStale) {
+            // Filter existing cache for instant matches
+            const matches = data.filter((name: string) => 
+              name.toLowerCase().includes(cleanQuery)
+            ).slice(0, 5);
+            
+            if (matches.length > 0) {
+              setSuggestions(matches);
+              // If we have good matches, we can skip the network call or just let it update in background
+              // For now, let's just return if we have matches to save bandwidth
+              return;
+            }
+          }
+        } catch {
+          localStorage.removeItem(CACHE_KEY);
+        }
+      }
+
       setIsSearchingGlobal(true);
       try {
-        const data = await searchArtistReleaseGroups(globalQuery);
-        // Extract unique artist names
-        const uniqueArtists = Array.from(new Set(
-          data
-            .map(item => item.artist)
-            .filter((a): a is string => !!a)
-        )).slice(0, 5);
-        setSuggestions(uniqueArtists);
+        const data = await suggestArtists(globalQuery);
+        setSuggestions(data);
+        
+        // Update LocalStorage cache
+        const currentCache = cached ? JSON.parse(cached).data : [];
+        const updatedData = Array.from(new Set([...currentCache, ...data])).slice(-100); // Keep last 100
+        localStorage.setItem(CACHE_KEY, JSON.stringify({
+          data: updatedData,
+          timestamp: Date.now()
+        }));
       } catch (err) {
         console.error("Failed to fetch suggestions:", err);
       } finally {
@@ -195,10 +225,9 @@ export function Catalog({
       const stats = await getLeaderboardStats(artistName);
       
       if (!stats) {
-        // If no stats, we can skip fetching full leaderboard or just pass null
-        // We'll let the component handle the "no data" state
+        // No stats means not enough rankings exist
         setGlobalData(null);
-        onGlobalLeaderboardOpen?.(artistName, null, null);
+        onGlobalLeaderboardOpen?.(artistName, null, `Not enough rankings available for ${artistName}`);
       } else {
         // 2. Fetch full leaderboard
         const data = await getGlobalLeaderboard(artistName);

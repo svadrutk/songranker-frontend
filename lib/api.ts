@@ -110,6 +110,10 @@ export type LeaderboardStats = {
   last_updated: string | null;
 };
 
+export type ArtistSuggestion = {
+  name: string;
+};
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 // Helper to show errors visually
@@ -262,6 +266,17 @@ export async function getGlobalLeaderboard(artist: string, limit: number = 100):
   } catch (error) {
     console.error("[API] Error fetching global leaderboard:", error);
     return null;
+  }
+}
+
+export async function suggestArtists(query: string): Promise<string[]> {
+  if (query.length < 2) return [];
+  try {
+    const data = await fetchBackend<ArtistSuggestion[]>(`/suggest?query=${encodeURIComponent(query)}`);
+    return data.map(a => a.name);
+  } catch (error) {
+    console.error("[API] Error fetching artist suggestions:", error);
+    return [];
   }
 }
 

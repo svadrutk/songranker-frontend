@@ -1,7 +1,7 @@
 "use client";
 
 import { type JSX, memo, useMemo } from "react";
-import { Loader2, AlertCircle, RefreshCcw, Globe, Users } from "lucide-react";
+import { Loader2, RefreshCcw, Globe, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
 import { cn } from "@/lib/utils";
@@ -148,7 +148,7 @@ export function GlobalLeaderboard({
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-6 p-4 text-center">
         <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
-          <AlertCircle className="h-8 w-8 text-destructive" />
+          <X className="h-8 w-8 text-destructive" />
         </div>
         <div className="space-y-2 max-w-xs">
           <p className="text-sm font-bold font-mono uppercase tracking-tight">
