@@ -3,8 +3,9 @@
 import { useState, useCallback, useEffect, type JSX } from "react";
 import { Catalog } from "@/components/Catalog";
 import { RankingWidget } from "@/components/RankingWidget";
-import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
-import { createSession, type ReleaseGroup, type LeaderboardResponse } from "@/lib/api";
+import { AnalyticsPage } from "@/components/AnalyticsPage";
+import { MyRankingsOverview } from "@/components/MyRankingsOverview";
+import { createSession, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { DeduplicationModal } from "@/components/DeduplicationModal";
 import {
@@ -18,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type ViewState = "catalog" | "dedupe" | "ranking" | "global";
+type ViewState = "catalog" | "dedupe" | "ranking" | "analytics" | "my_rankings";
 
 export default function Home(): JSX.Element {
   const { user } = useAuth();
@@ -32,15 +33,9 @@ export default function Home(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   
-  // Global Leaderboard State
-  const [globalArtist, setGlobalArtist] = useState<string | null>(null);
-  const [globalData, setGlobalData] = useState<LeaderboardResponse | null>(null);
-  const [globalError, setGlobalError] = useState<string | null>(null);
-  const [loadingGlobal, setLoadingGlobal] = useState(false);
-
-  // Auto-collapse sidebar when ranking or global view starts
+  // Auto-collapse sidebar when ranking, analytics, or my rankings view starts
   useEffect(() => {
-    if (view === "ranking" || view === "global") {
+    if (view === "ranking" || view === "analytics" || view === "my_rankings") {
       setIsSidebarCollapsed(true);
     }
   }, [view]);
@@ -48,8 +43,8 @@ export default function Home(): JSX.Element {
   // Handle sidebar visibility
   useEffect(() => {
     const handleResize = () => {
-      // If we are already ranking, don't mess with the sidebar based on auth
-      if (view === "ranking") return;
+      // When ranking, analytics, or my rankings is active, keep sidebar collapsed (don't reopen on resize)
+      if (view === "ranking" || view === "analytics" || view === "my_rankings") return;
 
       const isMobile = window.innerWidth < 768;
       
@@ -78,14 +73,6 @@ export default function Home(): JSX.Element {
     setSelectedReleases((prev) => 
       prev.some((r) => r.id === release.id) ? prev : [...prev, release]
     );
-  }, []);
-
-  const handleGlobalLeaderboardOpen = useCallback((artist: string, data: LeaderboardResponse | null, errorMsg: string | null) => {
-    setGlobalArtist(artist);
-    setGlobalData(data);
-    setGlobalError(errorMsg);
-    setLoadingGlobal(!data && !errorMsg); // Loading if no data and no error
-    setView("global");
   }, []);
 
   const handleSearchStart = useCallback(() => {
@@ -168,24 +155,27 @@ export default function Home(): JSX.Element {
 
   return (
     <div key={user?.id || "guest"} className="flex h-full w-full overflow-hidden bg-background relative">
-      {/* Sidebar Collapse Toggle (Only when collapsed) */}
+      {/* Navigator tab when collapsed: vertical bar with arrow + "NAVIGATOR" */}
       <AnimatePresence>
         {isSidebarCollapsed && (
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="absolute left-4 bottom-6 md:bottom-auto md:top-1/2 md:-translate-y-1/2 z-40"
+          <motion.button
+            type="button"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 48, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            onClick={() => setIsSidebarCollapsed(false)}
+            className="fixed left-0 top-16 md:top-20 bottom-0 z-40 flex flex-col items-center justify-center gap-4 shrink-0 border-r border-border bg-muted/30 hover:bg-muted/50 backdrop-blur-sm transition-colors cursor-pointer group"
+            aria-label="Open navigator"
           >
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => setIsSidebarCollapsed(false)}
-              className="h-12 w-12 md:h-10 md:w-10 rounded-full border-primary/20 bg-background/80 backdrop-blur-xl shadow-2xl hover:bg-primary/5 group"
+            <ChevronRight className="h-6 w-6 text-primary group-hover:translate-x-0.5 transition-transform shrink-0" />
+            <span
+              className="text-[10px] font-mono font-black uppercase tracking-widest text-muted-foreground group-hover:text-primary transition-colors"
+              style={{ writingMode: "vertical-rl", textOrientation: "mixed", transform: "rotate(180deg)" }}
             >
-              <ChevronRight className="h-6 w-6 md:h-5 md:w-5 text-primary group-hover:translate-x-0.5 transition-transform" />
-            </Button>
-          </motion.div>
+              Navigator
+            </span>
+          </motion.button>
         )}
       </AnimatePresence>
 
@@ -233,15 +223,23 @@ export default function Home(): JSX.Element {
             onStartRanking={handleStartRanking}
             onSessionSelect={handleSessionSelect}
             onSessionDelete={handleSessionDelete}
-            onGlobalLeaderboardOpen={handleGlobalLeaderboardOpen}
+            onAnalyticsOpen={() => setView("analytics")}
+            onRankingsOpen={() => setView("my_rankings")}
+            showAnalyticsPanel={view === "analytics"}
+            showRankingsPanel={view === "my_rankings"}
             selectedIds={selectedReleases.map((r) => r.id)}
             activeSessionId={sessionId}
           />
         </div>
       </motion.aside>
 
-      {/* Right Panel: Ranking or Global Leaderboard */}
-      <main className="flex-1 min-h-0 h-full overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative">
+      {/* Right Panel: Ranking or Analytics — expands into full space when navigator is collapsed */}
+      <main
+        className={cn(
+          "flex-1 min-h-0 h-full overflow-hidden bg-linear-to-br from-background via-background to-primary/5 relative transition-[margin] duration-200",
+          isSidebarCollapsed && "pl-12"
+        )}
+      >
         <AnimatePresence>
           {isCreatingSession && <LoadingOverlay />}
           {error && (
@@ -253,18 +251,25 @@ export default function Home(): JSX.Element {
           )}
         </AnimatePresence>
         
-        {view === "global" ? (
-          <div className="flex flex-col min-h-0 h-full w-full max-w-3xl mx-auto py-4 md:py-8 px-4 md:px-6 overflow-y-auto">
-            <GlobalLeaderboard
-              artist={globalArtist || ""}
-              data={globalData}
-              isLoading={loadingGlobal}
-              error={globalError}
-              onRetry={() => {
-                if (globalArtist) {
-                  handleGlobalLeaderboardOpen(globalArtist, null, null);
-                }
-              }}
+        {view === "analytics" ? (
+          <div
+            className={cn(
+              "flex flex-col min-h-0 h-full w-full py-4 md:py-8 overflow-y-auto",
+              isSidebarCollapsed ? "max-w-none px-2 md:px-3" : "max-w-none px-4 md:px-6"
+            )}
+          >
+            <AnalyticsPage isSidebarCollapsed={isSidebarCollapsed} />
+          </div>
+        ) : view === "my_rankings" ? (
+          <div
+            className={cn(
+              "flex flex-col min-h-0 h-full w-full py-4 md:py-8 overflow-y-auto",
+              isSidebarCollapsed ? "max-w-none px-2 md:px-3" : "max-w-none px-4 md:px-6"
+            )}
+          >
+            <MyRankingsOverview
+              isSidebarCollapsed={isSidebarCollapsed}
+              onSelectSession={(id) => { setSessionId(id); setView("ranking"); }}
             />
           </div>
         ) : (

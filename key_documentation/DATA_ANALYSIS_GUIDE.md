@@ -35,6 +35,7 @@
 - ✅ **Convergence patterns**: How many comparisons needed for stable rankings
 - ✅ **Song popularity**: Global rankings across all users
 - ✅ **Artist analysis**: Which artists get ranked most, average comparisons per artist
+- ✅ **Album distribution in top 20**: Waffle chart on global leaderboard (one cell per song, colored by album; see [Top Albums Waffle Chart](#2-global-leaderboard-top-albums-waffle-chart-implemented) below)
 
 **SQL Examples**:
 ```sql
@@ -62,6 +63,33 @@ GROUP BY s.id, s.name, s.artist
 ORDER BY comparison_count DESC
 LIMIT 20;
 ```
+
+---
+
+#### **2. Global Leaderboard: Top Albums Waffle Chart** (Implemented)
+
+**Location**: Global leaderboard tab — shown above the song list when viewing an artist’s global ranking.
+
+**Component**: `components/charts/TopAlbumsWaffleChart.tsx`  
+**Used in**: `components/GlobalLeaderboard.tsx` (rendered when `data.songs.length >= 2`).
+
+**What it shows**:
+- **Top 20 by album (waffle)**: A 5×4 grid of cells, one cell per song in the global top 20.
+- **Color by album**: Each cell is colored by the song’s album; colors come from `lib/rankingColors.ts` (`RANKING_CSS_VARS`). One color per distinct album in the top 20; legend lists album names.
+- **Rank 1–3 emphasis**: Cells for ranks 1, 2, and 3 have gold/silver/bronze borders and show the rank number in a badge (gold/silver/bronze text on dark background).
+- **Hover tooltip**: Song name, album, and rank (for top 3). Tooltip is rendered via portal so it isn’t clipped by overflow.
+
+**Data source**: Same as the global leaderboard — `LeaderboardResponse.songs` from `GET /leaderboard/{artist}` (top 20 by global ranking). Uses `LeaderboardSong`: `id`, `name`, `album`, `rank`, etc.
+
+**Analysis value**:
+- **Album diversity**: See how many distinct albums appear in the top 20 at a glance.
+- **Album dominance**: One color dominating many cells = one or two albums dominating the top 20.
+- **Rank context**: Gold/silver/bronze cells make top 3 easy to spot without reading the full list.
+
+**Implementation details**:
+- Grid: 5 columns, aspect ratio preserved; responsive min/max width.
+- Albums with no name use `"Unknown"`; legend and tooltips reflect that.
+- No new backend or tables — purely a visualization of existing leaderboard song data.
 
 ---
 

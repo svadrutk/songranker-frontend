@@ -192,8 +192,8 @@ export function DashboardOverview({ onSelectArtist }: DashboardOverviewProps): J
                   <span className="font-mono text-xs font-bold truncate text-foreground">
                     {item.artist}
                   </span>
-                  <span className="shrink-0 text-[10px] font-mono text-muted-foreground uppercase">
-                    {item.total_comparisons.toLocaleString()} comparisons
+                    <span className="shrink-0 text-[10px] font-mono text-muted-foreground uppercase">
+                    {item.total_comparisons.toLocaleString()} user{item.total_comparisons === 1 ? "" : "s"}
                   </span>
                 </button>
               ))}

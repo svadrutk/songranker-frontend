@@ -1,26 +1,16 @@
 "use client";
 
 import { useState, useMemo, useEffect, type JSX } from "react";
-import { Search, Loader2, CheckCircle2, ChevronDown, ChevronUp, Layers, X, Lock, History, Globe, LayoutDashboard } from "lucide-react";
+import { Search, Loader2, CheckCircle2, ChevronDown, ChevronUp, Layers, X, Lock, History, BarChart2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
-import { 
-  searchArtistReleaseGroups, 
-  getReleaseGroupTracks, 
-  getGlobalLeaderboard,
-  getLeaderboardStats,
-  suggestArtists,
-  type ReleaseGroup,
-  type LeaderboardResponse
-} from "@/lib/api";
+import { searchArtistReleaseGroups, getReleaseGroupTracks, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { SessionSelector } from "@/components/SessionSelector";
-import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
-import { DashboardOverview } from "@/components/DashboardOverview";
 import { cn } from "@/lib/utils";
 
 type ReleaseType = "Album" | "EP" | "Single" | "Other";
-type CatalogView = "search" | "rankings" | "global" | "dashboard";
+type CatalogView = "search" | "rankings" | "analytics";
 
 function LoadingSkeleton(): JSX.Element {
   return (
@@ -47,7 +37,10 @@ type CatalogProps = Readonly<{
   onStartRanking?: () => void;
   onSessionSelect?: (sessionId: string) => void;
   onSessionDelete?: (sessionId: string) => void;
-  onGlobalLeaderboardOpen?: (artist: string, data: LeaderboardResponse | null, error: string | null) => void;
+  onAnalyticsOpen?: () => void;
+  onRankingsOpen?: () => void;
+  showAnalyticsPanel?: boolean;
+  showRankingsPanel?: boolean;
   selectedIds: string[];
   activeSessionId: string | null;
 }>;
@@ -55,22 +48,13 @@ type CatalogProps = Readonly<{
 type ViewToggleProps = Readonly<{
   view: CatalogView;
   setView: (view: CatalogView) => void;
+  onAnalyticsOpen?: () => void;
+  onRankingsOpen?: () => void;
 }>;
 
-function ViewToggle({ view, setView }: ViewToggleProps): JSX.Element {
+function ViewToggle({ view, setView, onAnalyticsOpen, onRankingsOpen }: ViewToggleProps): JSX.Element {
   return (
     <div className="flex bg-muted/20 p-1 rounded-lg border border-border/40">
-      <button
-        onClick={() => setView("dashboard")}
-        className={cn(
-          "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
-          view === "dashboard" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
-        )}
-      >
-        <LayoutDashboard className="h-3 w-3" />
-        <span className="hidden sm:inline">Dashboard</span>
-        <span className="sm:hidden">Stats</span>
-      </button>
       <button
         onClick={() => setView("search")}
         className={cn(
@@ -82,7 +66,10 @@ function ViewToggle({ view, setView }: ViewToggleProps): JSX.Element {
         <span className="hidden sm:inline">Search</span>
       </button>
       <button
-        onClick={() => setView("rankings")}
+        onClick={() => {
+          setView("rankings");
+          onRankingsOpen?.();
+        }}
         className={cn(
           "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
           view === "rankings" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
@@ -93,15 +80,18 @@ function ViewToggle({ view, setView }: ViewToggleProps): JSX.Element {
         <span className="sm:hidden">Rankings</span>
       </button>
       <button
-        onClick={() => setView("global")}
+        onClick={() => {
+          setView("analytics");
+          onAnalyticsOpen?.();
+        }}
         className={cn(
           "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
-          view === "global" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
+          view === "analytics" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
         )}
       >
-        <Globe className="h-3 w-3" />
-        <span className="hidden sm:inline">Global</span>
-        <span className="sm:hidden">Global</span>
+        <BarChart2 className="h-3 w-3" />
+        <span className="hidden sm:inline">Analytics</span>
+        <span className="sm:hidden">Stats</span>
       </button>
     </div>
   );
@@ -113,13 +103,23 @@ export function Catalog({
   onStartRanking, 
   onSessionSelect,
   onSessionDelete,
-  onGlobalLeaderboardOpen,
+  onAnalyticsOpen,
+  onRankingsOpen,
+  showAnalyticsPanel = false,
+  showRankingsPanel = false,
   selectedIds,
   activeSessionId
 }: CatalogProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
-  const [view, setView] = useState<CatalogView>("dashboard");
-  
+  const [view, setView] = useState<CatalogView>("search");
+
+  // When parent opens analytics or rankings panel, keep that tab selected in sidebar (single dep so array size is stable)
+  const activePanel = showAnalyticsPanel ? "analytics" : showRankingsPanel ? "rankings" : null;
+  useEffect(() => {
+    if (activePanel === "analytics") setView("analytics");
+    else if (activePanel === "rankings") setView("rankings");
+  }, [activePanel]);
+
   // Catalog Search State
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<ReleaseGroup[]>([]);
@@ -128,135 +128,6 @@ export function Catalog({
   const [loadingTracks, setLoadingTracks] = useState<Record<string, boolean>>({});
   const [activeFilters, setActiveFilters] = useState<ReleaseType[]>(["Album"]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Global Leaderboard State (managed by parent)
-  const [globalQuery, setGlobalQuery] = useState("");
-  const [globalArtist, setGlobalArtist] = useState<string | null>(null);
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
-  const [globalData, setGlobalData] = useState<LeaderboardResponse | null>(null);
-  
-  // Optional: Refetch global leaderboard when switching to global view (disabled for performance)
-  // Only refetch if data is stale (more than 5 minutes old)
-  useEffect(() => {
-    if (view === "global" && globalArtist && globalData) {
-      const lastFetchKey = `global_${globalArtist}_timestamp`;
-      const lastFetch = localStorage.getItem(lastFetchKey);
-      const fiveMinutes = 5 * 60 * 1000;
-      
-      if (!lastFetch || Date.now() - parseInt(lastFetch) > fiveMinutes) {
-        const refetch = async () => {
-          try {
-            const data = await getGlobalLeaderboard(globalArtist);
-            if (data) {
-              setGlobalData(data);
-              localStorage.setItem(lastFetchKey, Date.now().toString());
-            }
-          } catch (err) {
-            console.error("Failed to refetch global leaderboard:", err);
-          }
-        };
-        refetch();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, globalArtist]); // Note: globalData intentionally not in deps to avoid infinite loop
-
-  // Debounce for global search suggestions
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      const cleanQuery = globalQuery.trim().toLowerCase();
-      if (cleanQuery.length < 2 || view !== "global" || globalArtist?.toLowerCase() === cleanQuery) {
-        setSuggestions([]);
-        return;
-      }
-      
-      // 1. Check LocalStorage Cache (Offline/Speed)
-      const CACHE_KEY = "sr_artist_suggestions";
-      const cached = localStorage.getItem(CACHE_KEY);
-      if (cached) {
-        try {
-          const { data, timestamp } = JSON.parse(cached);
-          const isStale = Date.now() - timestamp > 4 * 60 * 60 * 1000; // 4 hours
-          
-          if (!isStale) {
-            // Filter existing cache for instant matches
-            const matches = data.filter((name: string) => 
-              name.toLowerCase().includes(cleanQuery)
-            ).slice(0, 5);
-            
-            if (matches.length > 0) {
-              setSuggestions(matches);
-              // If we have good matches, we can skip the network call or just let it update in background
-              // For now, let's just return if we have matches to save bandwidth
-              return;
-            }
-          }
-        } catch {
-          localStorage.removeItem(CACHE_KEY);
-        }
-      }
-
-      setIsSearchingGlobal(true);
-      try {
-        const data = await suggestArtists(globalQuery);
-        setSuggestions(data);
-        
-        // Update LocalStorage cache
-        const currentCache = cached ? JSON.parse(cached).data : [];
-        const updatedData = Array.from(new Set([...currentCache, ...data])).slice(-100); // Keep last 100
-        localStorage.setItem(CACHE_KEY, JSON.stringify({
-          data: updatedData,
-          timestamp: Date.now()
-        }));
-      } catch (err) {
-        console.error("Failed to fetch suggestions:", err);
-      } finally {
-        setIsSearchingGlobal(false);
-      }
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [globalQuery, view, globalArtist]);
-
-  const handleGlobalSearch = async (artistName: string) => {
-    if (!user) {
-      openAuthModal("login");
-      return;
-    }
-
-    setGlobalArtist(artistName);
-    setGlobalQuery(artistName); // Sync input
-    setSuggestions([]);
-    setGlobalData(null);
-
-    // Notify parent immediately with loading state
-    onGlobalLeaderboardOpen?.(artistName, null, null);
-
-    try {
-      // 1. Check if stats exist first (optional optimization, but good UX)
-      const stats = await getLeaderboardStats(artistName);
-      
-      if (!stats) {
-        // No stats means not enough rankings exist
-        setGlobalData(null);
-        onGlobalLeaderboardOpen?.(artistName, null, `Not enough rankings available for ${artistName}`);
-      } else {
-        // 2. Fetch full leaderboard
-        const data = await getGlobalLeaderboard(artistName);
-        setGlobalData(data);
-        onGlobalLeaderboardOpen?.(artistName, data, null);
-      }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Failed to load global rankings";
-      onGlobalLeaderboardOpen?.(artistName, null, errorMsg);
-    }
-  };
-
-  const handleDashboardSelectArtist = (artistName: string) => {
-    setView("global");
-    handleGlobalSearch(artistName);
-  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -352,7 +223,7 @@ export function Catalog({
     <div className="flex flex-col h-full gap-6 overflow-hidden relative">
       <div className="flex flex-col gap-4">
         {/* View Toggle */}
-        <ViewToggle view={view} setView={setView} />
+        <ViewToggle view={view} setView={setView} onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
 
         {view === "search" && (
           <form onSubmit={handleSearch} className="flex gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
@@ -381,67 +252,6 @@ export function Catalog({
           </form>
         )}
 
-        {view === "global" && (
-           <form onSubmit={(e) => { e.preventDefault(); handleGlobalSearch(globalQuery); }} className="relative animate-in fade-in slide-in-from-top-1 duration-300 z-50">
-             <div className="relative flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={globalQuery}
-                  onChange={(e) => {
-                    setGlobalQuery(e.target.value);
-                    if (!e.target.value) setSuggestions([]);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleGlobalSearch(globalQuery);
-                    }
-                  }}
-                  placeholder="Find global rankings..."
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm transition-all focus-visible:outline-none focus-visible:border-primary/20 focus-visible:ring-1 focus-visible:ring-primary/10 shadow-sm"
-                />
-                {isSearchingGlobal && user && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-              </div>
-              <Button type="submit" disabled={isSearchingGlobal} className="px-5 h-10 bg-neutral-300 hover:bg-neutral-400 text-black font-mono relative group">
-                {isSearchingGlobal ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : !user ? (
-                  <div className="flex items-center gap-2">
-                    <Lock className="h-3 w-3" />
-                    <span>Search</span>
-                  </div>
-                ) : (
-                  "Search"
-                )}
-              </Button>
-            </div>
-            
-            {/* Autocomplete Suggestions */}
-            {suggestions.length > 0 && user && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="py-1">
-                  {suggestions.map((artist) => (
-                    <button
-                      key={artist}
-                      type="button"
-                      onClick={() => handleGlobalSearch(artist)}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
-                    >
-                      <Search className="h-3 w-3 text-muted-foreground/50" />
-                      <span className="font-medium">{artist}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-           </form>
-        )}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto pr-2 custom-scrollbar pb-24">
@@ -562,17 +372,21 @@ export function Catalog({
               <p className="text-xs font-mono">Search to browse catalog</p>
             </div>
           )
-        ) : view === "dashboard" ? (
-          <div className="animate-in fade-in slide-in-from-bottom-1 duration-300 h-full">
-            <DashboardOverview onSelectArtist={handleDashboardSelectArtist} />
+        ) : view === "analytics" ? (
+          <div className="flex flex-col items-center justify-center h-full opacity-80 py-20 animate-in fade-in duration-300">
+            <BarChart2 className="h-10 w-10 mb-4 text-primary" />
+            <p className="text-xs font-mono text-center px-4 text-muted-foreground">
+              Analytics open on the right →
+            </p>
+            <p className="text-[10px] font-mono text-muted-foreground/70 mt-1">
+              Global &amp; user stats
+            </p>
           </div>
-        ) : view === "global" ? (
-          <div className="flex flex-col items-center justify-center h-full opacity-20 py-20">
-            <Globe className="h-10 w-10 mb-4" />
-            <p className="text-xs font-mono text-center px-4">
-              {globalArtist 
-                ? "View global rankings on the right →"
-                : "Search to see global rankings"}
+        ) : showRankingsPanel ? (
+          <div className="flex flex-col items-center justify-center h-full opacity-80 py-20 animate-in fade-in duration-300">
+            <History className="h-10 w-10 mb-4 text-primary" />
+            <p className="text-xs font-mono text-center px-4 text-muted-foreground">
+              Your rankings open on the right →
             </p>
           </div>
         ) : (

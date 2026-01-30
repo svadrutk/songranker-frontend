@@ -303,4 +303,22 @@ export async function getArtistsWithLeaderboards(limit: number = 50): Promise<Ar
   }
 }
 
+export type GlobalActivityStats = {
+  total_sessions: number;
+  total_comparisons: number;
+  artists_ranked: number;
+  avg_convergence: number;
+  completed_sessions: number;
+  completion_rate: number;
+};
+
+export async function getGlobalActivityStats(): Promise<GlobalActivityStats | null> {
+  try {
+    return await fetchBackend<GlobalActivityStats>("/activity/global", { cache: "no-store" });
+  } catch (error) {
+    console.error("[API] Error fetching global activity stats:", error);
+    return null;
+  }
+}
+
 

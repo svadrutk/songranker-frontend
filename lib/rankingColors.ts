@@ -2,18 +2,19 @@
  * Ranking color preset for any ranking visualization (waffle, charts, etc.).
  * Use RANKING_CSS_VARS in components that support CSS variables (e.g. style={{ color: 'var(--ranking-1)' }}).
  * Use RANKING_HEX when you need raw hex (e.g. Plotly, canvas, or external libs).
+ * Shared palette: Spring Green → Deep Forest → teals/blues → purple → Sage Lavender.
  */
 export const RANKING_HEX = [
-  "#FF0000", // Red
-  "#FF8C00", // Dark Orange
-  "#FFD700", // Goldenrod (Yellow)
-  "#008000", // Forest Green
-  "#0000FF", // Classic Blue
-  "#4B0082", // Indigo
-  "#EE82EE", // Violet
-  "#00FFFF", // Cyan (Electric Blue)
-  "#FF69B4", // Hot Pink
-  "#7FFF00", // Chartreuse (Neon Lime)
+  "#88E65C", // Spring Green – slightly softened
+  "#1A5C3D", // Deep Forest – dark green base
+  "#006B63", // Deep Sea Teal – anchor color
+  "#57D1C1", // Aquamarine – brighter, greener turquoise
+  "#2B9EA1", // Aegean Blue – blue reflecting green
+  "#1A5E91", // Marine Cobalt – deep blue, green edge
+  "#204A5E", // Midnight Teal – dark moody blue-green
+  "#5F5685", // Grape Leaf – purple muddied with green
+  "#827EAD", // Muted Amethyst – cool mossy slate violet
+  "#CCD9D2", // Sage Lavender – pale silvery-green lavender
 ] as const;
 
 export const RANKING_CSS_VARS = [
