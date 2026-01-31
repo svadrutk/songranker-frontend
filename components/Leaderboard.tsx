@@ -1,7 +1,7 @@
 "use client";
 
 import type { JSX } from "react";
-import { RotateCcw, Check } from "lucide-react";
+import { RotateCcw, Check, FileDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
 import { ShareButton } from "@/components/ShareButton";
@@ -9,10 +9,53 @@ import { cn } from "@/lib/utils";
 import type { SessionSong } from "@/lib/api";
 import { motion, type Variants } from "framer-motion";
 
+function escapeCsvCell(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function artistToFilenameBase(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean).slice(0, 2);
+  const joined = words.join("_");
+  return joined
+    .replace(/[/\\:*?"<>|]/g, "_")
+    .replace(/_+/g, "_")
+    .trim()
+    .slice(0, 100) || "rankings";
+}
+
+function exportRankingsToCsv(sortedByScore: SessionSong[]): void {
+  const artistName = sortedByScore[0]?.artist?.trim() ?? "";
+  const baseName = artistName ? artistToFilenameBase(artistName) : null;
+  const filename = baseName ? `${baseName}_Rankings.csv` : "Rankings.csv";
+
+  const header = ["Rank", "Track", "Artist", "Album"];
+  const rows = sortedByScore.map((song, index) => {
+    return [
+      index + 1,
+      escapeCsvCell(song.name),
+      escapeCsvCell(song.artist),
+      escapeCsvCell(song.album ?? ""),
+    ].join(",");
+  });
+  const csv = [header.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 type LeaderboardProps = {
   songs: SessionSong[];
   onContinue: () => void;
   isPreview?: boolean;
+  /** Override back button label when isPreview (e.g. "Back to My Rankings"). */
+  backButtonLabel?: string;
 };
 
 const containerVariants: Variants = {
@@ -45,7 +88,7 @@ const itemVariants: Variants = {
   }),
 };
 
-export function Leaderboard({ songs, onContinue, isPreview }: LeaderboardProps): JSX.Element {
+export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel }: LeaderboardProps): JSX.Element {
   const sortedSongs = [...songs].sort((a, b) => {
     const scoreA = a.bt_strength ?? (a.local_elo / 3000); 
     const scoreB = b.bt_strength ?? (b.local_elo / 3000);
@@ -110,25 +153,43 @@ export function Leaderboard({ songs, onContinue, isPreview }: LeaderboardProps):
       </div>
 
       <motion.div custom={0} variants={itemVariants} className="shrink-0 space-y-6">
-        <div className="flex gap-3">
+        <div className="flex gap-2 flex-wrap">
           <Button
             onClick={onContinue}
             variant={isPreview ? "default" : "outline"}
-            className="flex-1 h-12 font-mono uppercase tracking-wider text-sm font-bold"
+            className="flex-1 min-w-0 h-12 font-mono uppercase tracking-wider text-xs md:text-sm font-bold shrink"
           >
-            {isPreview ? (
+            {backButtonLabel ? (
               <>
-                <Check className="h-4 w-4 mr-2" />
-                Back to Duel
+                <Check className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
+                <span className="truncate">{backButtonLabel}</span>
+              </>
+            ) : isPreview ? (
+              <>
+                <Check className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
+                <span className="truncate">Back to Duel</span>
               </>
             ) : (
               <>
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Keep Ranking
+                <RotateCcw className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
+                <span className="truncate">Keep Ranking</span>
               </>
             )}
           </Button>
-          {!isPreview && <ShareButton songs={sortedSongs} />}
+          {!isPreview && (
+            <div className="flex flex-1 min-w-0 shrink">
+              <ShareButton songs={sortedSongs} />
+            </div>
+          )}
+          <Button
+            onClick={() => exportRankingsToCsv(sortedSongs)}
+            variant="outline"
+            className="flex-1 min-w-0 h-12 font-mono uppercase tracking-wider text-xs md:text-sm font-bold shrink"
+            title="Download rankings as CSV"
+          >
+            <FileDown className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
+            <span className="truncate">Export CSV</span>
+          </Button>
         </div>
         <p className="text-xs font-mono text-muted-foreground uppercase text-center">
           {isPreview 

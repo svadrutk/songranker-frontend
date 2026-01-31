@@ -29,6 +29,37 @@ import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { GlobalLeaderboard } from "@/components/GlobalLeaderboard";
 
+/** Same as ComparisonsPerArtistChart: top N artists to consider for rank. */
+const TOP_N_ARTISTS = 10;
+
+/** Standard competition ranking: ties get same rank, next rank = 1 + count of people strictly ahead. */
+function computeRanks(counts: number[]): number[] {
+  return counts.map((count) => {
+    const ahead = counts.filter((c) => c > count).length;
+    return ahead + 1;
+  });
+}
+
+/** Rank 1–3 colors matching ComparisonsPerArtistChart (gold / silver / bronze). */
+function rankColor(rank: number): string {
+  if (rank === 1) return "#FFD700";
+  if (rank === 2) return "#C0C0C0";
+  if (rank === 3) return "#CD7F32";
+  return "";
+}
+
+/** Tie-break when rank is equal: total_comparisons desc, then artist name asc. Same as chart. */
+function sortByRankThenTieBreak<T extends { rank: number; total_comparisons: number; artist: string }>(items: T[]): T[] {
+  return [...items].sort(
+    (a, b) =>
+      a.rank !== b.rank
+        ? a.rank - b.rank
+        : b.total_comparisons !== a.total_comparisons
+          ? b.total_comparisons - a.total_comparisons
+          : a.artist.localeCompare(b.artist, undefined, { sensitivity: "base" })
+  );
+}
+
 const ComparisonsPerArtistChart = dynamic(
   () => import("@/components/charts/ComparisonsPerArtistChart").then((m) => m.ComparisonsPerArtistChart),
   { ssr: false, loading: () => <div className="w-full h-[280px] animate-pulse rounded-lg bg-muted/30" aria-hidden /> }
@@ -409,6 +440,36 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {/* Top 3 artists by rank — same logic as ComparisonsPerArtistChart (computeRanks on total_comparisons) */}
+                {artistsWithLeaderboards.length > 0 && (() => {
+                  const topArtists = artistsWithLeaderboards.slice(0, TOP_N_ARTISTS);
+                  const counts = topArtists.map((a) => a.total_comparisons);
+                  const ranks = computeRanks(counts);
+                  const withRank = topArtists.map((a, i) => ({ artist: a.artist, rank: ranks[i], total_comparisons: a.total_comparisons }));
+                  const top3 = sortByRankThenTieBreak(withRank).slice(0, 3);
+                  return (
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      {top3.map((item) => {
+                        const color = rankColor(item.rank);
+                        return (
+                          <Button
+                            key={item.artist}
+                            type="button"
+                            variant={selectedArtist === item.artist ? "default" : "outline"}
+                            onClick={() => handleGlobalSearch(item.artist)}
+                            className="font-mono text-xs md:text-sm font-bold uppercase tracking-wider shrink-0"
+                          >
+                            {item.artist}{" "}
+                            <span style={{ color: selectedArtist === item.artist ? undefined : color || undefined }}>
+                              Rank {item.rank}
+                            </span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+
                 {/* Search bar at top of popup */}
                 <form
                   onSubmit={(e) => {

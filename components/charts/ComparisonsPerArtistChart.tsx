@@ -34,6 +34,26 @@ function computeRanks(counts: number[]): number[] {
   });
 }
 
+/** Tie-break when rank is equal: total_comparisons desc, then artist name asc. Same as View Artist Leaderboard modal. */
+function sortByRankThenTieBreak(
+  artists: ArtistWithLeaderboard[],
+  ranks: number[]
+): { artists: ArtistWithLeaderboard[]; ranks: number[] } {
+  const combined = artists.map((a, i) => ({ artist: a, rank: ranks[i] }));
+  combined.sort(
+    (a, b) =>
+      a.rank !== b.rank
+        ? a.rank - b.rank
+        : b.artist.total_comparisons !== a.artist.total_comparisons
+          ? b.artist.total_comparisons - a.artist.total_comparisons
+          : a.artist.artist.localeCompare(b.artist.artist, undefined, { sensitivity: "base" })
+  );
+  return {
+    artists: combined.map((c) => c.artist),
+    ranks: combined.map((c) => c.rank),
+  };
+}
+
 function outlineColorForRank(rank: number): string {
   if (rank === 1) return GOLD;
   if (rank === 2) return SILVER;
@@ -91,7 +111,15 @@ export function ComparisonsPerArtistChart({
     if (bg && bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") setPaperColor(bg);
   }, [resolvedTheme]);
 
-  const topArtists = useMemo(() => artists.slice(0, TOP_N), [artists]);
+  const topArtistsRaw = useMemo(() => artists.slice(0, TOP_N), [artists]);
+
+  // Same tie-break as View Artist Leaderboard modal: rank asc, total_comparisons desc, artist name asc
+  const { artists: topArtists, ranks: topRanks } = useMemo(() => {
+    if (topArtistsRaw.length === 0) return { artists: [] as ArtistWithLeaderboard[], ranks: [] as number[] };
+    const counts = topArtistsRaw.map((a) => a.total_comparisons);
+    const ranks = computeRanks(counts);
+    return sortByRankThenTieBreak(topArtistsRaw, ranks);
+  }, [topArtistsRaw]);
 
   // Random palette once per mount so bar colors change each time you open Analytics.
   const shuffledColors = useMemo(() => shuffle(RANKING_HEX), []);
@@ -99,16 +127,14 @@ export function ComparisonsPerArtistChart({
   const data = useMemo(() => {
     const contributorLabel = (n: number) =>
       n === 1 ? "1 Contributor" : `${n} Contributors`;
-    const counts = topArtists.map((a) => a.total_comparisons);
-    const ranks = computeRanks(counts);
-    const outlineColors = ranks.map(outlineColorForRank);
-    const outlineWidths = ranks.map((r) => (r <= 3 ? OUTLINE_WIDTH_TOP3 : OUTLINE_WIDTH));
+    const outlineColors = topRanks.map(outlineColorForRank);
+    const outlineWidths = topRanks.map((r) => (r <= 3 ? OUTLINE_WIDTH_TOP3 : OUTLINE_WIDTH));
     return [
       {
         type: "bar" as const,
         x: topArtists.map((a) => a.artist),
-        y: counts,
-        text: ranks.map(String),
+        y: topArtists.map((a) => a.total_comparisons),
+        text: topRanks.map(String),
         textposition: "outside" as const,
         textfont: { size: 12, color: colors.font, family: "var(--font-geist-sans), sans-serif" },
         customdata: topArtists.map((a) => contributorLabel(a.total_comparisons)),
@@ -122,7 +148,7 @@ export function ComparisonsPerArtistChart({
         hovertemplate: "%{x}<br>%{customdata}<extra></extra>",
       },
     ];
-  }, [topArtists, colors.font, shuffledColors]);
+  }, [topArtists, topRanks, colors.font, shuffledColors]);
 
   const yRange = useMemo(() => {
     if (topArtists.length === 0) return [0, 5] as [number, number];
