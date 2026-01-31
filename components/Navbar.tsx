@@ -14,7 +14,7 @@ export function Navbar() {
     <nav className="w-full border-b bg-background/95 backdrop-blur-md sticky top-0 z-[60]">
       <div className="w-full px-4 md:px-8 h-16 md:h-20 flex items-center justify-between">
         <div className="flex items-center gap-2 md:gap-3">
-          <div className="p-1.5 md:p-2 rounded-lg bg-black dark:bg-transparent">
+          <div className="p-1.5 md:p-2 rounded-lg bg-primary dark:bg-transparent">
             <Image
               src="/logo/logo.svg"
               alt="Chorusboard Logo"

@@ -4,6 +4,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-sage: var(--sage);
+  --color-sage-dark: var(--sage-dark);
+  --color-sage-muted: var(--sage-muted);
+  --color-sage-text: var(--sage-text);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -58,29 +62,35 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(0.96 0 0);
-  --foreground: oklch(0.25 0 0);
-  --card: oklch(0.98 0 0);
-  --card-foreground: oklch(0.25 0 0);
-  --popover: oklch(0.98 0 0);
-  --popover-foreground: oklch(0.25 0 0);
-  --primary: oklch(0.25 0 0);
-  --primary-foreground: oklch(0.98 0 0);
-  --secondary: oklch(0.92 0 0);
-  --secondary-foreground: oklch(0.25 0 0);
-  --muted: oklch(0.94 0 0);
-  --muted-foreground: oklch(0.48 0 0);
-  --accent: oklch(0.92 0 0);
-  --accent-foreground: oklch(0.25 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.88 0 0);
-  --input: oklch(0.88 0 0);
-  --ring: oklch(0.65 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  /* Light-mode sage accent (single source of truth) */
+  --sage: #82A67D;
+  --sage-dark: #6b8a67;
+  --sage-muted: #5a7557;
+  --sage-text: #2d3d28;
+  /* Light: warm paper/cream base with soft contrast */
+  --background: oklch(0.98 0.008 85);
+  --foreground: oklch(0.28 0.02 270);
+  --card: oklch(1 0.004 85);
+  --card-foreground: oklch(0.28 0.02 270);
+  --popover: oklch(1 0.004 85);
+  --popover-foreground: oklch(0.28 0.02 270);
+  --primary: oklch(0.35 0.08 265);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.93 0.012 85);
+  --secondary-foreground: oklch(0.32 0.02 270);
+  --muted: oklch(0.945 0.01 85);
+  --muted-foreground: oklch(0.45 0.02 270);
+  --accent: oklch(0.93 0.02 265);
+  --accent-foreground: oklch(0.32 0.06 265);
+  --destructive: oklch(0.55 0.22 25);
+  --border: oklch(0.90 0.015 85);
+  --input: oklch(0.90 0.015 85);
+  --ring: oklch(0.45 0.12 265);
+  --chart-1: oklch(0.55 0.22 265);
+  --chart-2: oklch(0.65 0.18 165);
+  --chart-3: oklch(0.72 0.19 75);
+  --chart-4: oklch(0.6 0.2 25);
+  --chart-5: oklch(0.58 0.2 310);
   /* Ranking preset: Spring Green → Deep Forest → teals/blues → purple → Sage Lavender */
   --ranking-1: #88E65C;
   --ranking-2: #1A5C3D;
@@ -92,14 +102,14 @@
   --ranking-8: #5F5685;
   --ranking-9: #827EAD;
   --ranking-10: #CCD9D2;
-  --sidebar: oklch(0.97 0 0);
-  --sidebar-foreground: oklch(0.25 0 0);
-  --sidebar-primary: oklch(0.25 0 0);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
-  --sidebar-accent: oklch(0.92 0 0);
-  --sidebar-accent-foreground: oklch(0.25 0 0);
-  --sidebar-border: oklch(0.88 0 0);
-  --sidebar-ring: oklch(0.65 0 0);
+  --sidebar: oklch(0.975 0.006 85);
+  --sidebar-foreground: oklch(0.28 0.02 270);
+  --sidebar-primary: oklch(0.35 0.08 265);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.93 0.02 265);
+  --sidebar-accent-foreground: oklch(0.32 0.06 265);
+  --sidebar-border: oklch(0.90 0.015 85);
+  --sidebar-ring: oklch(0.45 0.12 265);
 }
 
 .dark {

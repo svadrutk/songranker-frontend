@@ -6,6 +6,7 @@ import Image from "next/image";
 import { getUserSessions, type SessionSummary } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
+import { useNavigationStore } from "@/lib/store";
 
 const COMPLETION_THRESHOLD = 25;
 /** Same as RankingWidget "View Results" threshold (displayScore >= 90) so completed rankings appear in Completed column. */
@@ -13,12 +14,12 @@ const COMPLETED_THRESHOLD = 90;
 
 type MyRankingsOverviewProps = Readonly<{
   isSidebarCollapsed?: boolean;
-  onSelectSession: (sessionId: string) => void;
 }>;
 
 type SortDir = "asc" | "desc";
 
-export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession }: MyRankingsOverviewProps): JSX.Element {
+export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOverviewProps): JSX.Element {
+  const { navigateToRanking, navigateToResults } = useNavigationStore();
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(!!user);
@@ -112,9 +113,14 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
     return "green";
   }
 
-  function SessionCard({ session }: { session: SessionSummary }) {
+  function SessionCard({
+    session,
+    openResultsOnClick,
+  }: {
+    session: SessionSummary;
+    openResultsOnClick?: boolean;
+  }) {
     const score = session.convergence_score ?? 0;
-    const isSettled = score >= COMPLETED_THRESHOLD;
     const scheme = completionColor(score);
     const barBg =
       scheme === "red"
@@ -129,7 +135,13 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
           ? "text-yellow-600 dark:text-yellow-500"
           : "text-green-600 dark:text-green-500";
 
-    const handleClick = () => onSelectSession(session.session_id);
+    const handleClick = () => {
+      if (openResultsOnClick) {
+        navigateToResults(session.session_id, "kanban");
+      } else {
+        navigateToRanking(session.session_id);
+      }
+    };
 
     return (
       <button
@@ -173,7 +185,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
               <Swords className="h-3 w-3 opacity-50" />
               {session.comparison_count} duels
             </span>
-            {session.song_count != null && (
+            {openResultsOnClick && session.song_count != null && (
               <span className="flex items-center gap-1">
                 <Music className="h-3 w-3 opacity-50" />
                 {session.song_count} songs
@@ -184,8 +196,13 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
               {score}% complete
             </span>
           </div>
+          {openResultsOnClick && (
+            <p className="text-[9px] font-mono text-primary/80 uppercase tracking-wider mt-1.5">
+              View results →
+            </p>
+          )}
         </div>
-        {isSettled ? (
+        {openResultsOnClick ? (
           <Trophy className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
         ) : (
           <PlayCircle className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
@@ -321,7 +338,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`settled-${completionDir}-${thenByArtistDir}`}>
             {completedSessions.map((session) => (
-              <SessionCard key={session.session_id} session={session} />
+              <SessionCard key={session.session_id} session={session} openResultsOnClick />
             ))}
             {completedSessions.length === 0 && (
               <p className="text-xs font-mono text-muted-foreground/80 py-4 text-center">

@@ -633,20 +633,20 @@ function RankingPlaceholder({
   return (
     <div className="flex flex-col items-center justify-center h-full w-full gap-8">
       <div className="flex flex-col items-center gap-12 w-full max-w-2xl text-center">
-        <div className="relative flex items-center justify-center gap-4 md:gap-8 opacity-25 grayscale pointer-events-none select-none transform transition-all duration-700 hover:opacity-40 hover:scale-105">
-           <div className="absolute inset-0 bg-primary/20 blur-[60px] md:blur-[100px] rounded-full z-[-1]" />
-           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-primary/40 bg-linear-to-b from-primary/5 to-transparent" />
+        <div className="relative flex items-center justify-center gap-4 md:gap-8 opacity-50 hover:opacity-60 dark:opacity-25 dark:hover:opacity-40 dark:grayscale pointer-events-none select-none transform transition-all duration-700 hover:scale-105">
+           <div className="absolute inset-0 bg-[#82A67D]/30 dark:bg-primary/20 blur-[60px] md:blur-[100px] rounded-full z-[-1]" />
+           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-[#82A67D]/60 dark:border-primary/40 bg-linear-to-b from-[#82A67D]/15 dark:from-primary/5 to-transparent" />
            <div className="flex flex-col gap-4 md:gap-6 relative">
-             <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-primary/20 -z-10 hidden md:block" />
-             <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-primary/20 -z-10 md:hidden" />
-             <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-primary/60 bg-background/50 backdrop-blur-xs flex items-center justify-center">
-               <div className="h-8 w-8 rounded-full bg-primary/10" />
+             <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-[#82A67D]/40 dark:bg-primary/20 -z-10 hidden md:block" />
+             <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-[#82A67D]/40 dark:bg-primary/20 -z-10 md:hidden" />
+             <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-[#82A67D]/70 dark:border-primary/60 bg-[#82A67D]/20 dark:bg-background/50 backdrop-blur-xs flex items-center justify-center">
+               <div className="h-8 w-8 rounded-full bg-[#82A67D]/40 dark:bg-primary/10" />
              </div>
-             <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-primary/60 bg-background/50 backdrop-blur-xs flex items-center justify-center">
-               <div className="h-8 w-8 rounded-full bg-primary/10" />
+             <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-[#82A67D]/70 dark:border-primary/60 bg-[#82A67D]/20 dark:bg-background/50 backdrop-blur-xs flex items-center justify-center">
+               <div className="h-8 w-8 rounded-full bg-[#82A67D]/40 dark:bg-primary/10" />
              </div>
            </div>
-           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-primary/40 bg-linear-to-b from-primary/5 to-transparent" />
+           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-[#82A67D]/60 dark:border-primary/40 bg-linear-to-b from-[#82A67D]/15 dark:from-primary/5 to-transparent" />
         </div>
         <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-2">
@@ -690,15 +690,19 @@ function RankingControlButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "h-14 md:h-18 w-full md:w-48 rounded-xl md:rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-zinc-900/60 hover:bg-zinc-800/80 group shadow-lg hover:shadow-primary/5 p-0 overflow-hidden",
-        isActive && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary shadow-xl shadow-primary/25"
+        "h-14 md:h-18 w-full md:w-48 rounded-xl md:rounded-2xl transition-all p-0 overflow-hidden",
+        "border-[#82A67D]/35 hover:border-[#82A67D]/50 dark:border-border/40 dark:hover:border-primary/50",
+        "bg-[#82A67D]/25 hover:bg-[#82A67D]/45 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/80",
+        "shadow-lg hover:shadow-[#82A67D]/10 dark:hover:shadow-primary/5",
+        isActive && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary shadow-xl shadow-primary/25",
+        !isActive && "text-[#5a7557] dark:text-muted-foreground"
       )}
     >
       <div className="flex flex-row items-stretch h-full w-full">
         {icon && (
           <div className={cn(
-            "flex items-center justify-center aspect-square h-full shrink-0 transition-colors border-r border-white/5",
-            isActive ? "bg-white/20 text-white" : "bg-white/10 text-muted-foreground group-hover:text-primary group-hover:bg-white/20"
+            "flex items-center justify-center aspect-square h-full shrink-0 transition-colors border-r border-[#82A67D]/30 dark:border-white/5",
+            isActive ? "bg-white/20 text-white" : "bg-[#82A67D]/20 text-[#5a7557] dark:bg-white/10 dark:text-muted-foreground group-hover:bg-[#82A67D]/35 group-hover:text-[#5a7557] dark:group-hover:text-primary dark:group-hover:bg-white/20"
           )}>
             {icon}
           </div>

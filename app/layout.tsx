@@ -79,7 +79,7 @@ export default function RootLayout({
             />
           </>
         )}
-        <meta name="theme-color" content="#ffffff" />
+        <meta name="theme-color" content="#faf8f5" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased h-full w-full overflow-hidden`}

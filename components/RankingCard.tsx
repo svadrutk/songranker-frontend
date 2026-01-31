@@ -29,17 +29,19 @@ function VinylWing({ side }: { side: "left" | "right" }): JSX.Element {
       side === "left" ? "justify-end" : "justify-start"
     )}>
       <div className={cn(
-        "h-full aspect-square rounded-full border-2 border-zinc-400/30 bg-zinc-950 shadow-[inset_0_0_40px_rgba(255,255,255,0.1)] flex items-center justify-center overflow-hidden",
+        "h-full aspect-square rounded-full border-2 flex items-center justify-center overflow-hidden",
+        "border-[#82A67D]/40 bg-[#6b8a67] shadow-[inset_0_0_40px_rgba(255,255,255,0.15)]",
+        "dark:border-zinc-400/30 dark:bg-zinc-950 dark:shadow-[inset_0_0_40px_rgba(255,255,255,0.1)]",
         side === "left" ? "translate-x-1/2" : "-translate-x-1/2"
       )}>
-        <div className="h-[85%] w-[80%] rounded-full border-[1.5px] border-white/10" />
-        <div className="absolute h-[65%] w-[60%] rounded-full border-[1.5px] border-white/10" />
-        <div className="absolute h-[45%] w-[40%] rounded-full border-[1.5px] border-white/10" />
+        <div className="h-[85%] w-[80%] rounded-full border-[1.5px] border-[#82A67D]/25 dark:border-white/10" />
+        <div className="absolute h-[65%] w-[60%] rounded-full border-[1.5px] border-[#82A67D]/25 dark:border-white/10" />
+        <div className="absolute h-[45%] w-[40%] rounded-full border-[1.5px] border-[#82A67D]/25 dark:border-white/10" />
         
         {PARTICLES.map((p, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-amber-500 rounded-full blur-[0.5px]"
+            className="absolute w-1 h-1 bg-black rounded-full blur-[0.5px] dark:bg-amber-500"
             animate={{
               opacity: [0, 1, 0],
               scale: [0, 1.2, 0],
@@ -79,7 +81,8 @@ export function RankingCard({
       }}
       className={cn(
         "group relative flex flex-row md:flex-col items-center gap-4 md:gap-0 w-full max-w-[360px] md:max-w-[520px] rounded-[1.5rem] md:rounded-[3.5rem] p-3 md:p-6 transition-all duration-300 outline-none shrink min-w-0 md:min-w-[280px]",
-        "bg-zinc-900/30 hover:bg-zinc-900/50 border border-white/5 shadow-2xl",
+        "bg-card/90 hover:bg-card border border-border shadow-xl",
+        "dark:bg-zinc-900/30 dark:hover:bg-zinc-900/50 dark:border-white/5 dark:shadow-[0_0_40px_-8px_rgba(255,255,255,0.18),0_10px_40px_-15px_rgba(0,0,0,0.4)]",
         "focus-visible:ring-2 focus-visible:ring-primary/50",
         isActive && "ring-2 ring-primary/20",
         isWinner && "z-10",
@@ -129,8 +132,8 @@ export function RankingCard({
             {song.artist}
           </p>
         </div>
-        <div className="hover-scroll-container w-full mt-0.5 md:mt-1 opacity-30 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="hover-scroll-content text-[9px] md:text-xs lg:text-sm font-mono font-bold whitespace-nowrap">
+        <div className="hover-scroll-container w-full mt-0.5 md:mt-1 opacity-60 dark:opacity-30 dark:group-hover:opacity-100 transition-opacity duration-300">
+          <span className="hover-scroll-content text-[9px] md:text-xs lg:text-sm font-mono font-bold whitespace-nowrap text-[#2d3d28] group-hover:text-black dark:text-muted-foreground dark:group-hover:text-foreground transition-colors duration-200">
             {song.album || "Unknown Release"}
           </span>
         </div>
