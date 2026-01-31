@@ -14,13 +14,11 @@ const COMPLETED_THRESHOLD = 90;
 type MyRankingsOverviewProps = Readonly<{
   isSidebarCollapsed?: boolean;
   onSelectSession: (sessionId: string) => void;
-  /** For completed (settled) rankings: open the results (Leaderboard) view directly instead of the session. */
-  onViewResults?: (sessionId: string) => void;
 }>;
 
 type SortDir = "asc" | "desc";
 
-export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession, onViewResults }: MyRankingsOverviewProps): JSX.Element {
+export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession }: MyRankingsOverviewProps): JSX.Element {
   const { user } = useAuth();
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [loading, setLoading] = useState(!!user);
@@ -136,10 +134,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
           ? "text-yellow-600 dark:text-yellow-500"
           : "text-green-600 dark:text-green-500";
 
-    const handleClick = () => {
-      if (openResultsOnClick && onViewResults) onViewResults(session.session_id);
-      else onSelectSession(session.session_id);
-    };
+    const handleClick = () => onSelectSession(session.session_id);
 
     return (
       <button
@@ -336,7 +331,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSelectSession
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`settled-${completionDir}-${thenByArtistDir}`}>
             {completedSessions.map((session) => (
-              <SessionCard key={session.session_id} session={session} openResultsOnClick={!!onViewResults} />
+              <SessionCard key={session.session_id} session={session} />
             ))}
             {completedSessions.length === 0 && (
               <p className="text-xs font-mono text-muted-foreground/80 py-4 text-center">

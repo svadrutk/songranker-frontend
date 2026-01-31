@@ -287,7 +287,6 @@ export default function Home(): JSX.Element {
             <MyRankingsOverview
               isSidebarCollapsed={isSidebarCollapsed}
               onSelectSession={handleSessionSelect}
-              onViewResults={handleViewResults}
             />
           </div>
         ) : (
