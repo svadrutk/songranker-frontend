@@ -4,12 +4,13 @@ import { useState, useMemo, useEffect, type JSX } from "react";
 import { Search, CheckCircle2, ChevronDown, ChevronUp, Layers, X, History, ListMusic, BarChart2, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
-import { searchArtistReleaseGroups, getReleaseGroupTracks, getUserSessions, suggestArtists, type ReleaseGroup } from "@/lib/api";
+import { searchArtistReleaseGroups, getReleaseGroupTracks, suggestArtists, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import Image from "next/image";
 import { SessionSelector } from "@/components/SessionSelector";
 import { cn } from "@/lib/utils";
-import { useCatalogStore, useAnalyticsStore } from "@/lib/store";
+import { useCatalogStore } from "@/lib/store";
+import { useUserSessions } from "@/lib/hooks";
 
 const COMPLETED_THRESHOLD = 90;
 
@@ -144,13 +145,8 @@ export function Catalog({
     setLoadingSuggestions,
   } = useCatalogStore();
 
-  // Use sessions from analytics store (shared with AnalyticsPage, MyRankingsOverview, DashboardOverview)
-  const {
-    sessions,
-    loadingSessions,
-    setSessions,
-    setLoadingSessions,
-  } = useAnalyticsStore();
+  // React Query for sessions (shared cache with AnalyticsPage, MyRankingsOverview)
+  const { data: sessions = [], isLoading: loadingSessions } = useUserSessions(user?.id);
 
   // When parent opens analytics or rankings panel, keep that tab selected in sidebar (single dep so array size is stable)
   // When neither is active (e.g., RankingWidget is open), reset to search view
@@ -161,7 +157,7 @@ export function Catalog({
     else if (activePanel === null) setCatalogView("search");
   }, [activePanel, setCatalogView]);
 
-  // Derive completed rankings from shared sessions store
+  // Derive completed rankings from sessions
   const rankingResults = useMemo(() => {
     return sessions
       .filter((s) => (s.convergence_score ?? 0) >= COMPLETED_THRESHOLD)
@@ -170,22 +166,6 @@ export function Catalog({
   
   const loadingRankingResults = loadingSessions;
   const [rankingResultsImageErrors, setRankingResultsImageErrors] = useState<Record<string, boolean>>({});
-
-  // Load sessions when rankings tab is active and sessions aren't loaded yet
-  useEffect(() => {
-    if (catalogView !== "rankings" || !user || sessions.length > 0) return;
-    
-    let cancelled = false;
-    setLoadingSessions(true);
-    getUserSessions(user.id)
-      .then((data) => {
-        if (cancelled || !Array.isArray(data)) return;
-        setSessions(data);
-      })
-      .catch(() => setSessions([]))
-      .finally(() => { if (!cancelled) setLoadingSessions(false); });
-    return () => { cancelled = true; };
-  }, [catalogView, user, sessions.length, setSessions, setLoadingSessions]);
 
   // Fetch suggestions when query changes
   useEffect(() => {

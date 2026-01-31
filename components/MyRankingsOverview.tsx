@@ -327,7 +327,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
               mobileTab === "draft" ? "bg-background shadow-xs text-primary" : "text-muted-foreground"
             )}
           >
-            Draft ({draftSessions.length})
+            Not Started ({draftSessions.length})
           </button>
           <button
             type="button"
@@ -337,7 +337,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
               mobileTab === "progress" ? "bg-background shadow-xs text-primary" : "text-muted-foreground"
             )}
           >
-            Progress ({incompleteSessions.length})
+            In Progress ({incompleteSessions.length})
           </button>
           <button
             type="button"
@@ -347,7 +347,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
               mobileTab === "settled" ? "bg-background shadow-xs text-primary" : "text-muted-foreground"
             )}
           >
-            Settled ({completedSessions.length})
+            Complete ({completedSessions.length})
           </button>
         </div>
         <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
@@ -358,7 +358,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
               ))}
               {draftSessions.length === 0 && (
                 <p className="text-xs font-mono text-muted-foreground/80 py-8 text-center">
-                  No draft rankings yet
+                  No rankings yet
                 </p>
               )}
             </>
@@ -394,7 +394,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
       <div className="hidden sm:grid gap-4 grid-cols-3 flex-1 min-h-0 min-w-0">
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
           <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
-            Draft zone
+            Not Started
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`draft-${sortField}-${sortDir}`}>
             {draftSessions.map((session) => (
@@ -409,7 +409,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
         </div>
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
           <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
-            Progress zone
+            In Progress
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`progress-${sortField}-${sortDir}`}>
             {incompleteSessions.map((session) => (
@@ -424,7 +424,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
         </div>
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
           <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
-            Settled zone
+            Complete
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`settled-${sortField}-${sortDir}`}>
             {completedSessions.map((session) => (

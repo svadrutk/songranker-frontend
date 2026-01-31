@@ -52,6 +52,53 @@
         }
       }
     },
+    "/suggest": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Suggest",
+        "operationId": "suggest_suggest_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "title": "Query"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ArtistSuggestion"
+                  },
+                  "title": "Response Suggest Suggest Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tracks/{release_group_id}": {
       "get": {
         "tags": [
@@ -141,6 +188,30 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activity/global": {
+      "get": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Get Global Activity",
+        "description": "Return global aggregate stats: total sessions, comparisons, artists ranked, avg convergence.",
+        "operationId": "get_global_activity_activity_global_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Global Activity Activity Global Get"
+                }
               }
             }
           }
@@ -381,6 +452,50 @@
         }
       }
     },
+    "/sessions/{session_id}/comparisons/last": {
+      "delete": {
+        "tags": [
+          "sessions"
+        ],
+        "summary": "Undo Last Comparison",
+        "description": "Undo the last comparison in a session.\nRestores previous ELO values and deletes the comparison record.\nTriggers a ranking recalculation in the background.",
+        "operationId": "undo_last_comparison_sessions__session_id__comparisons_last_delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UndoComparisonResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/sessions": {
       "post": {
         "tags": [
@@ -462,13 +577,61 @@
         }
       }
     },
+    "/leaderboard/artists": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Get Artists With Leaderboards",
+        "description": "List artists that have global leaderboards, ordered by popularity (desc).\ntotal_comparisons = number of distinct users who have ranked that artist (one per user per artist).\nUsed by the dashboard for \"Most popular artists\" and to link to each leaderboard.",
+        "operationId": "get_artists_with_leaderboards_leaderboard_artists_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Max number of artists to return",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Max number of artists to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtistsWithLeaderboardsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/leaderboard/{artist}": {
       "get": {
         "tags": [
           "leaderboard"
         ],
         "summary": "Get Global Leaderboard",
-        "description": "Get the global leaderboard for a specific artist.\nReturns the top songs ranked by global_elo across all user sessions.\n\n- **artist**: The artist name (must match exactly as stored in the database)\n- **limit**: Maximum number of songs to return (default: 100, max: 500)",
+        "description": "Get the global leaderboard for a specific artist.\nReturns the top songs ranked by global_elo across all user sessions.\n\n- **artist**: The artist name (must match the name stored in the database exactly)\n- **limit**: Maximum number of songs to return (default: 100, max: 500)\n\nIf there are pending comparisons and the ranking hasn't updated in the required interval,\nthis endpoint will trigger a background global ranking update.",
         "operationId": "get_global_leaderboard_leaderboard__artist__get",
         "parameters": [
           {
@@ -525,7 +688,7 @@
           "leaderboard"
         ],
         "summary": "Get Artist Leaderboard Stats",
-        "description": "Get statistics about an artist's global leaderboard.\nReturns metadata without the full song list (lighter weight than full leaderboard).",
+        "description": "Get statistics about an artist's global leaderboard.\nReturns metadata without the full song list (lighter weight than full leaderboard).\nArtist name must match the name stored in the database exactly.",
         "operationId": "get_artist_leaderboard_stats_leaderboard__artist__stats_get",
         "parameters": [
           {
@@ -543,7 +706,53 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Artist Leaderboard Stats Leaderboard  Artist  Stats Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback": {
+      "post": {
+        "tags": [
+          "feedback"
+        ],
+        "summary": "Create Feedback",
+        "description": "Submit user feedback, bug reports, or feature requests.",
+        "operationId": "create_feedback_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedbackCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedbackResponse"
+                }
               }
             }
           },
@@ -613,6 +822,66 @@
   },
   "components": {
     "schemas": {
+      "ArtistSuggestion": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ArtistSuggestion"
+      },
+      "ArtistWithLeaderboard": {
+        "properties": {
+          "artist": {
+            "type": "string",
+            "title": "Artist"
+          },
+          "total_comparisons": {
+            "type": "integer",
+            "title": "Total Comparisons"
+          },
+          "last_updated": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Updated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artist",
+          "total_comparisons"
+        ],
+        "title": "ArtistWithLeaderboard",
+        "description": "An artist that has a global leaderboard. total_comparisons = distinct users who have ranked this artist (one per user)."
+      },
+      "ArtistsWithLeaderboardsResponse": {
+        "properties": {
+          "artists": {
+            "items": {
+              "$ref": "#/components/schemas/ArtistWithLeaderboard"
+            },
+            "type": "array",
+            "title": "Artists"
+          }
+        },
+        "type": "object",
+        "required": [
+          "artists"
+        ],
+        "title": "ArtistsWithLeaderboardsResponse",
+        "description": "Response listing artists that have global leaderboards."
+      },
       "ComparisonCreate": {
         "properties": {
           "song_a_id": {
@@ -772,6 +1041,78 @@
         "type": "object",
         "title": "CoverArtArchive"
       },
+      "FeedbackCreate": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "FeedbackCreate"
+      },
+      "FeedbackResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "message",
+          "created_at"
+        ],
+        "title": "FeedbackResponse"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -801,6 +1142,11 @@
           "total_comparisons": {
             "type": "integer",
             "title": "Total Comparisons"
+          },
+          "pending_comparisons": {
+            "type": "integer",
+            "title": "Pending Comparisons",
+            "default": 0
           },
           "last_updated": {
             "anyOf": [
@@ -1290,6 +1636,52 @@
           "tracks"
         ],
         "title": "TrackResponse"
+      },
+      "UndoComparisonResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "comparison_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Comparison Id"
+          },
+          "song_a_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Song A Id"
+          },
+          "song_b_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Song B Id"
+          },
+          "restored_elo_a": {
+            "type": "number",
+            "title": "Restored Elo A"
+          },
+          "restored_elo_b": {
+            "type": "number",
+            "title": "Restored Elo B"
+          },
+          "sync_queued": {
+            "type": "boolean",
+            "title": "Sync Queued",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "comparison_id",
+          "song_a_id",
+          "song_b_id",
+          "restored_elo_a",
+          "restored_elo_b"
+        ],
+        "title": "UndoComparisonResponse"
       },
       "ValidationError": {
         "properties": {

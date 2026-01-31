@@ -90,7 +90,7 @@ function getThemeColors(isDark: boolean) {
   };
 }
 
-const DEFAULT_CHART_HEIGHT = 280;
+const DEFAULT_CHART_HEIGHT = 480;
 
 export function ComparisonsPerArtistChart({
   artists,
@@ -102,19 +102,33 @@ export function ComparisonsPerArtistChart({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-  // Track mount state to avoid SSR hydration issues with theme
+  // Track mount state and handle resizing
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Detect mobile screen
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+    
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (containerRef.current) {
+        setDimensions({
+          width: containerRef.current.clientWidth,
+          height: Math.max(containerRef.current.clientHeight, height)
+        });
+      }
+    };
+    
+    handleResize();
+    
+    const observer = new ResizeObserver(handleResize);
+    if (containerRef.current) observer.observe(containerRef.current);
+    
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      observer.disconnect();
+    };
+  }, [height]);
 
   const topArtistsRaw = useMemo(() => artists.slice(0, TOP_N), [artists]);
 
@@ -137,14 +151,20 @@ export function ComparisonsPerArtistChart({
     const isDark = resolvedTheme === "dark";
     const colors = getThemeColors(isDark);
     const container = containerRef.current;
-    const svg = d3.select(svgRef.current);
+    
+    // Get container dimensions
+    const containerWidth = dimensions.width || container.clientWidth;
+    // Use the larger of the two to fill the space
+    const containerHeight = dimensions.height || height;
+
+    const svg = d3.select(svgRef.current)
+      .attr("width", containerWidth)
+      .attr("height", containerHeight);
+    
     svg.selectAll("*").remove();
 
-    // Get container dimensions
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
     // Margins: left for artist names, right for badges, bottom for x-axis
-    const margin = { top: 50, right: 80, bottom: 50, left: 140 };
+    const margin = { top: 40, right: 80, bottom: 45, left: 150 };
     const chartWidth = containerWidth - margin.left - margin.right;
     const chartHeight = containerHeight - margin.top - margin.bottom;
 
@@ -519,7 +539,7 @@ export function ComparisonsPerArtistChart({
     return () => {
       tooltip.remove();
     };
-  }, [mounted, topArtists, topRanks, shuffledColors, height, onSelectArtist, resolvedTheme]);
+  }, [mounted, topArtists, topRanks, shuffledColors, height, onSelectArtist, resolvedTheme, dimensions.width, dimensions.height]);
 
   if (topArtists.length === 0) return null;
 
@@ -616,9 +636,8 @@ export function ComparisonsPerArtistChart({
     >
       <svg
         ref={svgRef}
+        className="w-full h-full"
         style={{
-          width: "100%",
-          height: `${height}px`,
           backgroundColor: "transparent",
         }}
       />
