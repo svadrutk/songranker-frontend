@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/app/providers";
 import { AuthProvider } from "@/components/AuthProvider";
@@ -65,6 +66,19 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning className="h-full w-full">
       <head>
+        {process.env.NODE_ENV === "development" && (
+          <>
+            <Script
+              src="//unpkg.com/react-grab/dist/index.global.js"
+              crossOrigin="anonymous"
+              strategy="beforeInteractive"
+            />
+            <Script
+              src="//unpkg.com/@react-grab/opencode/dist/client.global.js"
+              strategy="lazyOnload"
+            />
+          </>
+        )}
         <meta name="theme-color" content="#ffffff" />
       </head>
       <body

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { getSessionDetail, createComparison, type SessionSong } from "@/lib/api";
 import { getNextPair } from "@/lib/pairing";
 import { calculateNewRatings, calculateKFactor } from "@/lib/elo";
-import { Music, LogIn, Loader2, Trophy, Scale, Meh, Sword, ChartNetwork, Eye } from "lucide-react";
+import { Music, LogIn, Loader2, Trophy, Scale, Meh, Sword, ChartNetwork, Eye, RotateCcw } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { RankingCard } from "@/components/RankingCard";
 import { Leaderboard } from "@/components/Leaderboard";
@@ -24,7 +24,6 @@ export function RankingWidget({
 }: RankingWidgetProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
   const isMounted = useRef(true);
-  const prevTop10Ref = useRef<string[]>([]);
   const [songs, setSongs] = useState<SessionSong[]>([]);
   const [currentPair, setCurrentPair] = useState<[SessionSong, SessionSong] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,13 +44,11 @@ export function RankingWidget({
 
   useEffect(() => {
     const handleBlur = () => {
-      console.log("[Timer] Window blurred. Pausing timer...");
       blurTimeRef.current = Date.now();
     };
     const handleFocus = () => {
       if (blurTimeRef.current) {
         const pauseDuration = Date.now() - blurTimeRef.current;
-        console.log(`[Timer] Window focused. Resumed. Paused for ${pauseDuration}ms`);
         lastPairLoadTime.current += pauseDuration;
         blurTimeRef.current = null;
       }
@@ -65,14 +62,11 @@ export function RankingWidget({
     };
   }, []);
 
-  // Pause timer when peeking
   useEffect(() => {
     if (showPeek) {
-      console.log("[Timer] Peek started. Pausing timer...");
       peekStartTimeRef.current = Date.now();
     } else if (peekStartTimeRef.current) {
       const peekDuration = Date.now() - peekStartTimeRef.current;
-      console.log(`[Timer] Peek ended. Resumed. Paused for ${peekDuration}ms`);
       lastPairLoadTime.current += peekDuration;
       peekStartTimeRef.current = null;
     }
@@ -94,7 +88,6 @@ export function RankingWidget({
     };
   }, []);
 
-  // Sync convergence ref whenever convergence state updates
   useEffect(() => {
     previousConvergenceRef.current = convergence;
   }, [convergence]);
@@ -102,7 +95,6 @@ export function RankingWidget({
   useEffect(() => {
     if (!isRanking || !sessionId) return;
 
-    // Reset all session-specific state when the sessionId changes or ranking starts
     setSongs([]);
     setCurrentPair(null);
     setTotalDuels(0);
@@ -113,7 +105,6 @@ export function RankingWidget({
     setIsSkipping(false);
     setShowRankUpdate(false);
     if (notificationTimerRef.current) clearTimeout(notificationTimerRef.current);
-    prevTop10Ref.current = [];
     previousConvergenceRef.current = 0;
 
     let isCurrent = true;
@@ -130,9 +121,7 @@ export function RankingWidget({
           lastPairLoadTime.current = Date.now();
         }
       } catch (error) {
-        if (isCurrent) {
-          console.error("Failed to load ranking songs:", error);
-        }
+        console.error("Failed to load ranking songs:", error);
       } finally {
         if (isMounted.current && isCurrent) {
           setIsLoading(false);
@@ -151,12 +140,9 @@ export function RankingWidget({
   const optimisticMin = Math.min(40, quantityProgress);
   const displayScore = Math.max(convergence, optimisticMin);
 
-  // Detect when progress is stuck at 40% and show hint after delay
   useEffect(() => {
     if (displayScore === 40 && quantityProgress >= 40) {
-      const timer = setTimeout(() => {
-        setShowProgressHint(true);
-      }, 4000); // 4 second delay
+      const timer = setTimeout(() => setShowProgressHint(true), 4000);
       return () => clearTimeout(timer);
     } else {
       setShowProgressHint(false);
@@ -175,9 +161,7 @@ export function RankingWidget({
 
       const decisionTime = Date.now() - lastPairLoadTime.current;
       const kFactor = calculateKFactor(decisionTime);
-      console.log(`[Timer] Final Decision Time: ${decisionTime}ms (K-Factor: ${kFactor})`);
 
-      // Wait for winner animation/overlay before switching
       await new Promise((resolve) => setTimeout(resolve, 600));
 
       const scoreA = tie ? 0.5 : wId === songA.song_id ? 1 : 0;
@@ -210,9 +194,7 @@ export function RankingWidget({
           const newScore = response.convergence_score ?? 0;
           if (isMounted.current) {
             setConvergence(prev => {
-              if (newScore > prev && newScore >= 90) {
-                triggerRankUpdateNotification();
-              }
+              if (newScore > prev && newScore >= 90) triggerRankUpdateNotification();
               return Math.max(prev, newScore);
             });
           }
@@ -221,68 +203,45 @@ export function RankingWidget({
             const pollForUpdate = async () => {
               if (!isMounted.current) return;
               
-              const maxAttempts = 4; // Try up to 4 times
-              const delays = [400, 800, 1500, 2500]; // Exponential backoff: 400ms, 800ms, 1.5s, 2.5s
-              
-              // Track the baseline convergence to detect updates
-              let previousConvergence = previousConvergenceRef.current;
+              const maxAttempts = 4;
+              const delays = [400, 800, 1500, 2500];
+              const previousConvergenceValue = previousConvergenceRef.current;
               
               for (let attempt = 0; attempt < maxAttempts; attempt++) {
                 if (!isMounted.current) return;
-                
-                // Wait before fetching (skip delay on first attempt for immediate check)
-                if (attempt > 0) {
-                  await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]));
-                }
+                if (attempt > 0) await new Promise(resolve => setTimeout(resolve, delays[attempt - 1]));
                 
                 try {
                   const detail = await getSessionDetail(sessionId);
                   if (detail && isMounted.current) {
                     if (detail.songs && detail.songs.length > 0) {
-                      setSongs(prevSongs => {
-                        return detail.songs.map(backendSong => {
-                          const isCurrent = currentPair.some(p => p.song_id === backendSong.song_id);
-                          if (isCurrent) {
-                            const local = prevSongs.find(s => s.song_id === backendSong.song_id);
-                            return { ...backendSong, local_elo: local?.local_elo ?? backendSong.local_elo };
-                          }
-                          return backendSong;
-                        });
-                      });
+                      setSongs(prevSongs => detail.songs.map(backendSong => {
+                        const isCurrentPair = currentPair.some(p => p.song_id === backendSong.song_id);
+                        if (isCurrentPair) {
+                          const local = prevSongs.find(s => s.song_id === backendSong.song_id);
+                          return { ...backendSong, local_elo: local?.local_elo ?? backendSong.local_elo };
+                        }
+                        return backendSong;
+                      }));
                     }
                     
                     const detailScore = detail.convergence_score ?? 0;
-                    
-                    // Check if convergence score has actually updated
-                    if (detailScore > previousConvergence) {
+                    if (detailScore > previousConvergenceValue) {
                       setConvergence(prev => {
-                        if (detailScore > prev && detailScore >= 90) {
-                          triggerRankUpdateNotification();
-                        }
+                        if (detailScore > prev && detailScore >= 90) triggerRankUpdateNotification();
                         return Math.max(prev, detailScore);
                       });
                       setTotalDuels(prev => Math.max(prev, detail.comparison_count));
-                      
-                      // Update the tracking ref and local variable for next iteration
                       previousConvergenceRef.current = detailScore;
-                      previousConvergence = detailScore;
-                      
-                      console.log(`[Sync] Rankings updated after ${attempt + 1} poll(s)`);
-                      return; // Success - stop polling
+                      return;
                     }
-                    
-                    // Update state even if convergence didn't change (bt_strength might have)
                     setTotalDuels(prev => Math.max(prev, detail.comparison_count));
                   }
                 } catch (error) {
                   console.error(`[Sync] Poll attempt ${attempt + 1} failed:`, error);
                 }
               }
-              
-              console.log(`[Sync] Polling completed after ${maxAttempts} attempts`);
             };
-
-            // Start polling immediately (first check happens without delay)
             pollForUpdate();
           }
         }
@@ -298,12 +257,9 @@ export function RankingWidget({
     
     setIsSkipping(true);
     const decisionTime = Date.now() - lastPairLoadTime.current;
-    // Short delay for visual feedback
     await new Promise((resolve) => setTimeout(resolve, 200));
 
     const [songA, songB] = currentPair;
-
-    // Apply "double loss" penalty in local state for immediate feedback
     const [newEloA] = calculateNewRatings(songA.local_elo, songB.local_elo, 0);
     const [, newEloB] = calculateNewRatings(songA.local_elo, songB.local_elo, 1);
 
@@ -316,11 +272,9 @@ export function RankingWidget({
     setCurrentPair(getNextPair(updatedSongs));
     lastPairLoadTime.current = Date.now();
 
-
     setTotalDuels((prev) => prev + 1);
     setIsSkipping(false);
 
-    // Persist skip to backend
     createComparison(sessionId, {
       song_a_id: songA.song_id,
       song_b_id: songB.song_id,
@@ -328,15 +282,12 @@ export function RankingWidget({
       is_tie: false,
       decision_time_ms: decisionTime,
     }).catch(err => console.error("Failed to record skip:", err));
-
-
   }, [currentPair, sessionId, songs]);
 
   useEffect(() => {
     if (!currentPair || !!winnerId || isTie || isSkipping) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only active on non-mobile screens (md breakpoint is typically 768px)
       if (window.innerWidth < 768) return;
 
       switch (e.code) {
@@ -405,33 +356,9 @@ export function RankingWidget({
         <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
           Loading Ranking Data...
         </p>
-    </div>
-  );
-}
-
-function KeyboardShortcutsHelp(): JSX.Element {
-  return (
-    <div className="hidden md:flex flex-col gap-1.5 fixed top-24 right-8 z-40 opacity-40 hover:opacity-100 transition-opacity p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-primary/5">
-      <div className="flex items-center justify-end gap-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">Select Left</span>
-        <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">←</kbd>
       </div>
-      <div className="flex items-center justify-end gap-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">Select Right</span>
-        <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">→</kbd>
-      </div>
-      <div className="flex items-center justify-end gap-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">Tie</span>
-        <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">↑</kbd>
-      </div>
-      <div className="flex items-center justify-end gap-3">
-        <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">IDC</span>
-        <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">↓</kbd>
-      </div>
-    </div>
-  );
-}
-
+    );
+  }
 
   if (isFinished) {
     return (
@@ -465,6 +392,11 @@ function KeyboardShortcutsHelp(): JSX.Element {
                 onContinue={() => setShowPeek(false)} 
                 isPreview 
               />
+              <div className="absolute top-4 right-4 z-50">
+                <Button variant="ghost" size="icon" onClick={() => setShowPeek(false)} className="rounded-full">
+                  <RotateCcw className="h-6 w-6" />
+                </Button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -511,20 +443,20 @@ function KeyboardShortcutsHelp(): JSX.Element {
             <SpeedLines side="right" />
           </div>
 
-          <div className="flex items-center justify-center gap-2 md:gap-4 text-[8px] md:text-[11px] lg:text-xs font-mono text-muted-foreground/60 uppercase font-bold">
+          <div className="flex items-center justify-center gap-3 md:gap-6 text-[10px] md:text-xs lg:text-sm font-mono text-muted-foreground/60 uppercase font-bold">
             <StatBadge 
-              icon={<div className="h-1 w-1 md:h-1.5 md:w-1.5 rounded-full bg-primary animate-pulse" />} 
+              icon={<div className="h-2 w-2 md:h-2.5 md:w-2.5 rounded-full bg-primary animate-pulse" />} 
               label={`${songs.length} Tracks`} 
             />
             <StatBadge 
-              icon={<Trophy className="h-3 w-3 md:h-4 md:w-4 text-primary/60" />} 
+              icon={<Trophy className="h-4 w-4 md:h-5 md:w-5 text-primary/60" />} 
               label={`${totalDuels} Duels`} 
             />
           </div>
         </div>
 
         {/* Progress Section */}
-        <div className="w-full max-w-xl space-y-1.5 md:space-y-2 px-6 md:px-4 shrink-0 relative">
+        <div className="w-full max-w-xl space-y-1 md:space-y-2 px-4 shrink-0 relative">
           <div className="flex items-center justify-between px-1">
              <p className="text-[7px] md:text-[10px] font-mono font-bold uppercase tracking-[0.1em] md:tracking-[0.2em] text-primary/60">
                {getConvergenceLabel(displayScore)}
@@ -544,17 +476,17 @@ function KeyboardShortcutsHelp(): JSX.Element {
 
            <AnimatePresence>
              {showProgressHint && displayScore === 40 && (
-               <motion.div
-                 initial={{ opacity: 0, y: -5 }}
-                 animate={{ opacity: 1, y: 0 }}
-                 exit={{ opacity: 0, y: -5 }}
-                 className="flex items-center justify-center gap-1.5 md:gap-2 pt-0.5 md:pt-1"
-               >
-                 <Sword className="h-2.5 w-2.5 md:h-3 md:w-3 text-primary/50 animate-pulse" />
-                 <p className="text-[8px] md:text-[10px] font-mono text-muted-foreground/70">
-                   Keep battling! A few more duels will refine your rankings...
-                 </p>
-               </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="flex items-center justify-center gap-1.5 md:gap-2 pt-0.5 md:pt-1"
+                >
+                  <Sword className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary/50 animate-pulse" />
+                  <p className="text-[8px] md:text-[10px] font-mono text-muted-foreground/70">
+                    Keep battling! A few more duels will refine your rankings...
+                  </p>
+                </motion.div>
              )}
            </AnimatePresence>
 
@@ -564,12 +496,12 @@ function KeyboardShortcutsHelp(): JSX.Element {
                  initial={{ opacity: 0, y: 10 }}
                  animate={{ opacity: 1, y: 0 }}
                  exit={{ opacity: 0, y: -10 }}
-                 className="flex justify-center gap-2 md:gap-3 pt-2 md:pt-4"
+                 className="flex flex-col items-center pt-6 md:pt-4"
                >
                  {displayScore >= 90 ? (
                    <Button 
                      onClick={() => setIsFinished(true)}
-                     className="h-10 md:h-14 px-5 md:px-8 rounded-xl bg-muted/10 hover:bg-primary/5 text-green-500 border border-green-500 font-mono hover:cursor-pointer uppercase tracking-[0.15em] md:tracking-[0.25em] text-[9px] md:text-xs font-black transition-all group active:scale-95"
+                     className="h-12 md:h-14 w-full rounded-xl bg-muted/10 hover:bg-primary/5 text-green-500 border border-green-500 font-mono hover:cursor-pointer uppercase tracking-[0.15em] md:tracking-[0.25em] text-[10px] md:text-xs font-black transition-all group active:scale-95"
                    >
                      View Results
                    </Button>
@@ -577,7 +509,7 @@ function KeyboardShortcutsHelp(): JSX.Element {
                    <Button 
                      onClick={() => setShowPeek(true)}
                      variant="outline"
-                     className="h-9 md:h-14 border-primary/20 hover:border-primary/40 text-muted-foreground hover:text-primary font-mono uppercase tracking-widest text-[8px] md:text-[10px] font-black py-2 md:py-3 px-3 md:px-6 rounded-xl group bg-background/50 backdrop-blur-sm"
+                     className="h-11 md:h-14 w-full border-primary/20 hover:border-primary/40 text-muted-foreground hover:text-primary font-mono uppercase tracking-widest text-[9px] md:text-[10px] font-black py-2 md:py-3 px-3 md:px-6 rounded-xl group bg-background/50 backdrop-blur-sm"
                    >
                      <Eye className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1.5 md:mr-2 group-hover:scale-110 transition-transform" />
                      Peek Rankings
@@ -586,28 +518,25 @@ function KeyboardShortcutsHelp(): JSX.Element {
                </motion.div>
              )}
            </AnimatePresence>
-
         </div>
 
         {/* Duel Area */}
-        <div className="flex-1 flex flex-col md:flex-row items-center gap-2 md:gap-12 lg:gap-16 w-full justify-center px-4 min-h-0 overflow-visible">
+        <div className="flex-1 flex flex-col md:flex-row items-center gap-4 md:gap-12 lg:gap-16 w-full justify-center px-2 md:px-12 min-h-0 overflow-visible">
           {!currentPair ? (
             <PairingLoader />
           ) : (
-            <div className="flex flex-col md:flex-row items-center gap-2 md:gap-12 lg:gap-16 w-full justify-center h-full min-h-0">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-12 lg:gap-16 w-full justify-center min-h-0">
               {[0, 1].map((index) => (
-
-
                 <Fragment key={index}>
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentPair[index].song_id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "linear" }}
                       className={cn(
-                        "flex justify-center flex-1 w-full min-w-0 md:min-w-[240px] max-w-full md:max-w-[360px]",
+                        "flex justify-center shrink w-full md:w-auto min-w-0",
                         index === 0 ? "items-end md:items-center" : "items-start md:items-center"
                       )}
                     >
@@ -621,35 +550,25 @@ function KeyboardShortcutsHelp(): JSX.Element {
                   </AnimatePresence>
 
                   {index === 0 && (
-                    <div className="flex flex-row md:flex-col gap-2 md:gap-4 lg:gap-6 items-center shrink-0 w-full md:w-auto justify-center px-2 md:px-0">
-                      <div className="relative hidden md:block">
-                        <div className="h-10 w-10 lg:h-16 lg:w-16 rounded-full border-2 md:border-[3px] border-primary flex items-center justify-center bg-background shadow-lg relative z-10">
-                          <span className="text-xs lg:text-lg font-mono font-black text-primary select-none">
-                            VS
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-row md:flex-col gap-2 md:gap-3 lg:gap-4 w-full md:w-auto max-w-[280px] md:max-w-none">
-                        <div className="flex-1 md:flex-none min-w-0">
+                    <div className="flex flex-row md:flex-col gap-3 md:gap-4 lg:gap-5 items-center shrink-0 w-full md:w-auto justify-center px-2 md:px-0 max-w-[300px] md:max-w-none">
+                        <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                           <RankingControlButton
-                            icon={<Scale className="h-3 w-3 md:h-5 md:w-5" />}
+                            icon={<Scale className="size-5 md:size-8 shrink-0" strokeWidth={2} />}
                             label="Tie"
                             onClick={() => handleChoice(null, true)}
                             disabled={!!winnerId || isTie || isSkipping}
                             isActive={isTie}
                           />
                         </div>
-                        <div className="flex-1 md:flex-none min-w-0">
+                        <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                           <RankingControlButton
-                            icon={<Meh className="h-3 w-3 md:h-5 md:w-5" />}
+                            icon={<Meh className="size-5 md:size-8 shrink-0" strokeWidth={2} />}
                             label="IDC"
                             onClick={handleSkip}
                             disabled={!!winnerId || isTie || isSkipping}
                             isActive={isSkipping}
                           />
                         </div>
-                      </div>
                     </div>
                   )}
                 </Fragment>
@@ -662,16 +581,11 @@ function KeyboardShortcutsHelp(): JSX.Element {
   );
 }
 
-type StatBadgeProps = Readonly<{
-  icon: React.ReactNode;
-  label: string;
-}>;
-
-function StatBadge({ icon, label }: StatBadgeProps): JSX.Element {
+function StatBadge({ icon, label }: { icon: React.ReactNode; label: string }): JSX.Element {
   return (
-    <div className="flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-0.5 md:py-1 rounded-full border border-border/40 bg-muted/10 backdrop-blur-sm">
+    <div className="flex items-center gap-2 md:gap-3 px-3 md:px-5 py-1 md:py-1.5 rounded-full border border-border/40 bg-muted/10 backdrop-blur-sm shadow-sm">
       {icon}
-      <span>{label}</span>
+      <span className="tracking-[0.1em] md:tracking-[0.2em]">{label}</span>
     </div>
   );
 }
@@ -692,15 +606,6 @@ function PairingLoader(): JSX.Element {
   );
 }
 
-type RankingPlaceholderProps = Readonly<{
-  title: string;
-  description: string;
-  icon?: React.ReactNode;
-  buttonText?: string;
-  onClick?: () => void;
-  hideButton?: boolean;
-}>;
-
 function RankingPlaceholder({
   title,
   description,
@@ -708,39 +613,32 @@ function RankingPlaceholder({
   buttonText,
   onClick,
   hideButton = false,
-}: RankingPlaceholderProps): JSX.Element {
+}: Readonly<{
+  title: string;
+  description: string;
+  icon?: React.ReactNode;
+  buttonText?: string;
+  onClick?: () => void;
+  hideButton?: boolean;
+}>): JSX.Element {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full gap-8">
       <div className="flex flex-col items-center gap-12 w-full max-w-2xl text-center">
-        {/* Responsive Placeholder Graphic */}
         <div className="relative flex items-center justify-center gap-4 md:gap-8 opacity-25 grayscale pointer-events-none select-none transform transition-all duration-700 hover:opacity-40 hover:scale-105">
-           {/* Background Glow */}
            <div className="absolute inset-0 bg-primary/20 blur-[60px] md:blur-[100px] rounded-full z-[-1]" />
-
-           {/* Left Panel (Catalog) - Hidden on Mobile */}
            <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-primary/40 bg-linear-to-b from-primary/5 to-transparent" />
-           
-           {/* Center Panel (Duel) - Always Visible */}
            <div className="flex flex-col gap-4 md:gap-6 relative">
-             {/* Decorative connection lines */}
              <div className="absolute top-1/2 left-0 right-0 h-[2px] bg-primary/20 -z-10 hidden md:block" />
              <div className="absolute left-1/2 top-0 bottom-0 w-[2px] bg-primary/20 -z-10 md:hidden" />
-
-             {/* Top Card */}
              <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-primary/60 bg-background/50 backdrop-blur-xs flex items-center justify-center">
                <div className="h-8 w-8 rounded-full bg-primary/10" />
              </div>
-             
-             {/* Bottom Card */}
              <div className="h-24 w-32 md:h-28 md:w-44 rounded-xl border-2 border-dashed border-primary/60 bg-background/50 backdrop-blur-xs flex items-center justify-center">
                <div className="h-8 w-8 rounded-full bg-primary/10" />
              </div>
            </div>
-
-           {/* Right Panel (Leaderboard) - Hidden on Mobile */}
            <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-primary/40 bg-linear-to-b from-primary/5 to-transparent" />
         </div>
-
         <div className="flex flex-col items-center gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold uppercase tracking-tight">{title}</h2>
@@ -764,40 +662,61 @@ function RankingPlaceholder({
   );
 }
 
-type RankingControlButtonProps = Readonly<{
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  isActive?: boolean;
-}>;
-
 function RankingControlButton({
   icon,
   label,
   onClick,
   disabled,
   isActive,
-}: RankingControlButtonProps): JSX.Element {
+}: {
+  icon?: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  isActive?: boolean;
+}): JSX.Element {
   return (
     <Button
       variant={isActive ? "default" : "outline"}
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "h-9 md:h-14 w-full md:w-36 rounded-lg md:rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-muted/10 hover:bg-primary/5 group shadow-sm hover:shadow-primary/5 px-2 md:px-0",
-        isActive && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary shadow-lg shadow-primary/25"
+        "h-14 md:h-18 w-full md:w-48 rounded-xl md:rounded-2xl border-border/40 hover:border-primary/50 transition-all bg-zinc-900/60 hover:bg-zinc-800/80 group shadow-lg hover:shadow-primary/5 p-0 overflow-hidden",
+        isActive && "bg-primary text-primary-foreground border-primary hover:bg-primary/90 hover:border-primary shadow-xl shadow-primary/25"
       )}
     >
-      <div className="flex items-center gap-1.5 md:gap-3">
+      <div className="flex flex-row items-stretch h-full w-full">
         {icon && (
-          <div className={cn("text-muted-foreground transition-colors shrink-0", isActive ? "text-primary-foreground" : "group-hover:text-primary")}>
+          <div className={cn(
+            "flex items-center justify-center aspect-square h-full shrink-0 transition-colors border-r border-white/5",
+            isActive ? "bg-white/20 text-white" : "bg-white/10 text-muted-foreground group-hover:text-primary group-hover:bg-white/20"
+          )}>
             {icon}
           </div>
         )}
-        <span className="text-[8px] md:text-xs font-mono uppercase tracking-widest font-black">{label}</span>
+        <div className="flex items-center justify-center flex-1 px-3">
+          <span className="text-[11px] md:text-base font-mono uppercase tracking-[0.25em] font-black">{label}</span>
+        </div>
       </div>
     </Button>
+  );
+}
+
+function KeyboardShortcutsHelp(): JSX.Element {
+  return (
+    <div className="hidden md:flex flex-col gap-1.5 fixed top-24 right-8 z-40 opacity-40 hover:opacity-100 transition-opacity p-4 rounded-xl bg-background/5 backdrop-blur-sm border border-primary/5">
+      {[
+        { label: "Select Left", key: "←" },
+        { label: "Select Right", key: "→" },
+        { label: "Tie", key: "↑" },
+        { label: "IDC", key: "↓" },
+      ].map(({ label, key }) => (
+        <div key={label} className="flex items-center justify-end gap-3">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-medium">{label}</span>
+          <kbd className="h-6 min-w-[24px] px-1.5 flex items-center justify-center rounded bg-muted/50 border border-border/50 text-muted-foreground font-mono text-[10px] font-bold shadow-sm">{key}</kbd>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -815,14 +734,14 @@ function SpeedLines({ side }: { side: "left" | "right" }): JSX.Element {
           key={`${side}-${i}`}
           className={cn("h-[1px] md:h-[2px] bg-primary/40 rounded-full", !isLeft && "ml-auto")}
           animate={{
-            width: isLeft ? [5, 20, 10, 15] : [10, 15, 5, 20],
-            opacity: isLeft ? [0.2, 0.8, 0.4] : [0.4, 0.2, 0.8],
-            x: isLeft ? [0, -2, 1, 0] : [0, 2, -1, 0],
+            width: isLeft ? [8, 12, 18, 14, 10, 8] : [10, 14, 18, 12, 8, 10],
+            opacity: isLeft ? [0.3, 0.5, 0.7, 0.5, 0.3] : [0.4, 0.6, 0.7, 0.5, 0.4],
+            x: isLeft ? [0, -1, -2, -1, 0] : [0, 1, 2, 1, 0],
           }}
           transition={{
-            duration: (isLeft ? 0.15 : 0.2) + i * 0.05,
+            duration: (isLeft ? 1.8 : 2.1) + i * 0.4,
             repeat: Infinity,
-            ease: "linear",
+            ease: "easeInOut",
           }}
         />
       ))}
