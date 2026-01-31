@@ -39,7 +39,7 @@ function VinylWing({ side }: { side: "left" | "right" }): JSX.Element {
         {PARTICLES.map((p, i) => (
           <motion.div
             key={i}
-            className="absolute w-1 h-1 bg-white rounded-full blur-[1px]"
+            className="absolute w-1 h-1 bg-amber-500 rounded-full blur-[0.5px]"
             animate={{
               opacity: [0, 1, 0],
               scale: [0, 1.2, 0],
