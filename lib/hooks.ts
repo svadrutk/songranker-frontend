@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getUserSessions,
@@ -22,6 +23,20 @@ import {
   type SessionSong,
   type ReleaseGroup,
 } from "@/lib/api";
+
+// ==================== Utilities ====================
+
+/** Returns a value that updates only after the input has been stable for delayMs. */
+export function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedValue(value), delayMs);
+    return () => clearTimeout(timer);
+  }, [value, delayMs]);
+
+  return debouncedValue;
+}
 
 // ==================== Query Keys ====================
 // Centralized query keys for consistency and cache invalidation
@@ -66,6 +81,7 @@ export function useArtistsWithLeaderboards(limit: number = 50) {
     queryKey: queryKeys.artistsWithLeaderboards(limit),
     queryFn: () => getArtistsWithLeaderboards(limit),
     staleTime: 2 * 60 * 1000, // Consider fresh for 2 minutes
+    refetchOnWindowFocus: true, // Stay in sync with global leaderboard updates
   });
 }
 
@@ -86,6 +102,7 @@ export function useGlobalLeaderboard(artist: string, limit: number = 100, enable
     enabled: enabled && !!artist,
     staleTime: 30 * 1000, // Consider fresh for 30 seconds
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes (formerly cacheTime)
+    refetchOnWindowFocus: true, // Refetch when user returns so global ranking updates appear
   });
 }
 
@@ -96,6 +113,7 @@ export function useLeaderboardStats(artist: string, enabled: boolean = true) {
     enabled: enabled && !!artist,
     staleTime: 30 * 1000,
     gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    refetchOnWindowFocus: true,
   });
 }
 

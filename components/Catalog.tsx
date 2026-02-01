@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, type JSX } from "react";
+import { useState, useMemo, useEffect, useRef, type JSX } from "react";
 import { Search, CheckCircle2, ChevronDown, ChevronUp, Layers, X, History, ListMusic, BarChart2, Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
@@ -10,7 +10,7 @@ import Image from "next/image";
 import { SessionSelector } from "@/components/SessionSelector";
 import { cn } from "@/lib/utils";
 import { useCatalogStore } from "@/lib/store";
-import { useUserSessions } from "@/lib/hooks";
+import { useUserSessions, useDebouncedValue } from "@/lib/hooks";
 
 const COMPLETED_THRESHOLD = 90;
 
@@ -167,23 +167,32 @@ export function Catalog({
   const loadingRankingResults = loadingSessions;
   const [rankingResultsImageErrors, setRankingResultsImageErrors] = useState<Record<string, boolean>>({});
 
-  // Fetch suggestions when query changes
+  const inputRef = useRef<HTMLInputElement>(null);
+  const debouncedQuery = useDebouncedValue(query, 300);
+
+  // Fetch suggestions when debounced query changes (not on every keypress)
   useEffect(() => {
-    const trimmedQuery = query.trim();
-    if (trimmedQuery.length < 2) {
+    const trimmed = query.trim();
+    if (trimmed.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
+    const trimmedDebounced = debouncedQuery.trim();
+    if (trimmedDebounced.length < 2) return;
+
     let cancelled = false;
     setLoadingSuggestions(true);
-    
-    suggestArtists(trimmedQuery)
+
+    suggestArtists(trimmedDebounced)
       .then((names) => {
         if (!cancelled) {
           setSuggestions(names);
-          setShowSuggestions(names.length > 0);
+          // Only show dropdown if input is still focused
+          if (document.activeElement === inputRef.current && names.length > 0) {
+            setShowSuggestions(true);
+          }
         }
       })
       .catch(() => {
@@ -196,10 +205,11 @@ export function Catalog({
     return () => {
       cancelled = true;
     };
-  }, [query, setSuggestions, setShowSuggestions, setLoadingSuggestions]);
+  }, [query, debouncedQuery, setSuggestions, setShowSuggestions, setLoadingSuggestions]);
 
   const handleSuggestionClick = (suggestion: string) => {
     setQuery(suggestion);
+    setSuggestions([]);
     setShowSuggestions(false);
     
     if (!user) {
@@ -280,15 +290,16 @@ export function Catalog({
 
   return (
     <div className="flex flex-col h-full gap-6 overflow-hidden relative">
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 relative z-10">
         {/* View Toggle */}
         <ViewToggle onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
 
         {catalogView === "search" && (
           <div className="flex gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
-            <div className="relative flex-1">
+            <div className="relative flex-1 overflow-visible">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
               <input
+                ref={inputRef}
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}

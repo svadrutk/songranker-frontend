@@ -283,7 +283,7 @@ export default function Home(): JSX.Element {
               isSidebarCollapsed ? "max-w-none px-2 md:px-3" : "max-w-none px-4 md:px-6"
             )}
           >
-            <MyRankingsOverview isSidebarCollapsed={isSidebarCollapsed} />
+            <MyRankingsOverview isSidebarCollapsed={isSidebarCollapsed} onSessionDelete={handleSessionDelete} />
           </div>
         ) : (
           <RankingWidget

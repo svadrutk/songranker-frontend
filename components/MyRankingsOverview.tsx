@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, type JSX } from "react";
-import { Calendar, CheckCircle2, Layers, Loader2, Music, PlayCircle, Swords, Trophy, ArrowDownAZ, ArrowUpAZ, ArrowDown, ArrowUp, Clock } from "lucide-react";
+import { Calendar, CheckCircle2, Layers, Loader2, Music, PlayCircle, Swords, Trophy, ArrowDownAZ, ArrowUpAZ, ArrowDown, ArrowUp, Clock, Trash2 } from "lucide-react";
 import Image from "next/image";
 import type { SessionSummary } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { useNavigationStore, useAnalyticsStore } from "@/lib/store";
-import { useUserSessions } from "@/lib/hooks";
+import { useUserSessions, useDeleteSession } from "@/lib/hooks";
 
 const COMPLETION_THRESHOLD = 25;
 /** Same as RankingWidget "View Results" threshold (displayScore >= 90) so completed rankings appear in Completed column. */
@@ -15,15 +15,17 @@ const COMPLETED_THRESHOLD = 90;
 
 type MyRankingsOverviewProps = Readonly<{
   isSidebarCollapsed?: boolean;
+  onSessionDelete?: (sessionId: string) => void;
 }>;
 
 type SortField = "completion" | "date" | "artist";
 type SortDir = "asc" | "desc";
 
-export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOverviewProps): JSX.Element {
+export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
   const { navigateToRanking, navigateToResults } = useNavigationStore();
   const { user } = useAuth();
-  
+  const deleteSessionMutation = useDeleteSession();
+
   // React Query for sessions (shared cache with AnalyticsPage)
   const { data: sessions = [], isLoading: loading } = useUserSessions(user?.id);
   
@@ -117,12 +119,23 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
     return "green";
   }
 
+  const handleDeleteSession = (sessionId: string) => {
+    if (!confirm("Delete this ranking? This cannot be undone.")) return;
+    deleteSessionMutation.mutate(sessionId, {
+      onSuccess: () => onSessionDelete?.(sessionId),
+    });
+  };
+
   function SessionCard({
     session,
     openResultsOnClick,
+    onDelete,
+    isDeleting,
   }: {
     session: SessionSummary;
     openResultsOnClick?: boolean;
+    onDelete?: (sessionId: string) => void;
+    isDeleting?: boolean;
   }) {
     const score = session.convergence_score ?? 0;
     const scheme = completionColor(score);
@@ -147,12 +160,27 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
       }
     };
 
+    const handleDeleteClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      onDelete?.(session.session_id);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleClick();
+      }
+    };
+
     return (
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={handleClick}
+        onKeyDown={handleKeyDown}
         className={cn(
-          "w-full group flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-card relative",
+          "w-full group flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-card relative cursor-pointer",
           "hover:bg-muted/50 hover:border-primary/20 text-left transition-all",
           "outline-none focus-visible:ring-2 focus-visible:ring-primary"
         )}
@@ -206,11 +234,32 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
             </p>
           )}
         </div>
-        {openResultsOnClick ? (
-          <Trophy className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
-        ) : (
-          <PlayCircle className="h-5 w-5 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
-        )}
+        <div className="flex items-center gap-1 shrink-0">
+          {onDelete && (
+            <button
+              type="button"
+              onClick={handleDeleteClick}
+              disabled={isDeleting}
+              className={cn(
+                "p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+                "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "opacity-70 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+              )}
+              aria-label="Delete ranking"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Trash2 className="h-5 w-5" />
+              )}
+            </button>
+          )}
+          {openResultsOnClick ? (
+            <Trophy className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          ) : (
+            <PlayCircle className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          )}
+        </div>
         {/* Progress bar (matches navigator green / yellow / red) */}
         <div className="absolute bottom-2 left-4 right-4 h-[2px] bg-primary/10 rounded-full overflow-hidden">
           <div
@@ -218,7 +267,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
             style={{ width: `${Math.min(100, score)}%` }}
           />
         </div>
-      </button>
+      </div>
     );
   }
 
@@ -354,7 +403,12 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
           {mobileTab === "draft" && (
             <>
               {draftSessions.map((session) => (
-                <SessionCard key={session.session_id} session={session} />
+                <SessionCard
+                key={session.session_id}
+                session={session}
+                onDelete={handleDeleteSession}
+                isDeleting={deleteSessionMutation.isPending && deleteSessionMutation.variables === session.session_id}
+              />
               ))}
               {draftSessions.length === 0 && (
                 <p className="text-xs font-mono text-muted-foreground/80 py-8 text-center">
@@ -366,7 +420,12 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
           {mobileTab === "progress" && (
             <>
               {incompleteSessions.map((session) => (
-                <SessionCard key={session.session_id} session={session} />
+                <SessionCard
+                key={session.session_id}
+                session={session}
+                onDelete={handleDeleteSession}
+                isDeleting={deleteSessionMutation.isPending && deleteSessionMutation.variables === session.session_id}
+              />
               ))}
               {incompleteSessions.length === 0 && (
                 <p className="text-xs font-mono text-muted-foreground/80 py-8 text-center">
@@ -378,7 +437,13 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
           {mobileTab === "settled" && (
             <>
               {completedSessions.map((session) => (
-                <SessionCard key={session.session_id} session={session} openResultsOnClick />
+                <SessionCard
+                key={session.session_id}
+                session={session}
+                openResultsOnClick
+                onDelete={handleDeleteSession}
+                isDeleting={deleteSessionMutation.isPending && deleteSessionMutation.variables === session.session_id}
+              />
               ))}
               {completedSessions.length === 0 && (
                 <p className="text-xs font-mono text-muted-foreground/80 py-8 text-center">
@@ -398,7 +463,12 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`draft-${sortField}-${sortDir}`}>
             {draftSessions.map((session) => (
-              <SessionCard key={session.session_id} session={session} />
+              <SessionCard
+                key={session.session_id}
+                session={session}
+                onDelete={handleDeleteSession}
+                isDeleting={deleteSessionMutation.isPending && deleteSessionMutation.variables === session.session_id}
+              />
             ))}
             {draftSessions.length === 0 && (
               <p className="text-xs font-mono text-muted-foreground/80 py-4 text-center">
@@ -413,7 +483,12 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`progress-${sortField}-${sortDir}`}>
             {incompleteSessions.map((session) => (
-              <SessionCard key={session.session_id} session={session} />
+              <SessionCard
+                key={session.session_id}
+                session={session}
+                onDelete={handleDeleteSession}
+                isDeleting={deleteSessionMutation.isPending && deleteSessionMutation.variables === session.session_id}
+              />
             ))}
             {incompleteSessions.length === 0 && (
               <p className="text-xs font-mono text-muted-foreground/80 py-4 text-center">
@@ -428,7 +503,13 @@ export function MyRankingsOverview({ isSidebarCollapsed = false }: MyRankingsOve
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`settled-${sortField}-${sortDir}`}>
             {completedSessions.map((session) => (
-              <SessionCard key={session.session_id} session={session} openResultsOnClick />
+              <SessionCard
+                key={session.session_id}
+                session={session}
+                openResultsOnClick
+                onDelete={handleDeleteSession}
+                isDeleting={deleteSessionMutation.isPending && deleteSessionMutation.variables === session.session_id}
+              />
             ))}
             {completedSessions.length === 0 && (
               <p className="text-xs font-mono text-muted-foreground/80 py-4 text-center">

@@ -11,10 +11,11 @@ import {
   TrendingUp,
   User,
 } from "lucide-react";
-import { getUserSessions, getArtistsWithLeaderboards } from "@/lib/api";
+import { getUserSessions } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import { useAnalyticsStore } from "@/lib/store";
+import { useArtistsWithLeaderboards } from "@/lib/hooks";
 
 const ComparisonsPerArtistChart = dynamic(
   () => import("@/components/charts/ComparisonsPerArtistChart").then((m) => m.ComparisonsPerArtistChart),
@@ -53,17 +54,22 @@ function StatCard({
 export function DashboardOverview({ onSelectArtist }: DashboardOverviewProps): JSX.Element {
   const { user } = useAuth();
   
-  // Use Zustand store for data (shared with AnalyticsPage)
   const {
     sessions,
     loadingSessions,
-    artistsWithLeaderboards,
-    loadingArtists,
     setSessions,
     setLoadingSessions,
     setArtistsWithLeaderboards,
     setLoadingArtists,
   } = useAnalyticsStore();
+
+  // Use React Query so leaderboard list stays in sync when we invalidate after ranking
+  const { data: artistsWithLeaderboards = [], isLoading: loadingArtists } = useArtistsWithLeaderboards(50);
+
+  useEffect(() => {
+    setArtistsWithLeaderboards(artistsWithLeaderboards);
+    setLoadingArtists(loadingArtists);
+  }, [artistsWithLeaderboards, loadingArtists, setArtistsWithLeaderboards, setLoadingArtists]);
 
   const loadSessions = useCallback(async () => {
     if (!user) {
@@ -83,32 +89,11 @@ export function DashboardOverview({ onSelectArtist }: DashboardOverviewProps): J
     }
   }, [user, setSessions, setLoadingSessions]);
 
-  const loadArtists = useCallback(async () => {
-    setLoadingArtists(true);
-    try {
-      const data = await getArtistsWithLeaderboards(50);
-      setArtistsWithLeaderboards(data ?? []);
-    } catch (err) {
-      console.error("[DashboardOverview] Failed to load artists with leaderboards:", err);
-      setArtistsWithLeaderboards([]);
-    } finally {
-      setLoadingArtists(false);
-    }
-  }, [setArtistsWithLeaderboards, setLoadingArtists]);
-
   useEffect(() => {
-    // Only load if sessions are empty (avoid refetching if already loaded)
     if (sessions.length === 0 && user) {
       loadSessions();
     }
   }, [loadSessions, sessions.length, user]);
-
-  useEffect(() => {
-    // Only load if artists are empty (avoid refetching if already loaded)
-    if (artistsWithLeaderboards.length === 0) {
-      loadArtists();
-    }
-  }, [loadArtists, artistsWithLeaderboards.length]);
 
   const totalComparisons = sessions.reduce((sum, s) => sum + (s.comparison_count ?? 0), 0);
   const artistsRanked = [...new Set(sessions.map((s) => s.primary_artist).filter(Boolean))];

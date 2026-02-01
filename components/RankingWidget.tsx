@@ -5,13 +5,15 @@ import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { getSessionDetail, createComparison, type SessionSong } from "@/lib/api";
+import { getSessionDetail, createComparison, undoLastComparison, type SessionSong } from "@/lib/api";
 import { getNextPair } from "@/lib/pairing";
 import { calculateNewRatings, calculateKFactor } from "@/lib/elo";
-import { Music, LogIn, Loader2, Trophy, Scale, Meh, Sword, ChartNetwork, Eye, RotateCcw, X } from "lucide-react";
+import { Music, LogIn, Loader2, Trophy, Scale, Meh, Sword, ChartNetwork, Eye, X, Undo2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { RankingCard } from "@/components/RankingCard";
 import { Leaderboard } from "@/components/Leaderboard";
+import { showError } from "@/components/ErrorBanner";
+import { useQueryClient } from "@tanstack/react-query";
 
 type RankingWidgetProps = Readonly<{
   isRanking?: boolean;
@@ -29,6 +31,7 @@ export function RankingWidget({
   onBackFromResults,
 }: RankingWidgetProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
+  const queryClient = useQueryClient();
   const isMounted = useRef(true);
   const [songs, setSongs] = useState<SessionSong[]>([]);
   const [currentPair, setCurrentPair] = useState<[SessionSong, SessionSong] | null>(null);
@@ -42,6 +45,7 @@ export function RankingWidget({
   const [showRankUpdate, setShowRankUpdate] = useState(false);
   const [showProgressHint, setShowProgressHint] = useState(false);
   const [showPeek, setShowPeek] = useState(false);
+  const [isUndoing, setIsUndoing] = useState(false);
   const lastPairLoadTime = useRef<number>(Date.now());
   const blurTimeRef = useRef<number | null>(null);
   const peekStartTimeRef = useRef<number | null>(null);
@@ -198,6 +202,11 @@ export function RankingWidget({
         });
 
         if (response.success) {
+          // Invalidate global leaderboard and artists-with-leaderboards so Analytics / dashboard stay in sync
+          queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+          queryClient.invalidateQueries({ queryKey: ["artists", "leaderboards"] });
+          queryClient.invalidateQueries({ queryKey: ["activity", "global"] });
+
           const newScore = response.convergence_score ?? 0;
           if (isMounted.current) {
             setConvergence(prev => {
@@ -256,8 +265,62 @@ export function RankingWidget({
         console.error("Failed to sync comparison:", error);
       }
     },
-    [currentPair, sessionId, winnerId, triggerRankUpdateNotification, songs]
+    [currentPair, sessionId, winnerId, triggerRankUpdateNotification, songs, queryClient]
   );
+
+  const handleUndo = useCallback(async (): Promise<void> => {
+    if (!sessionId || totalDuels === 0 || isUndoing) return;
+    setIsUndoing(true);
+    try {
+      const response = await undoLastComparison(sessionId);
+      if (!response.success || !isMounted.current) return;
+
+      // Invalidate global leaderboard so Analytics / dashboard stay in sync after undo
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] });
+      queryClient.invalidateQueries({ queryKey: ["artists", "leaderboards"] });
+      queryClient.invalidateQueries({ queryKey: ["activity", "global"] });
+
+      // Update UI from the undo response so we don't depend on backend ranking task finishing.
+      const updatedSongs = songs.map((s) => {
+        if (s.song_id === response.song_a_id) return { ...s, local_elo: response.restored_elo_a };
+        if (s.song_id === response.song_b_id) return { ...s, local_elo: response.restored_elo_b };
+        return s;
+      });
+      setSongs(updatedSongs);
+      setTotalDuels((prev) => prev - 1);
+      setWinnerId(null);
+      setIsTie(false);
+      lastPairLoadTime.current = Date.now();
+
+      // Show the pair that was just undone (previous comparison).
+      const songA = updatedSongs.find((s) => s.song_id === response.song_a_id);
+      const songB = updatedSongs.find((s) => s.song_id === response.song_b_id);
+      if (songA && songB) {
+        setCurrentPair([songA, songB]);
+      } else {
+        setCurrentPair(getNextPair(updatedSongs));
+      }
+
+      // Sync convergence after the backend ranking task has had time to finish.
+      setTimeout(() => {
+        if (!isMounted.current || !sessionId) return;
+        getSessionDetail(sessionId).then((detail) => {
+          if (detail && isMounted.current) {
+            setConvergence(detail.convergence_score ?? 0);
+          }
+        }).catch(() => {});
+      }, 500);
+    } catch (error) {
+      console.error("Failed to undo last comparison:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Undo isn’t available for this session. Sessions created before undo was added don’t have the data needed to restore the previous state.";
+      showError(message);
+    } finally {
+      if (isMounted.current) setIsUndoing(false);
+    }
+  }, [sessionId, totalDuels, isUndoing, songs]);
 
   const handleSkip = useCallback(async (): Promise<void> => {
     if (!currentPair || !sessionId) return;
@@ -576,6 +639,15 @@ export function RankingWidget({
                             onClick={handleSkip}
                             disabled={!!winnerId || isTie || isSkipping}
                             isActive={isSkipping}
+                          />
+                        </div>
+                        <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
+                          <RankingControlButton
+                            icon={<Undo2 className="size-5 md:size-8 shrink-0" strokeWidth={2} />}
+                            label="Undo"
+                            onClick={handleUndo}
+                            disabled={totalDuels === 0 || isUndoing || !!winnerId || isTie || isSkipping}
+                            isActive={false}
                           />
                         </div>
                     </div>

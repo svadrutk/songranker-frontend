@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useCallback, type JSX, useMemo } from "react";
+import { useEffect, useCallback, useState, type JSX, useMemo } from "react";
 import {
   BarChart3,
   Globe,
@@ -26,6 +26,7 @@ import {
   useGlobalLeaderboard,
   useLeaderboardStats,
   useArtistSuggestions,
+  useDebouncedValue,
 } from "@/lib/hooks";
 
 /** Same as ComparisonsPerArtistChart: top N artists to consider for rank. */
@@ -118,13 +119,17 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
     setSelectedArtist,
   } = useAnalyticsStore();
 
-  // React Query for suggestions (with built-in debouncing via staleTime)
-  const shouldFetchSuggestions = globalQuery.trim().length >= 2 && 
-    selectedArtist?.toLowerCase() !== globalQuery.trim().toLowerCase();
+  // Debounce artist search so we don't hit suggest on every keypress
+  const debouncedGlobalQuery = useDebouncedValue(globalQuery, 300);
+  const shouldFetchSuggestions = debouncedGlobalQuery.trim().length >= 2 &&
+    selectedArtist?.toLowerCase() !== debouncedGlobalQuery.trim().toLowerCase();
   const { data: suggestions = [], isLoading: loadingSuggestions } = useArtistSuggestions(
-    globalQuery,
+    debouncedGlobalQuery,
     shouldFetchSuggestions
   );
+
+  // Track dropdown visibility
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // React Query for leaderboard data - fetch both in parallel when artist is selected
   const { 
@@ -192,6 +197,7 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
         openAuthModal("login");
         return;
       }
+      setShowSuggestions(false);
       setSelectedArtist(artistName);
       setGlobalQuery(artistName);
     },
@@ -395,7 +401,7 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
             onClick={closeLeaderboardModal}
           >
             <div
-              className="bg-card md:border md:border-border w-full h-full md:h-auto md:max-w-3xl md:rounded-2xl shadow-2xl flex flex-col md:max-h-[calc(100vh-5rem-3rem)] overflow-hidden animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200"
+              className="bg-card md:border md:border-border w-full h-full md:h-auto md:max-w-3xl md:rounded-2xl shadow-2xl flex flex-col md:max-h-[calc(100vh-5rem-3rem)] animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -413,7 +419,8 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
                 </button>
               </div>
 
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 custom-scrollbar">
+              {/* Pills + search (outside scroll) */}
+              <div className="shrink-0 p-3 md:p-4 space-y-3 md:space-y-4 border-b border-border/40 relative z-10 overflow-visible">
                 {/* Top 3 artists - compact pills on mobile */}
                 {artistsWithLeaderboards.length > 0 && (() => {
                   const topArtists = artistsWithLeaderboards.slice(0, TOP_N_ARTISTS);
@@ -449,42 +456,48 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
                   );
                 })()}
 
-                {/* Search bar - autocomplete only */}
-                <div className="relative shrink-0">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                      type="text"
-                      value={globalQuery}
-                      onChange={(e) => setGlobalQuery(e.target.value)}
-                      placeholder="Search artist..."
-                      className="flex h-10 md:h-11 w-full rounded-lg border border-input bg-background pl-10 pr-10 py-2 text-sm transition-all focus-visible:outline-none focus-visible:border-primary/20 focus-visible:ring-1 focus-visible:ring-primary/10"
-                    />
-                    {loadingSuggestions && (
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                      </div>
-                    )}
-                  </div>
-                  {suggestions.length > 0 && user && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-[100] overflow-hidden">
-                      <div className="py-1 max-h-48 overflow-y-auto custom-scrollbar">
-                        {suggestions.slice(0, 8).map((artist) => (
-                          <button
-                            key={artist}
-                            type="button"
-                            onClick={() => handleGlobalSearch(artist)}
-                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
-                          >
-                            <Search className="h-3 w-3 text-muted-foreground/50" />
-                            <span className="font-medium">{artist}</span>
-                          </button>
-                        ))}
-                      </div>
+                {/* Search bar */}
+                <div className="relative overflow-visible">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
+                  <input
+                    type="text"
+                    value={globalQuery}
+                    onChange={(e) => {
+                      setGlobalQuery(e.target.value);
+                      if (e.target.value.trim().length >= 2) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    onFocus={() => {
+                      if (suggestions.length > 0) setShowSuggestions(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                    placeholder="Search artist..."
+                    className="flex h-10 md:h-11 w-full rounded-lg border border-input bg-background pl-10 pr-10 py-2 text-sm transition-all focus-visible:outline-none focus-visible:border-primary/20 focus-visible:ring-1 focus-visible:ring-primary/10"
+                  />
+                  {loadingSuggestions && (
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground animate-spin z-10" />
+                  )}
+                  {/* Suggestions dropdown */}
+                  {showSuggestions && suggestions.length > 0 && user && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50 max-h-48 overflow-y-auto">
+                      {suggestions.slice(0, 8).map((artist) => (
+                        <button
+                          key={artist}
+                          type="button"
+                          onClick={() => handleGlobalSearch(artist)}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-muted/50 transition-colors flex items-center gap-2"
+                        >
+                          <Search className="h-3 w-3 text-muted-foreground/50" />
+                          <span className="font-medium">{artist}</span>
+                        </button>
+                      ))}
                     </div>
                   )}
-                  {!user && globalQuery.trim().length >= 2 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg z-[100] overflow-hidden">
+                  {showSuggestions && !user && globalQuery.trim().length >= 2 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-50">
                       <div className="px-4 py-3 text-sm text-muted-foreground flex items-center gap-2">
                         <Lock className="h-3.5 w-3.5" />
                         <span>Sign in to search artists</span>
@@ -492,8 +505,10 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Leaderboard content */}
+              {/* Leaderboard content - only this part scrolls */}
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 md:p-4 custom-scrollbar">
                 {selectedArtist && (
                   <div className="rounded-lg border border-border/40 bg-card/50 overflow-hidden">
                     <GlobalLeaderboard

@@ -60,6 +60,16 @@ export type ComparisonResponse = {
   convergence_score?: number;
 };
 
+export type UndoComparisonResponse = {
+  success: boolean;
+  comparison_id: string;
+  song_a_id: string;
+  song_b_id: string;
+  restored_elo_a: number;
+  restored_elo_b: number;
+  sync_queued: boolean;
+};
+
 export type TrackResponse = {
   tracks: string[];
 };
@@ -256,6 +266,13 @@ export async function createComparison(
   });
 }
 
+export async function undoLastComparison(sessionId: string): Promise<UndoComparisonResponse> {
+  return fetchBackend<UndoComparisonResponse>(
+    `/sessions/${sessionId}/comparisons/last`,
+    { method: "DELETE" }
+  );
+}
+
 export async function getLeaderboardStats(artist: string): Promise<LeaderboardStats | null> {
   try {
     return await fetchBackend<LeaderboardStats>(`/leaderboard/${encodeURIComponent(artist)}/stats`, {
@@ -280,10 +297,18 @@ export async function getGlobalLeaderboard(artist: string, limit: number = 100):
 }
 
 export async function suggestArtists(query: string): Promise<string[]> {
-  if (query.length < 2) return [];
+  const trimmed = query.trim();
+  if (trimmed.length < 2) return [];
   try {
-    const data = await fetchBackend<ArtistSuggestion[]>(`/suggest?query=${encodeURIComponent(query)}`);
-    return data.map(a => a.name);
+    const data = await fetchBackend<ArtistSuggestion[] | string[]>(
+      `/suggest?query=${encodeURIComponent(trimmed)}`
+    );
+    if (!Array.isArray(data)) return [];
+    return data
+      .map((a: ArtistSuggestion | string) =>
+        typeof a === "string" ? a : (a as ArtistSuggestion).name
+      )
+      .filter((name): name is string => Boolean(name));
   } catch (error) {
     console.error("[API] Error fetching artist suggestions:", error);
     return [];
