@@ -45,11 +45,17 @@ export type SessionSummary = {
   top_album_covers: string[];
 };
 
+export type ComparisonPair = {
+  song_a_id: string;
+  song_b_id: string;
+};
+
 export type SessionDetail = {
   session_id: string;
   songs: SessionSong[];
   comparison_count: number;
   convergence_score?: number;
+  comparisons?: ComparisonPair[];
 };
 
 export type ComparisonResponse = {

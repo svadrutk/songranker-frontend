@@ -6,7 +6,13 @@ import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { getSessionDetail, createComparison, undoLastComparison, type SessionSong } from "@/lib/api";
-import { getNextPair } from "@/lib/pairing";
+import { 
+  getNextPairV2, 
+  createComparisonHistory, 
+  recordComparison,
+  buildHistoryFromComparisons,
+  type ComparisonHistory 
+} from "@/lib/pairing-v2";
 import { calculateNewRatings, calculateKFactor } from "@/lib/elo";
 import { Music, LogIn, Loader2, Trophy, Scale, Meh, Sword, ChartNetwork, Eye, X, Undo2 } from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
@@ -35,6 +41,7 @@ export function RankingWidget({
   const isMounted = useRef(true);
   const [songs, setSongs] = useState<SessionSong[]>([]);
   const [currentPair, setCurrentPair] = useState<[SessionSong, SessionSong] | null>(null);
+  const [comparisonHistory, setComparisonHistory] = useState<ComparisonHistory>(() => createComparisonHistory());
   const [isLoading, setIsLoading] = useState(false);
   const [totalDuels, setTotalDuels] = useState(0);
   const [convergence, setConvergence] = useState(0);
@@ -124,10 +131,34 @@ export function RankingWidget({
       try {
         const detail = await getSessionDetail(sessionId!);
         if (detail && isMounted.current && isCurrent) {
-          setSongs(detail.songs);
+          // Build history from existing comparisons (preserves state across page refresh)
+          const history = detail.comparisons?.length 
+            ? buildHistoryFromComparisons(detail.comparisons)
+            : createComparisonHistory();
+          setComparisonHistory(history);
+          
+          // CRITICAL: Recalculate comparison_count from actual comparisons
+          // Backend's comparison_count may be stale (updated asynchronously)
+          const comparisonCounts: Record<string, number> = {};
+          if (detail.comparisons) {
+            for (const comp of detail.comparisons) {
+              comparisonCounts[comp.song_a_id] = (comparisonCounts[comp.song_a_id] ?? 0) + 1;
+              comparisonCounts[comp.song_b_id] = (comparisonCounts[comp.song_b_id] ?? 0) + 1;
+            }
+          }
+          
+          // Update songs with accurate comparison_count
+          const songsWithAccurateCounts = detail.songs.map(song => ({
+            ...song,
+            comparison_count: comparisonCounts[song.song_id] ?? 0
+          }));
+          
+          setSongs(songsWithAccurateCounts);
           setTotalDuels(detail.comparison_count);
           setConvergence(detail.convergence_score ?? 0);
-          setCurrentPair(getNextPair(detail.songs));
+          
+          // Use new pairing algorithm with restored history and accurate counts
+          setCurrentPair(getNextPairV2(songsWithAccurateCounts, history));
           lastPairLoadTime.current = Date.now();
           if (openInResultsView) setIsFinished(true);
         }
@@ -188,8 +219,11 @@ export function RankingWidget({
         return s;
       });
 
+      // Record this comparison in history to avoid repeating it
+      recordComparison(comparisonHistory, songA.song_id, songB.song_id);
+
       setSongs(updatedSongs);
-      setCurrentPair(getNextPair(updatedSongs));
+      setCurrentPair(getNextPairV2(updatedSongs, comparisonHistory));
       lastPairLoadTime.current = Date.now();
 
       setWinnerId(null);
@@ -269,7 +303,7 @@ export function RankingWidget({
         console.error("Failed to sync comparison:", error);
       }
     },
-    [currentPair, sessionId, winnerId, triggerRankUpdateNotification, songs, queryClient]
+    [currentPair, sessionId, winnerId, triggerRankUpdateNotification, songs, queryClient, comparisonHistory]
   );
 
   const handleUndo = useCallback(async (): Promise<void> => {
@@ -306,7 +340,7 @@ export function RankingWidget({
       if (songA && songB) {
         setCurrentPair([songA, songB]);
       } else {
-        setCurrentPair(getNextPair(updatedSongs));
+        setCurrentPair(getNextPairV2(updatedSongs, comparisonHistory));
       }
 
       // Sync convergence after the backend ranking task has had time to finish.
@@ -328,7 +362,7 @@ export function RankingWidget({
     } finally {
       if (isMounted.current) setIsUndoing(false);
     }
-  }, [sessionId, totalDuels, isUndoing, songs]);
+  }, [sessionId, totalDuels, isUndoing, songs, comparisonHistory]);
 
   const handleSkip = useCallback(async (): Promise<void> => {
     if (!currentPair || !sessionId) return;
@@ -350,8 +384,12 @@ export function RankingWidget({
       }
       return s;
     });
+    
+    // Record this comparison in history (skip still counts as a comparison)
+    recordComparison(comparisonHistory, songA.song_id, songB.song_id);
+    
     setSongs(updatedSongs);
-    setCurrentPair(getNextPair(updatedSongs));
+    setCurrentPair(getNextPairV2(updatedSongs, comparisonHistory));
     lastPairLoadTime.current = Date.now();
 
     setTotalDuels((prev) => prev + 1);
@@ -364,7 +402,7 @@ export function RankingWidget({
       is_tie: false,
       decision_time_ms: decisionTime,
     }).catch(err => console.error("Failed to record skip:", err));
-  }, [currentPair, sessionId, songs]);
+  }, [currentPair, sessionId, songs, comparisonHistory]);
 
   useEffect(() => {
     if (!currentPair || !!winnerId || isTie || isSkipping) return;
