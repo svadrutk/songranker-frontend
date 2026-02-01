@@ -247,11 +247,11 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
 
   const leaderboardButtonSection = (
     <div className="relative group">
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6b8a67] via-[#82A67D] to-[#6b8a67] dark:from-primary dark:via-primary/80 dark:to-primary rounded-2xl opacity-75 group-hover:opacity-100 blur group-hover:blur-md transition-all duration-300" />
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6b8a67] via-[#82A67D] to-[#6b8a67] dark:from-primary dark:via-primary/80 dark:to-primary rounded-2xl opacity-40 group-hover:opacity-60 blur-sm group-hover:blur transition-all duration-300" />
       <Button
         type="button"
         onClick={openLeaderboardModal}
-        className="relative w-full py-5 md:py-6 text-sm md:text-base font-mono font-black uppercase tracking-[0.2em] bg-gradient-to-br from-[#6b8a67] via-[#7a9a75] to-[#82A67D] dark:from-primary dark:via-primary dark:to-primary/90 text-white dark:text-primary-foreground hover:scale-[1.02] active:scale-[0.98] rounded-2xl shadow-2xl shadow-[#6b8a67]/25 dark:shadow-primary/25 flex items-center justify-center gap-2.5 transition-all duration-200 border border-white/10 dark:border-primary-foreground/10"
+        className="relative w-full py-6 md:py-7 text-sm md:text-base font-mono font-black uppercase tracking-[0.2em] bg-gradient-to-br from-[#6b8a67] via-[#7a9a75] to-[#82A67D] dark:from-primary dark:via-primary dark:to-primary/90 text-white dark:text-primary-foreground hover:scale-[1.02] active:scale-[0.98] rounded-2xl shadow-lg shadow-[#6b8a67]/15 dark:shadow-primary/15 flex items-center justify-center gap-2.5 transition-all duration-200 border border-white/10 dark:border-primary-foreground/10"
       >
         <Globe className="h-4 w-4 md:h-5 md:w-5 animate-pulse" />
         <span>
