@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { LogOut, Send } from "lucide-react";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { useFeedback } from "./FeedbackProvider";
 import { useNavigationStore } from "@/lib/store";
 
@@ -11,11 +13,20 @@ export function Navbar() {
   const { user, signOut, openAuthModal } = useAuth();
   const { openFeedback } = useFeedback();
   const { navigateToCatalog, setSidebarCollapsed } = useNavigationStore();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogoClick = () => {
     navigateToCatalog();
     setSidebarCollapsed(false);
   };
+
+  // Use dark logo as default during SSR to avoid hydration mismatch
+  const logoSrc = mounted && resolvedTheme === "dark" ? "/logo/logo.svg" : "/logo/logo-dark.svg";
 
   return (
     <nav className="w-full border-b bg-background/95 backdrop-blur-md sticky top-0 z-[60]">
@@ -25,15 +36,13 @@ export function Navbar() {
           onClick={handleLogoClick}
           className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity"
         >
-          <div className="p-2 md:p-3 rounded-lg bg-black">
-            <Image
-              src="/logo/logo.svg"
-              alt="Chorusboard Logo"
-              width={36}
-              height={36}
-              className="h-7 w-7 md:h-10 md:w-10"
-            />
-          </div>
+          <Image
+            src={logoSrc}
+            alt="Chorusboard Logo"
+            width={36}
+            height={36}
+            className="h-9 w-9 md:h-12 md:w-12"
+          />
           <h1 className="font-mono text-xl md:text-3xl font-bold tracking-tighter lowercase shrink-0">
             chorusboard
           </h1>
