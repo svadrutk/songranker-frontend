@@ -22,7 +22,7 @@ type SortField = "completion" | "date" | "artist";
 type SortDir = "asc" | "desc";
 
 export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
-  const { navigateToRanking, navigateToResults } = useNavigationStore();
+  const { navigateToRanking } = useNavigationStore();
   const { user } = useAuth();
   const deleteSessionMutation = useDeleteSession();
 
@@ -153,11 +153,8 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
           : "text-green-600 dark:text-green-500";
 
     const handleClick = () => {
-      if (openResultsOnClick) {
-        navigateToResults(session.session_id, "kanban");
-      } else {
-        navigateToRanking(session.session_id);
-      }
+      // Always navigate to ranking widget, even for completed sessions
+      navigateToRanking(session.session_id);
     };
 
     const handleDeleteClick = (e: React.MouseEvent) => {
@@ -206,7 +203,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
           <p className="font-mono text-sm font-bold truncate text-foreground">
             {session.primary_artist}
           </p>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
+          <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3 opacity-50" />
               {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(
@@ -217,22 +214,11 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
               <Swords className="h-3 w-3 opacity-50" />
               {session.comparison_count} duels
             </span>
-            {openResultsOnClick && session.song_count != null && (
-              <span className="flex items-center gap-1">
-                <Music className="h-3 w-3 opacity-50" />
-                {session.song_count} songs
-              </span>
-            )}
-            <span className={cn("flex items-center gap-1 font-semibold", textColor)}>
-              <CheckCircle2 className="h-3 w-3 opacity-80" />
-              {score}% complete
-            </span>
           </div>
-          {openResultsOnClick && (
-            <p className="text-[9px] font-mono text-primary/80 uppercase tracking-wider mt-1.5">
-              View results →
-            </p>
-          )}
+          <span className={cn("flex items-center gap-1 mt-1 text-[10px] font-mono uppercase tracking-tighter font-semibold", textColor)}>
+            <CheckCircle2 className="h-3 w-3 opacity-80" />
+            {score}% complete
+          </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {onDelete && (
@@ -274,12 +260,12 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
   return (
     <div
       className={cn(
-        "flex flex-col gap-4 h-full min-h-0 max-h-[calc(100vh-6rem)]",
+        "flex flex-col gap-4 h-full min-h-0",
         isSidebarCollapsed ? "w-full" : "w-full max-w-5xl mx-auto"
       )}
     >
       <div className="flex flex-col gap-5 shrink-0">
-        <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-foreground text-center">
+        <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-foreground text-center">
           My Rankings
         </h2>
         
@@ -376,7 +362,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
               mobileTab === "draft" ? "bg-background shadow-xs text-primary" : "text-muted-foreground"
             )}
           >
-            Not Started ({draftSessions.length})
+            Created ({draftSessions.length})
           </button>
           <button
             type="button"
@@ -386,7 +372,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
               mobileTab === "progress" ? "bg-background shadow-xs text-primary" : "text-muted-foreground"
             )}
           >
-            In Progress ({incompleteSessions.length})
+            Unfinished ({incompleteSessions.length})
           </button>
           <button
             type="button"
@@ -396,7 +382,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
               mobileTab === "settled" ? "bg-background shadow-xs text-primary" : "text-muted-foreground"
             )}
           >
-            Complete ({completedSessions.length})
+            Settled ({completedSessions.length})
           </button>
         </div>
         <div className="flex flex-col gap-3 overflow-y-auto flex-1 min-h-0">
@@ -429,7 +415,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
               ))}
               {incompleteSessions.length === 0 && (
                 <p className="text-xs font-mono text-muted-foreground/80 py-8 text-center">
-                  No rankings in progress
+                  No unfinished rankings
                 </p>
               )}
             </>
@@ -447,7 +433,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
               ))}
               {completedSessions.length === 0 && (
                 <p className="text-xs font-mono text-muted-foreground/80 py-8 text-center">
-                  No completed rankings yet
+                  No settled rankings yet
                 </p>
               )}
             </>
@@ -459,7 +445,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
       <div className="hidden sm:grid gap-4 grid-cols-3 flex-1 min-h-0 min-w-0">
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
           <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
-            Not Started
+            Created
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`draft-${sortField}-${sortDir}`}>
             {draftSessions.map((session) => (
@@ -479,7 +465,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
         </div>
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
           <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
-            In Progress
+            Unfinished
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`progress-${sortField}-${sortDir}`}>
             {incompleteSessions.map((session) => (
@@ -499,7 +485,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
         </div>
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
           <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
-            Complete
+            Settled
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`settled-${sortField}-${sortDir}`}>
             {completedSessions.map((session) => (

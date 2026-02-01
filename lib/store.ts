@@ -117,11 +117,13 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   },
   
   navigateToMyRankings: (fromNavigator) => {
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     set({
       view: "my_rankings",
       navigationSource: fromNavigator ? "navigator" : "catalog",
-      // If clicked from navigator, collapse it to show content
-      isSidebarCollapsed: fromNavigator ? true : get().isSidebarCollapsed,
+      // Only collapse sidebar on mobile when clicked from navigator
+      // On desktop, keep it open so user can see navigator + content
+      isSidebarCollapsed: fromNavigator && isMobile ? true : get().isSidebarCollapsed,
     });
   },
   

@@ -394,14 +394,14 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
       {/* Artist leaderboard popup */}
       {leaderboardModalOpen && (
           <div
-            className="fixed inset-0 top-14 md:top-20 z-50 flex items-start md:items-center justify-center md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 top-14 md:top-20 z-50 flex items-stretch justify-center p-4 md:p-6 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
             role="dialog"
             aria-modal="true"
             aria-labelledby="leaderboard-modal-title"
             onClick={closeLeaderboardModal}
           >
             <div
-              className="bg-card md:border md:border-border w-full h-full md:h-auto md:max-w-3xl md:rounded-2xl shadow-2xl flex flex-col md:max-h-[calc(100vh-5rem-3rem)] animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200"
+              className="bg-card border border-border w-full h-full md:max-w-3xl rounded-2xl shadow-2xl flex flex-col animate-in slide-in-from-bottom-4 md:zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}

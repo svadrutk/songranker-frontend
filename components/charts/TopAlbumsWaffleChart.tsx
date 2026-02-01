@@ -80,33 +80,33 @@ export function TopAlbumsWaffleChart({ songs }: TopAlbumsWaffleChartProps) {
   return (
     <div className="w-full rounded-lg border border-border/40 bg-card p-4 md:p-5">
       {/* Enhanced header with explanation */}
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <div className="flex-1">
-          <h3 className="text-xs md:text-sm font-black text-foreground uppercase tracking-wide mb-1">
+      <div className="flex flex-col items-center gap-1 mb-4 text-center">
+        <div className="flex items-center gap-2">
+          <h3 className="text-xs md:text-sm font-black text-foreground uppercase tracking-wide">
             Top 20 Songs by Album
           </h3>
-          <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed">
-            Each square = 1 song. Colors = albums. Hover for details.
-          </p>
-        </div>
-        <div className="shrink-0 group relative">
-          <Info className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-help" />
-          <div className="hidden group-hover:block absolute right-0 top-6 w-64 p-3 bg-popover border border-border rounded-lg shadow-xl z-50 text-xs leading-relaxed">
-            <p className="font-semibold mb-1.5">How to read this chart:</p>
-            <ul className="space-y-1 text-muted-foreground">
-              <li>• Each square represents one ranked song</li>
-              <li>• Colors group songs by album</li>
-              <li>• Gold/silver/bronze borders = rank 1/2/3</li>
-              <li>• Reading order: left to right, top to bottom</li>
-            </ul>
+          <div className="shrink-0 group relative">
+            <Info className="h-4 w-4 text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-help" />
+            <div className="hidden group-hover:block absolute right-0 top-6 w-64 p-3 bg-popover border border-border rounded-lg shadow-xl z-50 text-xs leading-relaxed text-left">
+              <p className="font-semibold mb-1.5">How to read this chart:</p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Each square represents one ranked song</li>
+                <li>• Colors group songs by album</li>
+                <li>• Gold/silver/bronze borders = rank 1/2/3</li>
+                <li>• Reading order: left to right, top to bottom</li>
+              </ul>
+            </div>
           </div>
         </div>
+        <p className="text-[10px] md:text-xs text-muted-foreground leading-relaxed">
+          Each square = 1 song. Colors = albums. Hover for details.
+        </p>
       </div>
 
-      <div className="flex flex-col gap-4 items-start">
+      <div className="flex flex-col gap-4 items-center">
         {/* Waffle grid with enhanced visual hierarchy */}
         <div
-          className="grid gap-2 min-w-[280px] md:min-w-[320px] max-w-[520px] w-full overflow-visible mx-auto md:mx-0"
+          className="grid gap-2 min-w-[280px] md:min-w-[320px] max-w-[520px] w-full overflow-visible mx-auto"
           style={{
             gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))`,
             aspectRatio: `${COLS} / ${Math.ceil(TOP_N / COLS)}`,
@@ -142,7 +142,7 @@ export function TopAlbumsWaffleChart({ songs }: TopAlbumsWaffleChartProps) {
         </div>
 
         {/* Enhanced legend with song counts - now below the waffle on all screens */}
-        <div className="flex flex-col gap-2 w-full max-w-[520px] mx-auto md:mx-0">
+        <div className="flex flex-col gap-2 w-full max-w-[520px] mx-auto">
           <div className="text-[10px] md:text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
             Albums ({albumColors.size})
           </div>

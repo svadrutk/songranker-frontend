@@ -34,9 +34,9 @@ function VinylWing({ side }: { side: "left" | "right" }): JSX.Element {
         "dark:border-zinc-400/30 dark:bg-zinc-950 dark:shadow-[inset_0_0_40px_rgba(255,255,255,0.1)]",
         side === "left" ? "translate-x-1/2" : "-translate-x-1/2"
       )}>
-        <div className="h-[85%] w-[80%] rounded-full border-[1.5px] border-[#82A67D]/25 dark:border-white/10" />
-        <div className="absolute h-[65%] w-[60%] rounded-full border-[1.5px] border-[#82A67D]/25 dark:border-white/10" />
-        <div className="absolute h-[45%] w-[40%] rounded-full border-[1.5px] border-[#82A67D]/25 dark:border-white/10" />
+        <div className="h-[85%] w-[80%] rounded-full border-[1.5px] border-[#2d4a28]/50 dark:border-white/10" />
+        <div className="absolute h-[65%] w-[60%] rounded-full border-[1.5px] border-[#2d4a28]/50 dark:border-white/10" />
+        <div className="absolute h-[45%] w-[40%] rounded-full border-[1.5px] border-[#2d4a28]/50 dark:border-white/10" />
         
         {PARTICLES.map((p, i) => (
           <motion.div

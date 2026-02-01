@@ -179,8 +179,12 @@ export function RankingWidget({
       const [newEloA, newEloB] = calculateNewRatings(songA.local_elo, songB.local_elo, scoreA, kFactor);
 
       const updatedSongs = songs.map((s) => {
-        if (s.song_id === songA.song_id) return { ...s, local_elo: newEloA };
-        if (s.song_id === songB.song_id) return { ...s, local_elo: newEloB };
+        if (s.song_id === songA.song_id) {
+          return { ...s, local_elo: newEloA, comparison_count: (s.comparison_count ?? 0) + 1 };
+        }
+        if (s.song_id === songB.song_id) {
+          return { ...s, local_elo: newEloB, comparison_count: (s.comparison_count ?? 0) + 1 };
+        }
         return s;
       });
 
@@ -282,8 +286,12 @@ export function RankingWidget({
 
       // Update UI from the undo response so we don't depend on backend ranking task finishing.
       const updatedSongs = songs.map((s) => {
-        if (s.song_id === response.song_a_id) return { ...s, local_elo: response.restored_elo_a };
-        if (s.song_id === response.song_b_id) return { ...s, local_elo: response.restored_elo_b };
+        if (s.song_id === response.song_a_id) {
+          return { ...s, local_elo: response.restored_elo_a, comparison_count: Math.max(0, (s.comparison_count ?? 0) - 1) };
+        }
+        if (s.song_id === response.song_b_id) {
+          return { ...s, local_elo: response.restored_elo_b, comparison_count: Math.max(0, (s.comparison_count ?? 0) - 1) };
+        }
         return s;
       });
       setSongs(updatedSongs);
@@ -334,8 +342,12 @@ export function RankingWidget({
     const [, newEloB] = calculateNewRatings(songA.local_elo, songB.local_elo, 1);
 
     const updatedSongs = songs.map((s) => {
-      if (s.song_id === songA.song_id) return { ...s, local_elo: newEloA };
-      if (s.song_id === songB.song_id) return { ...s, local_elo: newEloB };
+      if (s.song_id === songA.song_id) {
+        return { ...s, local_elo: newEloA, comparison_count: (s.comparison_count ?? 0) + 1 };
+      }
+      if (s.song_id === songB.song_id) {
+        return { ...s, local_elo: newEloB, comparison_count: (s.comparison_count ?? 0) + 1 };
+      }
       return s;
     });
     setSongs(updatedSongs);
@@ -622,10 +634,10 @@ export function RankingWidget({
                   </AnimatePresence>
 
                   {index === 0 && (
-                    <div className="flex flex-row md:flex-col gap-3 md:gap-4 lg:gap-5 items-center shrink-0 w-full md:w-auto justify-center px-2 md:px-0 max-w-[300px] md:max-w-none">
+                    <div className="flex flex-row md:flex-col gap-2 md:gap-4 lg:gap-5 items-center shrink-0 w-full md:w-auto justify-center px-0 md:px-0">
                         <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                           <RankingControlButton
-                            icon={<Scale className="size-5 md:size-8 shrink-0" strokeWidth={2} />}
+                            icon={<Scale className="size-4 md:size-8 shrink-0" strokeWidth={2} />}
                             label="Tie"
                             onClick={() => handleChoice(null, true)}
                             disabled={!!winnerId || isTie || isSkipping}
@@ -634,7 +646,7 @@ export function RankingWidget({
                         </div>
                         <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                           <RankingControlButton
-                            icon={<Meh className="size-5 md:size-8 shrink-0" strokeWidth={2} />}
+                            icon={<Meh className="size-4 md:size-8 shrink-0" strokeWidth={2} />}
                             label="IDC"
                             onClick={handleSkip}
                             disabled={!!winnerId || isTie || isSkipping}
@@ -643,7 +655,7 @@ export function RankingWidget({
                         </div>
                         <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                           <RankingControlButton
-                            icon={<Undo2 className="size-5 md:size-8 shrink-0" strokeWidth={2} />}
+                            icon={<Undo2 className="size-4 md:size-8 shrink-0" strokeWidth={2} />}
                             label="Undo"
                             onClick={handleUndo}
                             disabled={totalDuels === 0 || isUndoing || !!winnerId || isTie || isSkipping}
@@ -762,7 +774,7 @@ function RankingControlButton({
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "h-14 md:h-18 w-full md:w-48 rounded-xl md:rounded-2xl transition-all p-0 overflow-hidden",
+        "h-11 md:h-18 w-full md:w-48 rounded-lg md:rounded-2xl transition-all p-0 overflow-hidden",
         "border-[#82A67D]/35 hover:border-[#82A67D]/50 dark:border-border/40 dark:hover:border-primary/50",
         "bg-[#82A67D]/25 hover:bg-[#82A67D]/45 dark:bg-zinc-900/60 dark:hover:bg-zinc-800/80",
         "shadow-lg hover:shadow-[#82A67D]/10 dark:hover:shadow-primary/5",
@@ -779,8 +791,8 @@ function RankingControlButton({
             {icon}
           </div>
         )}
-        <div className="flex items-center justify-center flex-1 px-3">
-          <span className="text-[11px] md:text-base font-mono uppercase tracking-[0.25em] font-black">{label}</span>
+        <div className="flex items-center justify-center flex-1 px-2 md:px-3">
+          <span className="text-[9px] md:text-base font-mono uppercase tracking-[0.15em] md:tracking-[0.25em] font-black">{label}</span>
         </div>
       </div>
     </Button>

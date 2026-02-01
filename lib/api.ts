@@ -83,6 +83,7 @@ export type SessionSong = {
   cover_url: string | null;
   local_elo: number;
   bt_strength: number | null;
+  comparison_count: number;
 };
 
 export type ComparisonCreate = {

@@ -185,15 +185,15 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
               )}
             </div>
 
-            <div className="flex flex-col flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1.5">
+            <div className="flex flex-col flex-1 min-w-0 h-10 justify-between">
+              <div className="flex items-center justify-between">
                 <span className={cn(
                   "font-mono text-xs font-bold truncate flex-1",
                   activeSessionId === session.session_id ? "text-primary" : ""
                 )}>
                   {session.primary_artist}
                 </span>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                   {deletingId === session.session_id ? (
                     <Loader2 className="h-4 w-4 animate-spin text-destructive" />
                   ) : (
@@ -219,17 +219,17 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
                 </div>
               </div>
               
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
-                  <Calendar className="h-3 w-3 opacity-50" />
+              <div className="flex items-center gap-3 flex-nowrap overflow-hidden">
+                <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter whitespace-nowrap">
+                  <Calendar className="h-3 w-3 opacity-50 shrink-0" />
                   {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(session.created_at))}
                 </div>
-                <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter">
-                  <Layers className="h-3 w-3 opacity-50" />
+                <div className="flex items-center gap-1 text-[9px] text-muted-foreground uppercase font-bold tracking-tighter whitespace-nowrap">
+                  <Layers className="h-3 w-3 opacity-50 shrink-0" />
                   {session.song_count} songs
                 </div>
-                <div className="flex items-center gap-1 text-[9px] text-primary/60 uppercase font-bold tracking-tighter">
-                  <Swords className="h-3 w-3 opacity-50" />
+                <div className="flex items-center gap-1 text-[9px] text-primary/60 uppercase font-bold tracking-tighter whitespace-nowrap">
+                  <Swords className="h-3 w-3 opacity-50 shrink-0" />
                   {session.comparison_count} duels
                 </div>
               </div>
