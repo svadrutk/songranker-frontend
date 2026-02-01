@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, Fragment, useRef } from "react";
 import type { JSX } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { getSessionDetail, createComparison, undoLastComparison, type SessionSong } from "@/lib/api";
+import { getSessionDetail, createComparison, undoLastComparison, type SessionSong, type SessionDetail } from "@/lib/api";
 import { 
   getNextPairV2, 
   createComparisonHistory, 
@@ -135,15 +135,16 @@ export function RankingWidget({
         const detail = await getSessionDetail(sessionId!);
         if (detail && isMounted.current && isCurrent) {
           // Build history from existing comparisons (preserves state across page refresh)
-          const history = detail.comparisons?.length 
-            ? buildHistoryFromComparisons(detail.comparisons)
+          const detailWithComparisons = detail as SessionDetail;
+          const history = detailWithComparisons.comparisons?.length 
+            ? buildHistoryFromComparisons(detailWithComparisons.comparisons)
             : createComparisonHistory();
           setComparisonHistory(history);
           
           // Recalculate comparison_count from actual comparisons
           const comparisonCounts: Record<string, number> = {};
-          if (detail.comparisons) {
-            for (const comp of detail.comparisons) {
+          if (detailWithComparisons.comparisons) {
+            for (const comp of detailWithComparisons.comparisons) {
               comparisonCounts[comp.song_a_id] = (comparisonCounts[comp.song_a_id] ?? 0) + 1;
               comparisonCounts[comp.song_b_id] = (comparisonCounts[comp.song_b_id] ?? 0) + 1;
             }
@@ -457,14 +458,12 @@ export function RankingWidget({
   }
 
   if (isFinished) {
-    return (
       <Leaderboard
         songs={songs}
         onContinue={openInResultsView && onBackFromResults ? onBackFromResults : () => setIsFinished(false)}
         isPreview={false}
         backButtonLabel={openInResultsView ? "Back to My Rankings" : undefined}
       />
-    );
   }
 
   return (
@@ -523,7 +522,7 @@ export function RankingWidget({
                     <div className="flex flex-row md:flex-col gap-2 md:gap-4 lg:gap-5 items-center shrink-0 w-full md:w-auto justify-center px-0 md:px-0">
                       <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                         <RankingControlButton
-                          icon={<Scale className="size-4 md:size-8 shrink-0" strokeWidth={2} />}
+                          icon={<Scale className="size-5 md:size-8" strokeWidth={2} />}
                           label="Tie"
                           onClick={() => handleChoice(null, true)}
                           disabled={!!winnerId || isTie || isSkipping}
@@ -532,7 +531,7 @@ export function RankingWidget({
                       </div>
                       <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                         <RankingControlButton
-                          icon={<Meh className="size-4 md:size-8 shrink-0" strokeWidth={2} />}
+                          icon={<Meh className="size-5 md:size-8" strokeWidth={2} />}
                           label="IDC"
                           onClick={handleSkip}
                           disabled={!!winnerId || isTie || isSkipping}
@@ -541,7 +540,7 @@ export function RankingWidget({
                       </div>
                       <div className="flex-1 md:flex-none min-w-0 md:w-48 lg:w-52">
                         <RankingControlButton
-                          icon={<Undo2 className="size-4 md:size-8 shrink-0" strokeWidth={2} />}
+                          icon={<Undo2 className="size-5 md:size-8" strokeWidth={2} />}
                           label="Undo"
                           onClick={handleUndo}
                           disabled={totalDuels === 0 || isUndoing || !!winnerId || isTie || isSkipping}

@@ -50,7 +50,7 @@ function exportRankingsToCsv(sortedByScore: SessionSong[]): void {
   URL.revokeObjectURL(url);
 }
 
-type LeaderboardProps = {
+export type LeaderboardProps = {
   songs: SessionSong[];
   onContinue: () => void;
   isPreview?: boolean;
