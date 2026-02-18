@@ -368,9 +368,7 @@ export type FeedbackResponse = {
   id: string;
   message: string;
   created_at: string;
-};
-
-export async function submitFeedback(payload: FeedbackCreate): Promise<FeedbackResponse> {
+};export async function submitFeedback(payload: FeedbackCreate): Promise<FeedbackResponse> {
   return fetchBackend<FeedbackResponse>("/feedback", {
     method: "POST",
     body: JSON.stringify(payload),
