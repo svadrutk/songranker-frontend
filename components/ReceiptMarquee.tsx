@@ -32,13 +32,13 @@ const MarqueeColumn = ({
     return (
       <div className="flex flex-col items-center gap-12 py-4">
         {images.slice(0, 8).map((src, i) => (
-          <div key={i} className="relative aspect-[1080/1200] w-full max-w-[280px] shadow-2xl">
+          <div key={i} className="relative aspect-[1080/1200] w-full max-w-[380px]">
             <Image
               src={src}
               alt="Receipt"
               fill
-              className="object-contain"
-              sizes="280px"
+              className="object-contain filter grayscale invert brightness-110"
+              sizes="380px"
               priority={i < 2}
             />
           </div>
@@ -61,26 +61,26 @@ const MarqueeColumn = ({
       >
         {/* First Set */}
         {images.map((src, i) => (
-          <div key={`set1-${i}`} className="relative aspect-[1080/1200] w-full max-w-[280px] shadow-2xl group transition-transform duration-500 hover:scale-[1.02]">
+          <div key={`set1-${i}`} className="relative aspect-[1080/1200] w-full max-w-[380px] group transition-transform duration-500 hover:scale-[1.02]">
             <Image
               src={src}
               alt="Receipt"
               fill
-              className="object-contain"
-              sizes="280px"
+              className="object-contain filter grayscale invert brightness-110"
+              sizes="380px"
               priority={i < 2}
             />
           </div>
         ))}
         {/* Duplicate Set for Seamless Loop */}
         {images.map((src, i) => (
-          <div key={`set2-${i}`} className="relative aspect-[1080/1200] w-full max-w-[280px] shadow-2xl">
+          <div key={`set2-${i}`} className="relative aspect-[1080/1200] w-full max-w-[380px]">
             <Image
               src={src}
               alt="Receipt"
               fill
-              className="object-contain"
-              sizes="280px"
+              className="object-contain filter grayscale invert brightness-110"
+              sizes="380px"
             />
           </div>
         ))}
