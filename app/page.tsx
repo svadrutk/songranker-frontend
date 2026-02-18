@@ -272,7 +272,7 @@ export default function Home(): JSX.Element {
         {view === "analytics" ? (
           <div
             className={cn(
-              "flex flex-col min-h-0 h-full w-full py-4 md:py-8 overflow-y-auto",
+              "flex flex-col min-h-0 h-full w-full overflow-hidden",
               isSidebarCollapsed ? "max-w-none px-2 md:px-3" : "max-w-none px-4 md:px-6"
             )}
           >
