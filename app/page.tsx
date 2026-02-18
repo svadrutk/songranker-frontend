@@ -8,7 +8,6 @@ import { MyRankingsOverview } from "@/components/MyRankingsOverview";
 import { createSession, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { DeduplicationModal } from "@/components/DeduplicationModal";
-import { ReceiptMarquee } from "@/components/ReceiptMarquee";
 import {
   findPotentialDuplicates,
   filterTracks,
@@ -153,7 +152,6 @@ export default function Home(): JSX.Element {
 
   return (
     <div key={user?.id || "guest"} className="flex h-full w-full overflow-hidden bg-background relative">
-      <ReceiptMarquee />
       {/* Navigator toggle when collapsed */}
       <AnimatePresence>
         {isSidebarCollapsed && (

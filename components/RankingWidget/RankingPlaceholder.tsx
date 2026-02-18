@@ -1,6 +1,7 @@
 import type { JSX, ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ReceiptMarquee } from "@/components/ReceiptMarquee";
 
 type RankingPlaceholderProps = Readonly<{
   title: string;
@@ -20,8 +21,9 @@ export function RankingPlaceholder({
   hideButton = false,
 }: RankingPlaceholderProps): JSX.Element {
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full gap-8">
-      <div className="flex flex-col items-center gap-12 w-full max-w-2xl text-center">
+    <div className="flex flex-col items-center justify-center h-full w-full gap-8 relative overflow-hidden">
+      <ReceiptMarquee />
+      <div className="flex flex-col items-center gap-12 w-full max-w-2xl text-center z-10">
         <div className="relative flex items-center justify-center gap-4 md:gap-8 opacity-50 hover:opacity-60 dark:opacity-25 dark:hover:opacity-40 dark:grayscale pointer-events-none select-none transform transition-all duration-700 hover:scale-105">
           <div className="absolute inset-0 bg-[#82A67D]/30 dark:bg-primary/20 blur-[60px] md:blur-[100px] rounded-full z-[-1]" />
           <div className="hidden md:block h-48 w-32 lg:h-64 lg:w-48 rounded-2xl border-2 border-dashed border-[#82A67D]/60 dark:border-primary/40 bg-linear-to-b from-[#82A67D]/15 dark:from-primary/5 to-transparent" />

@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 const ASSET_COUNT = 24;
 
@@ -30,15 +30,15 @@ const MarqueeColumn = ({
   // If user prefers reduced motion, we just show a static list
   if (shouldReduceMotion) {
     return (
-      <div className="flex flex-col gap-4 py-4">
+      <div className="flex flex-col items-center gap-12 py-4">
         {images.slice(0, 8).map((src, i) => (
-          <div key={i} className="relative aspect-[1080/1200] w-full rounded-sm overflow-hidden shadow-2xl border border-white/5">
+          <div key={i} className="relative aspect-[1080/1200] w-full max-w-[280px] shadow-2xl">
             <Image
               src={src}
               alt="Receipt"
               fill
-              className="object-cover"
-              sizes="400px"
+              className="object-contain"
+              sizes="280px"
               priority={i < 2}
             />
           </div>
@@ -48,7 +48,7 @@ const MarqueeColumn = ({
   }
 
   return (
-    <div className="flex flex-col gap-4 py-4 relative h-full overflow-hidden">
+    <div className="flex flex-col gap-12 py-4 relative h-full">
       <motion.div
         initial={{ y: reverse ? "-50%" : "0%" }}
         animate={{ y: reverse ? "0%" : "-50%" }}
@@ -57,30 +57,30 @@ const MarqueeColumn = ({
           repeat: Infinity,
           ease: "linear",
         }}
-        className="flex flex-col gap-4 will-change-transform"
+        className="flex flex-col items-center gap-12 will-change-transform"
       >
         {/* First Set */}
         {images.map((src, i) => (
-          <div key={`set1-${i}`} className="relative aspect-[1080/1200] w-full rounded-sm overflow-hidden shadow-2xl border border-white/5 group transition-transform duration-500 hover:scale-[1.02]">
+          <div key={`set1-${i}`} className="relative aspect-[1080/1200] w-full max-w-[280px] shadow-2xl group transition-transform duration-500 hover:scale-[1.02]">
             <Image
               src={src}
               alt="Receipt"
               fill
-              className="object-cover"
-              sizes="400px"
+              className="object-contain"
+              sizes="280px"
               priority={i < 2}
             />
           </div>
         ))}
         {/* Duplicate Set for Seamless Loop */}
         {images.map((src, i) => (
-          <div key={`set2-${i}`} className="relative aspect-[1080/1200] w-full rounded-sm overflow-hidden shadow-2xl border border-white/5">
+          <div key={`set2-${i}`} className="relative aspect-[1080/1200] w-full max-w-[280px] shadow-2xl">
             <Image
               src={src}
               alt="Receipt"
               fill
-              className="object-cover"
-              sizes="400px"
+              className="object-contain"
+              sizes="280px"
             />
           </div>
         ))}
@@ -90,6 +90,13 @@ const MarqueeColumn = ({
 };
 
 export const ReceiptMarquee = () => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
   const columns = useMemo(() => {
     const allImages = Array.from({ length: ASSET_COUNT }, (_, i) => `/assets/marquee/receipt_${i}.webp`);
     
@@ -101,15 +108,16 @@ export const ReceiptMarquee = () => {
     return [col1, col2, col3];
   }, []);
 
-  if (columns.length === 0) return null;
+  if (!mounted) return null;
+
 
   return (
-    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-20 select-none">
+    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none opacity-40 select-none">
       {/* Top/Bottom Fade Mask */}
       <div 
         className="absolute inset-0 z-10"
         style={{
-          background: "linear-gradient(to bottom, var(--background) 0%, transparent 15%, transparent 85%, var(--background) 100%)"
+          background: "linear-gradient(to bottom, var(--background) 0%, transparent 10%, transparent 90%, var(--background) 100%)"
         }}
       />
       
@@ -121,7 +129,7 @@ export const ReceiptMarquee = () => {
         }}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[120%] -mt-[10%] px-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 h-[140%] -mt-[20%] px-4">
         <MarqueeColumn images={columns[0]} duration={60} />
         <div className="hidden md:block">
           <MarqueeColumn images={columns[1]} duration={85} reverse />
