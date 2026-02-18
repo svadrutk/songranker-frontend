@@ -90,7 +90,7 @@ export function Catalog({
   }, [activePanel, setCatalogView, setShowSuggestions]);
 
   // Close autocomplete dropdown when sidebar opens
-  const { isSidebarCollapsed } = useNavigationStore();
+  const { isSidebarCollapsed, setView } = useNavigationStore();
   useEffect(() => {
     if (!isSidebarCollapsed && catalogView === "search") {
       setShowSuggestions(false);
@@ -232,7 +232,7 @@ export function Catalog({
   return (
     <div className="flex flex-col h-full gap-6 overflow-hidden relative">
       <div className="flex flex-col gap-4 relative z-10">
-        <ViewToggle onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
+        <ViewToggle onSearchOpen={() => setView("catalog")} onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
 
         {catalogView === "search" && (
           <SearchBar

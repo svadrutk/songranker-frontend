@@ -278,7 +278,7 @@ export default function Home(): JSX.Element {
           >
             <AnalyticsPage isSidebarCollapsed={isSidebarCollapsed} />
           </div>
-        ) : view === "my_rankings" ? (
+        ) : view === "my_rankings" && user ? (
           <div
             className={cn(
               "flex flex-col min-h-0 h-full w-full py-4 md:py-8 overflow-y-auto",

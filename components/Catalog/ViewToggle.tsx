@@ -6,17 +6,21 @@ import { cn } from "@/lib/utils";
 import { useCatalogStore } from "@/lib/store";
 
 type ViewToggleProps = Readonly<{
+  onSearchOpen?: () => void;
   onAnalyticsOpen?: () => void;
   onRankingsOpen?: () => void;
 }>;
 
-export function ViewToggle({ onAnalyticsOpen, onRankingsOpen }: ViewToggleProps): JSX.Element {
+export function ViewToggle({ onSearchOpen, onAnalyticsOpen, onRankingsOpen }: ViewToggleProps): JSX.Element {
   const { catalogView, setCatalogView } = useCatalogStore();
   
   return (
     <div className="flex bg-muted/20 p-1 rounded-lg border border-border/40">
       <button
-        onClick={() => setCatalogView("search")}
+        onClick={() => {
+          setCatalogView("search");
+          onSearchOpen?.();
+        }}
         className={cn(
           "flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-mono text-[10px] uppercase font-bold tracking-widest transition-all",
           catalogView === "search" ? "bg-background shadow-xs text-primary" : "text-muted-foreground hover:text-foreground"
