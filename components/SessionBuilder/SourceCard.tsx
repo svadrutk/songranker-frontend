@@ -5,6 +5,7 @@ import { X, User, ListMusic, Loader2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RankingSource } from "@/lib/stores/session-builder-store";
 import Image from "next/image";
+import { useState } from "react";
 
 type SourceCardProps = Readonly<{
   source: RankingSource;
@@ -12,6 +13,7 @@ type SourceCardProps = Readonly<{
 }>;
 
 export function SourceCard({ source, onRemove }: SourceCardProps): JSX.Element {
+  const [imageError, setImageError] = useState(false);
   const isPlaylist = source.type === 'playlist';
   const isArtist = source.type === 'artist_all' || source.type === 'artist_partial';
   
@@ -30,13 +32,15 @@ export function SourceCard({ source, onRemove }: SourceCardProps): JSX.Element {
 
       <div className="flex items-start gap-6">
         <div className="relative h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-2xl overflow-hidden bg-muted flex items-center justify-center shadow-md border border-border/20">
-          {source.coverUrl ? (
+          {source.coverUrl && !imageError ? (
             <Image
               src={source.coverUrl}
               alt={source.name}
               fill
               className="object-cover"
               sizes="(max-width: 768px) 80px, 96px"
+              unoptimized
+              onError={() => setImageError(true)}
             />
           ) : (
             isPlaylist ? <ListMusic className="h-10 w-10 text-muted-foreground/40" /> : <User className="h-10 w-10 text-muted-foreground/40" />
