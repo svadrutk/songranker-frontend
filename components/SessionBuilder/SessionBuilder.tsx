@@ -5,7 +5,16 @@ import { useSessionBuilderStore, useNavigationStore } from "@/lib/store";
 import { UnifiedSearchBar } from "./UnifiedSearchBar";
 import { SourceCard } from "./SourceCard";
 import { InlineArtistSelector } from "./InlineArtistSelector";
-import { suggestArtists, searchArtistReleaseGroups, getReleaseGroupTracks, type ReleaseGroup, type SongInput } from "@/lib/api";
+import { 
+  suggestArtists, 
+  searchArtistReleaseGroups, 
+  getReleaseGroupTracks, 
+  importPlaylist, 
+  getSessionDetail, 
+  type ReleaseGroup, 
+  type SongInput,
+  type SessionSong
+} from "@/lib/api";
 import { useDebouncedValue } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { Trash2, ArrowRight, Music, Link as LinkIcon, Clock } from "lucide-react";
@@ -85,7 +94,6 @@ export function SessionBuilder(): JSX.Element {
     setArtistReleases([]);
 
     try {
-      // Fetch tracks for all selected releases to get song count
       let totalSongs = 0;
       let processed = 0;
       const sourceTracks: SongInput[] = [];
@@ -117,7 +125,7 @@ export function SessionBuilder(): JSX.Element {
     }
   };
 
-  const handleImportPlaylist = (url: string) => {
+  const handleImportPlaylist = async (url: string) => {
     const tempId = `playlist-${Date.now()}`;
     addSource({
       id: tempId,
@@ -125,29 +133,43 @@ export function SessionBuilder(): JSX.Element {
       name: 'Playlist from Link',
       songCount: 0,
       status: 'loading',
-      progress: 20,
+      progress: 10,
       data: { platform: url.includes('spotify') ? 'spotify' : 'apple', playlistId: url }
     });
     setQuery("");
     setStatus('building');
 
-    // Simulate import progress
-    let p = 20;
-    const interval = setInterval(() => {
-      p += 15;
-      if (p >= 95) {
-        clearInterval(interval);
-        updateSource(tempId, {
-          name: 'Imported Playlist',
-          songCount: 42,
-          status: 'ready',
-          progress: 100,
-          coverUrl: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop'
-        });
-      } else {
-        updateSource(tempId, { progress: p });
-      }
-    }, 400);
+    try {
+      const response = await importPlaylist({ url });
+      
+      // Fetch session details to get actual songs and count
+      const details = await getSessionDetail(response.session_id);
+      if (!details) throw new Error("Failed to fetch session details");
+      
+      const mappedSongs: SongInput[] = details.songs.map((s: SessionSong) => ({
+        name: s.name || "Unknown",
+        artist: s.artist || "Unknown",
+        album: s.album || null,
+        cover_url: s.cover_url || null,
+        spotify_id: s.spotify_id || null
+      }));
+
+      updateSource(tempId, {
+        name: details.songs[0]?.artist ? `${details.songs[0].artist} Mix` : 'Imported Playlist',
+        songCount: mappedSongs.length,
+        status: 'ready',
+        progress: 100,
+        resolvedTracks: mappedSongs,
+        coverUrl: mappedSongs[0]?.cover_url || 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=300&h=300&fit=crop'
+      });
+    } catch (err) {
+      console.error("Playlist import failed:", err);
+      updateSource(tempId, { 
+        status: 'error',
+        name: 'Import Failed',
+        songCount: 0
+      });
+    }
   };
 
   const totalSongs = sources.reduce((acc, s) => acc + s.songCount, 0);
