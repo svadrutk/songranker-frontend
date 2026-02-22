@@ -149,6 +149,8 @@ export type ArtistsWithLeaderboardsResponse = {
   artists: ArtistWithLeaderboard[];
 };
 
+import { cache } from "react";
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 // Helper to show errors visually
@@ -255,7 +257,7 @@ export async function getSessionSongs(sessionId: string): Promise<SessionSong[]>
   }
 }
 
-export async function getSessionDetail(sessionId: string): Promise<SessionDetail | null> {
+export const getSessionDetail = cache(async (sessionId: string): Promise<SessionDetail | null> => {
   try {
     return await fetchBackend<SessionDetail>(`/sessions/${sessionId}`, {
       cache: "no-store",
@@ -264,7 +266,7 @@ export async function getSessionDetail(sessionId: string): Promise<SessionDetail
     console.error("[API] Error in getSessionDetail:", error);
     return null;
   }
-}
+});
 
 export async function deleteSession(sessionId: string): Promise<boolean> {
   try {

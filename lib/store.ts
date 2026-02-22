@@ -13,7 +13,6 @@ export {
   // Navigation store
   useNavigationStore,
   useResponsiveSidebar,
-  type ViewState,
   type NavigationSource,
   type NavigationState,
   

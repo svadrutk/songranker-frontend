@@ -9,7 +9,6 @@
 export {
   useNavigationStore,
   useResponsiveSidebar,
-  type ViewState,
   type NavigationSource,
   type NavigationState,
 } from "./navigation-store";

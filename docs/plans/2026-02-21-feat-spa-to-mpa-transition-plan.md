@@ -7,17 +7,34 @@ date: 2026-02-21
 
 # feat: Transition from SPA to MPA for SEO and deep linking
 
+## Enhancement Summary
+
+**Deepened on:** 2026-02-21
+**Sections enhanced:** 6
+**Research agents used:** Best Practices Researcher, Framework Docs Researcher, Architecture Strategist, Web Design Guidelines, Vercel React Best Practices
+
+### Key Improvements
+1.  **Next.js 16 Asynchronous APIs**: Incorporation of mandatory async `params` and `searchParams` for Next.js 16.
+2.  **Streaming & Parallelism**: Implementation of `loading.tsx` and `React.cache()` to eliminate data waterfalls and provide instant loading states.
+3.  **URL-First State Management**: Strategy to move shareable UI state (like `view=results`) from Zustand to URL search parameters for better deep linking.
+4.  **Security & Guest Access**: Formalized "Read-Only" mode for shared rankings to support SEO without compromising private user data.
+
+---
+
 ## Overview
 
 This feature transforms the application from a Single Page Application (SPA) with state-based conditional rendering into a Multi-Page Application (MPA) using Next.js App Router. This change is essential for SEO (search engine optimization), deep linking (sharing specific rankings), and improved user navigation (browser back/forward support).
 
-## Problem Statement / Motivation
+### Research Insights
 
-Currently, the entire application lives on the home route (`/`). A Zustand `view` state determines whether the user sees the `SessionBuilder`, `ReviewView`, `AnalyticsPage`, `MyRankingsOverview`, or `RankingWidget`. This results in:
-1. **No SEO**: Search engines only see the home page content.
-2. **No Deep Linking**: Users cannot share their ranking results with a unique URL.
-3. **Broken Browser History**: Refreshing the page resets the view to the initial state (unless persisted), and the "Back" button doesn't work as expected.
-4. **Poor Shared Experience**: Guests cannot view ranking results directly via a link.
+**Best Practices:**
+- **Streaming by Default**: Use `loading.tsx` skeletons for every new route to maintain the "instant" feel of the original SPA while reaping MPA benefits.
+- **Semantic Landmarks**: Each new route will use `<main id="main-content">` and a clear `<h1>` for better accessibility and SEO indexing.
+
+**Performance Considerations:**
+- **Preconnect**: Add `<link rel="preconnect" href="[backend-url]">` in `layout.tsx` to reduce latency for the initial server-side data fetch on new page loads.
+
+---
 
 ## Proposed Solution
 
@@ -33,81 +50,118 @@ Map each internal `view` state to a dedicated Next.js route:
 
 ### Key Changes
 
-1. **Routing Architecture**: Move view components from `app/page.tsx` into their respective `app/[route]/page.tsx` files.
-2. **Navigation Store Refactor**: Update `useNavigationStore` to synchronize with Next.js routing or replace its navigation actions with `useRouter()` and `Link`.
-3. **Dynamic Metadata**: Use `generateMetadata` in `app/ranking/[id]/page.tsx` to provide dynamic social sharing titles (e.g., "Ranking: [Artist Name] on Chorusboard").
-4. **Guest Access**: Modify `RankingWidget` to allow guests to view the `Leaderboard` (read-only) for shared links.
-5. **Navbar Update**: Use Next.js `Link` components instead of state-based buttons.
+1.  **Routing Architecture**: Move view components from `app/page.tsx` into their respective `app/[route]/page.tsx` files.
+2.  **Navigation Store Refactor**: Update `useNavigationStore` to synchronize with Next.js routing. Move `view` and `sessionId` to the URL.
+3.  **Dynamic Metadata**: Use `generateMetadata` in `app/ranking/[id]/page.tsx` for social sharing.
+4.  **Guest Access**: Modify `RankingWidget` to allow guests to view the `Leaderboard`.
+5.  **Navbar Update**: Use Next.js `Link` components.
+
+### Research Insights (Routing & State)
+
+**Implementation Details:**
+- **URL-First State**: Use query parameters (e.g., `?mode=results`) to toggle views within a page. This makes the specific state shareable.
+- **Zustand Sync**: Retain Zustand *only* for non-URL state (e.g., sidebar collapse, transient UI states) or as a "Draft" cache for the `SessionBuilder`.
+
+**Next.js 16 Specifics:**
+- **Async Page Props**: Remember that `params` and `searchParams` are now **Promises** in Next.js 16.
+```tsx
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  // ...
+}
+```
+
+---
 
 ## Technical Considerations
 
-- **State Persistence**: Ensure the `SessionBuilder` draft state survives the transition to the `/review` page using Zustand `persist`.
-- **Authentication**: Routes like `/my-rankings` and `/analytics` should redirect to the home page (with an auth modal triggered) if the user is not logged in.
-- **Middleware**: Potentially use Next.js Middleware for simple route protection.
-- **Client Components**: The main `page.tsx` will become a Server Component (by default), and the `SessionBuilder` will be its primary child.
+- **State Persistence**: Use Zustand `persist` for the `SessionBuilder` draft state.
+- **Authentication**: Use Next.js Middleware (renamed to `proxy.ts` in Next.js 16) for route protection on `/my-rankings` and `/analytics`.
+- **Server Components**: The main routes will be Server Components by default.
+
+### Research Insights (Architecture)
+
+**Best Practices:**
+- **Eliminate Waterfalls**: Use `React.cache()` for data fetching in `lib/api.ts` so `generateMetadata` and the Page component can call the same function without redundant network requests.
+- **Serialization**: Pass only minimal serializable data from Server Pages to Client Widgets (e.g., `sessionId` and `initialData` instead of full complex objects).
+
+**Performance Considerations:**
+- **Dynamic Imports**: Use `next/dynamic` for heavy route components like `AnalyticsPage` and `RankingWidget` to keep the initial landing page bundle small.
+```tsx
+const AnalyticsPage = dynamic(() => import('@/components/AnalyticsPage'), {
+  loading: () => <Skeleton />,
+  ssr: true
+});
+```
+
+---
+
+## Security & Access Control
+
+### Research Insights
+
+**Edge Cases:**
+- **Guest "Read-Only" Mode**: If a guest accesses `/ranking/[id]`, the `RankingWidget` must automatically switch to `readOnly` mode, showing only the Leaderboard and disabling all ranking interactions (Duel, IDC, Tie).
+- **Public/Private Toggle**: Sessions need a `is_public` boolean in the database. If `is_public` is false, guest access to `/ranking/[id]` should return a 404 or redirect to login.
+- **Data Leakage**: Ensure the backend `GET /sessions/{id}` endpoint only returns public fields when accessed by a non-owner.
+
+---
 
 ## Acceptance Criteria
 
 - [ ] All pages have a distinct URL path: `/`, `/review`, `/analytics`, `/my-rankings`.
-- [ ] Users can share a `/ranking/[id]` link, and guests can view the results.
+- [ ] Users can share a `/ranking/[id]?mode=results` link, and guests can view the results.
 - [ ] Browser "Back" and "Forward" buttons work correctly across all views.
-- [ ] Social sharing a `/ranking/[id]` link displays dynamic metadata (title/description).
+- [ ] Social sharing a `/ranking/[id]` link displays dynamic metadata with artist/playlist names.
 - [ ] Refreshing the page on any route keeps the user on that same route.
 - [ ] `Navbar` links are crawlable `<a>` tags (via `next/link`).
+- [ ] Accessibility: "Skip to main content" link added; H1 hierarchy maintained on all pages.
+
+---
 
 ## Success Metrics
 
 - [ ] Successful indexing of dynamic ranking pages by search engines.
 - [ ] Increase in "Link Shared" events and guest sessions from shared links.
-- [ ] Reduced "View Reset" errors reported by users.
+- [ ] LCP (Largest Contentful Paint) under 1.5s for the Ranking page due to SSR.
 
-## Dependencies & Risks
-
-- **Next.js 16 App Router**: Requires strict adherence to server/client component boundaries.
-- **Supabase Auth**: Ensure auth state is correctly checked on both client and server for route protection.
-- **Zustand Hydration**: Ensure store persistence is handled correctly during route transitions to avoid flickering.
-
-## References & Research
-
-- **Current Implementation**: `app/page.tsx` (conditional renderer).
-- **Navigation Store**: `lib/stores/navigation-store.ts`.
-- **Navbar**: `components/Navbar.tsx`.
-- **Best Practices**: Next.js App Router Documentation (Routing, Metadata).
+---
 
 ## MVP
 
-### `app/analytics/page.tsx`
-```tsx
-import { AnalyticsPage } from "@/components/AnalyticsPage";
-
-export default function Analytics() {
-  return (
-    <div className="flex flex-col min-h-0 h-full w-full overflow-hidden px-4 md:px-8">
-      <AnalyticsPage isSidebarCollapsed={true} />
-    </div>
-  );
-}
-```
-
 ### `app/ranking/[id]/page.tsx`
 ```tsx
+import { Suspense } from "react";
 import { RankingWidget } from "@/components/RankingWidget";
-import { getSession } from "@/lib/api"; // Need to ensure server-side compatible
+import { getSession } from "@/lib/api"; // Wrapped in React.cache
+import { Metadata } from "next";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const session = await getSession(params.id);
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const session = await getSession(id);
   return {
-    title: `Ranking: ${session.name || "Music Ranking"}`,
-    description: `Check out the results for this ranking on Chorusboard.`,
+    title: `Ranking: ${session.name || "Music Ranking"} | Chorusboard`,
+    description: `Check out the results for this ${session.artist_name || ""} ranking.`,
+    openGraph: {
+      images: [session.cover_url || "/logo/og-image.png"],
+    },
   };
 }
 
-export default function Ranking({ params }: { params: { id: string } }) {
+export default async function RankingPage({ params, searchParams }: { 
+  params: Promise<{ id: string }>,
+  searchParams: Promise<{ mode?: string }>
+}) {
+  const { id } = await params;
+  const { mode } = await searchParams;
+  
   return (
-    <RankingWidget
-      isRanking={true}
-      sessionId={params.id}
-    />
+    <Suspense fallback={<RankingSkeleton />}>
+      <RankingWidget
+        sessionId={id}
+        initialMode={mode} // 'results' or 'duel'
+      />
+    </Suspense>
   );
 }
 ```

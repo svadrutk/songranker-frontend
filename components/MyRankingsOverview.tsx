@@ -6,11 +6,12 @@ import Image from "next/image";
 import type { SessionSummary } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
-import { useNavigationStore, useAnalyticsStore } from "@/lib/store";
+import { useAnalyticsStore } from "@/lib/store";
 import { useUserSessions, useDeleteSession } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 
 const COMPLETION_THRESHOLD = 25;
 /** Same as RankingWidget "View Results" threshold (displayScore >= 90) so completed rankings appear in Completed column. */
@@ -25,7 +26,7 @@ type SortField = "completion" | "date" | "artist";
 type SortDir = "asc" | "desc";
 
 export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
-  const { navigateToRanking } = useNavigationStore();
+  const router = useRouter();
   const { user } = useAuth();
   const deleteSessionMutation = useDeleteSession();
 
@@ -178,7 +179,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
 
     const handleClick = () => {
       // Always navigate to ranking widget, even for completed sessions
-      navigateToRanking(session.session_id);
+      router.push(`/ranking/${session.session_id}${isComplete ? "?mode=results" : ""}`);
     };
 
     const handleDeleteClick = (e: React.MouseEvent) => {

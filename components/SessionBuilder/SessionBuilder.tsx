@@ -3,7 +3,8 @@
 import { useState, useEffect, type JSX } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useSessionBuilderStore, useNavigationStore } from "@/lib/store";
+import { useSessionBuilderStore } from "@/lib/store";
+import { useRouter } from "next/navigation";
 import { UnifiedSearchBar } from "./UnifiedSearchBar";
 import { SourceCard } from "./SourceCard";
 import { InlineArtistSelector } from "./InlineArtistSelector";
@@ -24,8 +25,8 @@ import { SiSpotify, SiApplemusic } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 
 export function SessionBuilder(): JSX.Element {
+  const router = useRouter();
   const { sources, addSource, removeSource, resetDraft, setStatus, updateSource } = useSessionBuilderStore();
-  const { setView } = useNavigationStore();
   
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -319,7 +320,7 @@ export function SessionBuilder(): JSX.Element {
             <Button 
               size="lg"
               disabled={sources.some(s => s.status === 'loading') || sources.length === 0}
-              onClick={() => setView("review")}
+              onClick={() => router.push("/review")}
               className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl disabled:opacity-50"
             >
               <span className="flex items-center gap-4">

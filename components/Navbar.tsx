@@ -10,11 +10,14 @@ import { useFeedback } from "./FeedbackProvider";
 import { cn } from "@/lib/utils";
 import { useNavigationStore } from "@/lib/store";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export function Navbar() {
   const { user, signOut, openAuthModal } = useAuth();
   const { openFeedback } = useFeedback();
-  const { view, navigateToCreate, navigateToAnalytics, navigateToMyRankings, setSidebarCollapsed } = useNavigationStore();
+  const pathname = usePathname();
+  const { setSidebarCollapsed } = useNavigationStore();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -23,15 +26,10 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
-  const handleLogoClick = () => {
-    navigateToCreate();
-    setSidebarCollapsed(true);
-  };
-
   const navItems = [
-    { label: "Create", viewId: "create", onClick: () => navigateToCreate() },
-    { label: "My Rankings", viewId: "my_rankings", onClick: () => navigateToMyRankings(false) },
-    { label: "Stats", viewId: "analytics", onClick: () => navigateToAnalytics() },
+    { label: "Create", href: "/" },
+    { label: "My Rankings", href: "/my-rankings" },
+    { label: "Stats", href: "/analytics" },
   ];
 
   const logoSrc = mounted && resolvedTheme === "dark" ? "/logo/logo.svg" : "/logo/logo-dark.svg";
@@ -40,47 +38,48 @@ export function Navbar() {
     <nav className="w-full border-b bg-background/95 backdrop-blur-md sticky top-0 z-[60]">
       <div className="w-full px-4 md:px-8 h-16 md:h-20 flex items-center justify-between relative">
         <div className="flex items-center shrink-0">
-          <motion.button
-            type="button"
-            onClick={handleLogoClick}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity"
-          >
-            <Image
-              src={logoSrc}
-              alt="Chorusboard Logo"
-              width={36}
-              height={36}
-              className="h-9 w-9 md:h-12 md:w-12"
-            />
-            <h1 className="font-mono text-xl md:text-3xl font-bold tracking-tighter lowercase shrink-0">
-              chorusboard
-            </h1>
-          </motion.button>
+          <Link href="/" passHref legacyBehavior>
+            <motion.a
+              onClick={() => setSidebarCollapsed(true)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+            >
+              <Image
+                src={logoSrc}
+                alt="Chorusboard Logo"
+                width={36}
+                height={36}
+                className="h-9 w-9 md:h-12 md:w-12"
+              />
+              <h1 className="font-mono text-xl md:text-3xl font-bold tracking-tighter lowercase shrink-0">
+                chorusboard
+              </h1>
+            </motion.a>
+          </Link>
         </div>
 
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 items-center gap-1 bg-muted/30 p-1.5 rounded-full border border-border/50">
           {navItems.map((item) => (
-            <motion.button
-              key={item.viewId}
-              onClick={item.onClick}
-              whileHover={{ y: -1 }}
-              whileTap={{ y: 0 }}
-              className={cn(
-                "px-5 py-2 rounded-full font-mono text-[10px] lg:text-xs uppercase font-black tracking-[0.2em] transition-all duration-300 relative",
-                view === item.viewId ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {view === item.viewId && (
-                <motion.div
-                  layoutId="active-nav"
-                  className="absolute inset-0 bg-primary/10 rounded-full border border-primary/20 shadow-[0_0_15px_-3px_rgba(var(--primary-rgb),0.1)]"
-                  transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                />
-              )}
-              {item.label}
-            </motion.button>
+            <Link key={item.href} href={item.href} passHref legacyBehavior>
+              <motion.a
+                whileHover={{ y: -1 }}
+                whileTap={{ y: 0 }}
+                className={cn(
+                  "px-5 py-2 rounded-full font-mono text-[10px] lg:text-xs uppercase font-black tracking-[0.2em] transition-all duration-300 relative cursor-pointer",
+                  pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {pathname === item.href && (
+                  <motion.div
+                    layoutId="active-nav"
+                    className="absolute inset-0 bg-primary/10 rounded-full border border-primary/20 shadow-[0_0_15px_-3px_rgba(var(--primary-rgb),0.1)]"
+                    transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                  />
+                )}
+                {item.label}
+              </motion.a>
+            </Link>
           ))}
         </div>
 

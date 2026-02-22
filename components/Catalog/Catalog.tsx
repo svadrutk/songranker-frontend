@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useEffect, useRef, type JSX } from "react";
 import { searchArtistReleaseGroups, getReleaseGroupTracks, suggestArtists, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
@@ -47,6 +48,7 @@ export function Catalog({
   selectedIds,
   activeSessionId
 }: CatalogProps): JSX.Element {
+  const router = useRouter();
   const { user, openAuthModal } = useAuth();
   
   // Zustand catalog state
@@ -90,7 +92,7 @@ export function Catalog({
   }, [activePanel, setCatalogView, setShowSuggestions]);
 
   // Close autocomplete dropdown when sidebar opens
-  const { isSidebarCollapsed, setView } = useNavigationStore();
+  const { isSidebarCollapsed } = useNavigationStore();
   useEffect(() => {
     if (!isSidebarCollapsed && catalogView === "search") {
       setShowSuggestions(false);
@@ -232,7 +234,7 @@ export function Catalog({
   return (
     <div className="flex flex-col h-full gap-6 overflow-hidden relative">
       <div className="flex flex-col gap-4 relative z-10">
-        <ViewToggle onSearchOpen={() => setView("create")} onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
+        <ViewToggle onSearchOpen={() => router.push("/")} onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
 
         {catalogView === "search" && (
           <SearchBar

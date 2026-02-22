@@ -42,6 +42,8 @@ type RankingWidgetProps = Readonly<{
   sessionId?: string | null;
   /** When true, load session and show Leaderboard (results) directly instead of duel UI. */
   openInResultsView?: boolean;
+  /** Initial mode to show: 'results' or 'duel' (default) */
+  initialMode?: string;
   /** When openInResultsView, called when user taps "Keep Ranking" / back from results (e.g. return to My Rankings). */
   onBackFromResults?: () => void;
 }>;
@@ -50,6 +52,7 @@ export function RankingWidget({
   isRanking,
   sessionId,
   openInResultsView = false,
+  initialMode,
   onBackFromResults,
 }: RankingWidgetProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
@@ -155,7 +158,10 @@ export function RankingWidget({
           setConvergence(detail.convergence_score ?? 0);
           setCurrentPair(getNextPair(songsWithAccurateCounts, history));
           resetTimer();
-          if (openInResultsView) setIsFinished(true);
+          
+          if (openInResultsView || initialMode === "results" || !user) {
+            setIsFinished(true);
+          }
         }
       } catch (error) {
         console.error("Failed to load ranking songs:", error);
@@ -170,7 +176,7 @@ export function RankingWidget({
     return () => {
       isCurrent = false;
     };
-  }, [isRanking, sessionId, openInResultsView, resetTimer, hideRankNotification]);
+  }, [isRanking, sessionId, openInResultsView, resetTimer, hideRankNotification, initialMode, user]);
 
   const handleChoice = useCallback(
     async (winner: SessionSong | null, tie: boolean = false) => {
@@ -416,29 +422,6 @@ export function RankingWidget({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentPair, winnerId, isTie, isSkipping, handleChoice, handleSkip]);
 
-  // Render states
-  if (!user) {
-    return (
-      <RankingPlaceholder
-        title="Authentication Required"
-        description="Sign in to search for artists, select albums, and start ranking your favorite tracks."
-        icon={<LogIn className="h-6 w-6 text-primary" />}
-        onClick={() => openAuthModal("login")}
-      />
-    );
-  }
-
-  if (!isRanking || !sessionId) {
-    return (
-      <RankingPlaceholder
-        title="Ready to Rank?"
-        description="Select albums from the catalog to start ranking your favorite tracks."
-        icon={<Music className="h-5 w-5" />}
-        hideButton
-      />
-    );
-  }
-
   if (isLoading && songs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full w-full gap-4">
@@ -458,6 +441,30 @@ export function RankingWidget({
         isPreview={false}
         backButtonLabel={openInResultsView ? "Back to My Rankings" : undefined}
         sessionId={sessionId}
+        isGuest={!user}
+      />
+    );
+  }
+
+  // Render states
+  if (!user) {
+    return (
+      <RankingPlaceholder
+        title="Authentication Required"
+        description="Sign in to search for artists, select albums, and start ranking your favorite tracks."
+        icon={<LogIn className="h-6 w-6 text-primary" />}
+        onClick={() => openAuthModal("login")}
+      />
+    );
+  }
+
+  if (!isRanking || !sessionId) {
+    return (
+      <RankingPlaceholder
+        title="Ready to Rank?"
+        description="Select albums from the catalog to start ranking your favorite tracks."
+        icon={<Music className="h-5 w-5" />}
+        hideButton
       />
     );
   }
