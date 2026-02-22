@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useAnalyticsStore } from "@/lib/store";
 import { useUserSessions, useDeleteSession } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -18,14 +19,13 @@ const COMPLETION_THRESHOLD = 25;
 const COMPLETED_THRESHOLD = 90;
 
 type MyRankingsOverviewProps = Readonly<{
-  isSidebarCollapsed?: boolean;
   onSessionDelete?: (sessionId: string) => void;
 }>;
 
 type SortField = "completion" | "date" | "artist";
 type SortDir = "asc" | "desc";
 
-export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
+export function MyRankingsOverview({ onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
   const router = useRouter();
   const { user } = useAuth();
   const deleteSessionMutation = useDeleteSession();
@@ -246,6 +246,17 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
           </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          <CopyLinkButton 
+            url={`${typeof window !== 'undefined' ? window.location.origin : ''}/ranking/${session.session_id}`}
+            variant="ghost"
+            size="icon"
+            showLabel={false}
+            className={cn(
+              "h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10",
+              "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary",
+              "opacity-70 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+            )}
+          />
           {onDelete && (
             <button
               type="button"
@@ -317,12 +328,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-4 h-full min-h-0",
-        isSidebarCollapsed ? "w-full" : "w-full max-w-5xl mx-auto"
-      )}
-    >
+    <div className="flex flex-col gap-4 h-full min-h-0 w-full">
       <div className="flex flex-col gap-5 shrink-0">
         <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-foreground text-center">
           My Rankings

@@ -11,9 +11,6 @@
 
 export {
   // Navigation store
-  useNavigationStore,
-  useResponsiveSidebar,
-  type NavigationSource,
   type NavigationState,
   
   // Catalog store

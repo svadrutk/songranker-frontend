@@ -1,7 +1,7 @@
 ---
 title: "feat: Transition from SPA to MPA for SEO and deep linking"
 type: feat
-status: active
+status: completed
 date: 2026-02-21
 ---
 

@@ -8,7 +8,6 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useFeedback } from "./FeedbackProvider";
 import { cn } from "@/lib/utils";
-import { useNavigationStore } from "@/lib/store";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -17,7 +16,6 @@ export function Navbar() {
   const { user, signOut, openAuthModal } = useAuth();
   const { openFeedback } = useFeedback();
   const pathname = usePathname();
-  const { setSidebarCollapsed } = useNavigationStore();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -40,7 +38,6 @@ export function Navbar() {
         <div className="flex items-center shrink-0">
           <Link href="/" passHref legacyBehavior>
             <motion.a
-              onClick={() => setSidebarCollapsed(true)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="flex items-center gap-2 md:gap-3 hover:opacity-80 transition-opacity cursor-pointer"

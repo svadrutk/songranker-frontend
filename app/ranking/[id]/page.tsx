@@ -8,7 +8,7 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { id } = await params;
-  const session = await getSessionDetail(id);
+  const session = await getSessionDetail(id, { includeComparisons: true });
   const previousImages = (await parent).openGraph?.images || [];
 
   if (!session) {
@@ -51,13 +51,24 @@ export default async function RankingPage({
   return (
     <div className="h-full w-full overflow-hidden bg-background relative">
       <Suspense fallback={<RankingSkeleton />}>
-        <RankingWidget
-          isRanking={true}
-          sessionId={id}
-          initialMode={mode}
-        />
+        <RankingDataWrapper id={id} mode={mode} />
       </Suspense>
     </div>
+  );
+}
+
+async function RankingDataWrapper({ id, mode }: { id: string; mode?: string }) {
+  // Fetch session data on the server inside the Suspense boundary
+  // We include comparisons so the widget can initialize its pairing history
+  const session = await getSessionDetail(id, { includeComparisons: true });
+  
+  return (
+    <RankingWidget
+      isRanking={true}
+      sessionId={id}
+      initialMode={mode}
+      initialData={session}
+    />
   );
 }
 
@@ -66,7 +77,7 @@ function RankingSkeleton() {
     <div className="flex flex-col items-center justify-center h-full w-full gap-4">
       <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
-        Loading Ranking...
+        Loading Ranking…
       </p>
     </div>
   );

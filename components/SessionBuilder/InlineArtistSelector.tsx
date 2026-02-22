@@ -83,7 +83,7 @@ export function InlineArtistSelector({
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
-          <p className="font-mono text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Loading...</p>
+          <p className="font-mono text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Loading…</p>
         </div>
       ) : (
         <div className="space-y-6">

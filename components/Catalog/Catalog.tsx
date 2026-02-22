@@ -5,7 +5,7 @@ import { useMemo, useEffect, useRef, type JSX } from "react";
 import { searchArtistReleaseGroups, getReleaseGroupTracks, suggestArtists, type ReleaseGroup } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { SessionSelector } from "@/components/SessionSelector";
-import { useCatalogStore, useNavigationStore } from "@/lib/store";
+import { useCatalogStore } from "@/lib/store";
 import { useUserSessions, useDebouncedValue } from "@/lib/hooks";
 
 // Extracted components
@@ -90,14 +90,6 @@ export function Catalog({
       setShowSuggestions(false);
     }
   }, [activePanel, setCatalogView, setShowSuggestions]);
-
-  // Close autocomplete dropdown when sidebar opens
-  const { isSidebarCollapsed } = useNavigationStore();
-  useEffect(() => {
-    if (!isSidebarCollapsed && catalogView === "search") {
-      setShowSuggestions(false);
-    }
-  }, [isSidebarCollapsed, catalogView, setShowSuggestions]);
 
   // Derive completed rankings from sessions
   const rankingResults = useMemo(() => {

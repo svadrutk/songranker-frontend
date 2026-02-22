@@ -6,6 +6,7 @@ import { RotateCcw, Check, FileDown, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
 import { ShareButton } from "@/components/ShareButton";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import type { SessionSong } from "@/lib/api";
@@ -226,6 +227,10 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
           )}
           {!isPreview && (
             <>
+              <CopyLinkButton 
+                url={`${typeof window !== 'undefined' ? window.location.origin : ''}/ranking/${sessionId}`}
+                className="w-full md:flex-1 h-12"
+              />
               <ShareButton songs={sortedSongs} />
               <Button
                 onClick={() => exportRankingsToCsv(sortedSongs)}

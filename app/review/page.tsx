@@ -71,7 +71,7 @@ function LoadingOverlay(): JSX.Element {
           Initializing Session
         </h3>
         <p className="text-xs text-muted-foreground font-mono">
-          Setting up your ranking environment...
+          Setting up your ranking environment…
         </p>
       </div>
     </div>
