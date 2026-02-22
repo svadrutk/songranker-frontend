@@ -18,14 +18,13 @@ const COMPLETION_THRESHOLD = 25;
 /** Same as RankingWidget "View Results" threshold (displayScore >= 90) so completed rankings appear in Completed column. */
 const COMPLETED_THRESHOLD = 90;
 
-type MyRankingsOverviewProps = Readonly<{
-  onSessionDelete?: (sessionId: string) => void;
-}>;
-
 type SortField = "completion" | "date" | "artist";
 type SortDir = "asc" | "desc";
 
-export function MyRankingsOverview({ onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
+type MyRankingsOverviewProps = Record<string, never>;
+
+export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
+
   const router = useRouter();
   const { user } = useAuth();
   const deleteSessionMutation = useDeleteSession();
@@ -132,9 +131,7 @@ export function MyRankingsOverview({ onSessionDelete }: MyRankingsOverviewProps)
     if (!confirmDeleteId) return;
     const sessionId = confirmDeleteId;
     setConfirmDeleteId(null);
-    deleteSessionMutation.mutate(sessionId, {
-      onSuccess: () => onSessionDelete?.(sessionId),
-    });
+    deleteSessionMutation.mutate(sessionId);
   };
 
   // 3-phase progress bar thresholds (matching ProgressSection)

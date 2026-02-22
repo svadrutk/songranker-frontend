@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * RankingWidget - Song comparison and ranking interface
  * 
