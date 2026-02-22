@@ -109,13 +109,13 @@ const AnalyticsPage = dynamic(() => import('@/components/AnalyticsPage'), {
 
 ## Acceptance Criteria
 
-- [ ] All pages have a distinct URL path: `/`, `/review`, `/analytics`, `/my-rankings`.
-- [ ] Users can share a `/ranking/[id]?mode=results` link, and guests can view the results.
-- [ ] Browser "Back" and "Forward" buttons work correctly across all views.
-- [ ] Social sharing a `/ranking/[id]` link displays dynamic metadata with artist/playlist names.
-- [ ] Refreshing the page on any route keeps the user on that same route.
-- [ ] `Navbar` links are crawlable `<a>` tags (via `next/link`).
-- [ ] Accessibility: "Skip to main content" link added; H1 hierarchy maintained on all pages.
+- [x] All pages have a distinct URL path: `/`, `/review`, `/analytics`, `/my-rankings`.
+- [x] Users can share a `/ranking/[id]?mode=results` link, and guests can view the results.
+- [x] Browser "Back" and "Forward" buttons work correctly across all views.
+- [x] Social sharing a `/ranking/[id]` link displays dynamic metadata with artist/playlist names.
+- [x] Refreshing the page on any route keeps the user on that same route.
+- [x] `Navbar` links are crawlable `<a>` tags (via `next/link`).
+- [x] Accessibility: "Skip to main content" link added; H1 hierarchy maintained on all pages.
 
 ---
 

@@ -101,6 +101,7 @@ export type SessionSong = {
   local_elo: number;
   bt_strength: number | null;
   comparison_count: number;
+  genres?: string[] | null;
 };
 
 export type ComparisonCreate = {

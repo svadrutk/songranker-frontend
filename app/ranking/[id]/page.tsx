@@ -8,7 +8,7 @@ export async function generateMetadata(
   parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { id } = await params;
-  const session = await getSessionDetail(id, { includeComparisons: true });
+  const session = await getSessionDetail(id, { includeComparisons: false });
   const previousImages = (await parent).openGraph?.images || [];
 
   if (!session) {
