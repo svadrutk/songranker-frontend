@@ -67,6 +67,10 @@ export function RankingWidget({
   const isMounted = useRef(true);
 
   const setMode = useCallback((mode: "duel" | "results") => {
+    const currentMode = searchParams.get("mode");
+    if (mode === "results" && currentMode === "results") return;
+    if (mode === "duel" && !currentMode) return;
+
     const params = new URLSearchParams(searchParams.toString());
     if (mode === "results") {
       params.set("mode", "results");
@@ -182,7 +186,7 @@ export function RankingWidget({
 
     // If we have initialData for THIS sessionId, we can skip the initial fetch
     // This avoids the data fetching waterfall in MPA mode
-    if (initialData && initialData.session_id === sessionId && songs.length > 0) {
+    if (initialData && initialData.session_id === sessionId) {
       // Still need to handle the initial mode/results view logic
       if (openInResultsView || initialMode === "results" || !user) {
         setMode("results");
@@ -263,7 +267,7 @@ export function RankingWidget({
     return () => {
       isCurrent = false;
     };
-  }, [isRanking, sessionId, openInResultsView, resetTimer, hideRankNotification, initialMode, user, initialData, songs.length, setMode]);
+  }, [isRanking, sessionId, openInResultsView, resetTimer, hideRankNotification, initialMode, user, initialData, setMode]);
 
   const handleChoice = useCallback(
     async (winner: SessionSong | null, tie: boolean = false) => {
