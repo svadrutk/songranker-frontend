@@ -22,14 +22,14 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Chorusboard",
-  description: "Rank your favorite songs with ease.",
+  description: "Find your favorites.",
   icons: {
     icon: '/logo/logo.svg',
     apple: '/logo/logo.svg',
   },
   openGraph: {
     title: 'Chorusboard',
-    description: 'Rank your favorite songs with ease.',
+    description: 'Find your favorites.',
     url: 'https://chorusboard.com',
     siteName: 'Chorusboard',
     images: [
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Chorusboard',
-    description: 'Rank your favorite songs with ease.',
+    description: 'Find your favorites.',
     images: ['/logo/logo.svg'],
   },
 };

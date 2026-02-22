@@ -232,7 +232,7 @@ export function Catalog({
   return (
     <div className="flex flex-col h-full gap-6 overflow-hidden relative">
       <div className="flex flex-col gap-4 relative z-10">
-        <ViewToggle onSearchOpen={() => setView("catalog")} onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
+        <ViewToggle onSearchOpen={() => setView("create")} onAnalyticsOpen={onAnalyticsOpen} onRankingsOpen={onRankingsOpen} />
 
         {catalogView === "search" && (
           <SearchBar

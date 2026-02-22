@@ -225,7 +225,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-mono text-sm font-bold truncate text-foreground">
-            {session.primary_artist}
+            {session.display_name || session.primary_artist}
           </p>
           <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
             <span className="flex items-center gap-1">
@@ -568,7 +568,10 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
         isOpen={!!confirmDeleteId}
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={handleConfirmDelete}
-        artistName={sessions.find(s => s.session_id === confirmDeleteId)?.primary_artist || ""}
+        artistName={(() => {
+          const s = sessions.find(s => s.session_id === confirmDeleteId);
+          return s ? (s.display_name || s.primary_artist) : "";
+        })()}
       />
     </div>
   );
@@ -590,6 +593,7 @@ function DeleteConfirmationModal({
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMounted(true);
   }, []);
 

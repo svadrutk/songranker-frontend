@@ -538,6 +538,49 @@
         }
       }
     },
+    "/imports/playlist": {
+      "post": {
+        "tags": [
+          "imports",
+          "imports"
+        ],
+        "summary": "Import Playlist",
+        "description": "Import a public Spotify or Apple Music playlist and create a ranking session.",
+        "operationId": "import_playlist_imports_playlist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlaylistImportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/generate-receipt": {
       "post": {
         "tags": [
@@ -1299,6 +1342,54 @@
         "title": "LeaderboardSong",
         "description": "A song entry in the global leaderboard."
       },
+      "PlaylistImportRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "rank_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank Mode",
+            "default": "quick_rank"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "PlaylistImportRequest"
+      },
       "ReceiptRequest": {
         "properties": {
           "songs": {
@@ -1387,6 +1478,52 @@
               }
             ],
             "title": "User Id"
+          },
+          "playlist_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playlist Id"
+          },
+          "playlist_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Playlist Name"
+          },
+          "source_platform": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Platform",
+            "default": "manual"
+          },
+          "collection_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collection Metadata"
           },
           "songs": {
             "items": {
@@ -1519,6 +1656,35 @@
             ],
             "title": "Spotify Id"
           },
+          "apple_music_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Music Id"
+          },
+          "isrc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isrc"
+          },
+          "genres": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Genres"
+          },
           "cover_url": {
             "anyOf": [
               {
@@ -1568,6 +1734,17 @@
           "primary_artist": {
             "type": "string",
             "title": "Primary Artist"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
           },
           "song_count": {
             "type": "integer",
@@ -1672,6 +1849,35 @@
               }
             ],
             "title": "Spotify Id"
+          },
+          "apple_music_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apple Music Id"
+          },
+          "isrc": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Isrc"
+          },
+          "genres": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Genres"
           },
           "cover_url": {
             "anyOf": [

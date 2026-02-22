@@ -75,7 +75,7 @@ export function RankingsView({
               "font-mono text-xs font-bold truncate block",
               activeSessionId === session.session_id ? "text-primary" : ""
             )}>
-              {session.primary_artist}
+              {session.display_name || session.primary_artist}
             </span>
             <div className="flex items-center gap-2 mt-0.5 text-[9px] text-muted-foreground font-mono uppercase tracking-tighter">
               <span className="flex items-center gap-1">

@@ -1,15 +1,15 @@
 import { create } from "zustand";
 import { useEffect } from "react";
 
-type ViewState = "catalog" | "dedupe" | "ranking" | "analytics" | "my_rankings";
+type ViewState = "create" | "review" | "ranking" | "analytics" | "my_rankings";
 
-type NavigationSource = "navigator" | "kanban" | "catalog";
+type NavigationSource = "navigator" | "kanban" | "create";
 
 type NavigationState = {
   // Current view
   view: ViewState;
   
-  // Sidebar/Navigator state
+  // Sidebar/Navigator state (Deprecated for full-screen)
   isSidebarCollapsed: boolean;
   
   // Session state
@@ -24,12 +24,16 @@ type NavigationState = {
   setSidebarCollapsed: (collapsed: boolean) => void;
   
   // Navigation actions
-  navigateToCatalog: () => void;
+  navigateToCreate: () => void;
+  navigateToReview: () => void;
   navigateToAnalytics: () => void;
   navigateToMyRankings: (fromNavigator: boolean) => void;
   navigateToRanking: (sessionId: string) => void;
   navigateToResults: (sessionId: string, source: NavigationSource) => void;
   navigateBackFromResults: () => void;
+  
+  // Backwards compatibility for the plan
+  navigateToCatalog: () => void;
   
   // Reset state
   reset: () => void;
@@ -43,27 +47,32 @@ const getInitialSidebarState = () => {
 
 export const useNavigationStore = create<NavigationState>((set, get) => ({
   // Initial state
-  view: "catalog",
+  view: "create",
   isSidebarCollapsed: getInitialSidebarState(),
   sessionId: null,
   openInResultsView: false,
-  navigationSource: "catalog",
+  navigationSource: "create",
   
   // Simple setters
   setView: (view) => set({ view }),
   setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
   
   // Complex navigation actions
-  navigateToCatalog: () => set({
-    view: "catalog",
+  navigateToCreate: () => set({
+    view: "create",
     sessionId: null,
     openInResultsView: false,
-    navigationSource: "catalog",
+    navigationSource: "create",
+  }),
+  
+  // Backwards compatibility for the rename
+  navigateToCatalog: () => get().navigateToCreate(),
+  
+  navigateToReview: () => set({
+    view: "review",
   }),
   
   navigateToAnalytics: () => {
-    // Always collapse when navigating to analytics from the navigator
-    // (if sidebar is open, user clicked from inside it and wants to see content)
     set({
       view: "analytics",
       isSidebarCollapsed: true,
@@ -74,7 +83,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
     set({
       view: "my_rankings",
-      navigationSource: fromNavigator ? "navigator" : "catalog",
+      navigationSource: fromNavigator ? "navigator" : "create",
       // Only collapse sidebar on mobile when clicked from navigator
       // On desktop, keep it open so user can see navigator + content
       isSidebarCollapsed: fromNavigator && isMobile ? true : get().isSidebarCollapsed,
@@ -120,11 +129,11 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   },
   
   reset: () => set({
-    view: "catalog",
+    view: "create",
     isSidebarCollapsed: getInitialSidebarState(),
     sessionId: null,
     openInResultsView: false,
-    navigationSource: "catalog",
+    navigationSource: "create",
   }),
 }));
 
@@ -135,14 +144,14 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
 export function useResponsiveSidebar(user: { id: string } | null) {
   const { view, navigationSource, setSidebarCollapsed } = useNavigationStore();
   
-  // Initial mount: expand sidebar when in catalog view
+  // Initial mount: expand sidebar when in create view
   useEffect(() => {
-    // Only auto-expand on initial mount for catalog view
-    if (view !== "catalog") return;
+    // Only auto-expand on initial mount for create view
+    if (view !== "create") return;
     
     // Always expand sidebar on initial load (both mobile and desktop)
     setSidebarCollapsed(false);
-    // Only run once on mount for catalog view
+    // Only run once on mount for create view
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   

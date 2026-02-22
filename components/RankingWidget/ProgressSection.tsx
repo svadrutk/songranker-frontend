@@ -56,18 +56,19 @@ const PHASES: Phase[] = [
 ];
 
 function estimateDuelsForConvergence(nSongs: number): { minimum: number; recommended: number } {
-  // Based on real-world Bradley-Terry convergence with random pairing:
-  // - Each song needs ≥3 meaningful comparisons for >90% confidence
-  // - BUT random pairing creates uneven distribution (coupon collector problem)
-  // - The least-compared song bottlenecks convergence
-  // - Real data: 18 songs needed ~65 duels (3.6n)
-  // 
-  // More conservative estimates:
-  // - Minimum: ~2.5n (optimistic, assumes decent pairing luck)
-  // - Recommended: ~3.5n (realistic for most users)
+  if (nSongs < 2) return { minimum: 0, recommended: 0 };
+
+  // Bradley-Terry model convergence estimates using n log2(n) as base.
+  // - Top 10 stability typically requires around 0.7 * n log2(n) comparisons
+  //   when using active pairing (our current algorithm).
+  // - Fixed buffer accounts for user noise (Ties/IDC/Skips) which 
+  //   increase total duels without advancing the model.
+  
+  const logN = Math.log2(nSongs);
+  
   return {
-    minimum: Math.ceil(nSongs * 2.5),
-    recommended: Math.ceil(nSongs * 3.5),
+    minimum: Math.ceil(nSongs * logN * 0.5 + 10),
+    recommended: Math.ceil(nSongs * logN * 0.7 + 20),
   };
 }
 

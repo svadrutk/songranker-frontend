@@ -191,7 +191,7 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
                   "font-mono text-xs font-bold truncate flex-1",
                   activeSessionId === session.session_id ? "text-primary" : ""
                 )}>
-                  {session.primary_artist}
+                  {session.display_name || session.primary_artist}
                 </span>
                 <div className="flex items-center gap-2 shrink-0">
                   {deletingId === session.session_id ? (
@@ -256,7 +256,10 @@ export function SessionSelector({ onSelect, onDelete, activeSessionId }: Session
         isOpen={!!confirmDeleteId}
         onClose={() => setConfirmDeleteId(null)}
         onConfirm={handleConfirmDelete}
-        artistName={sessions.find(s => s.session_id === confirmDeleteId)?.primary_artist || ""}
+        artistName={(() => {
+          const s = sessions.find(s => s.session_id === confirmDeleteId);
+          return s ? (s.display_name || s.primary_artist) : "";
+        })()}
       />
     </div>
   );

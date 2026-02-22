@@ -1,4 +1,5 @@
 import { type ReleaseGroup, type SongInput } from "./api";
+import { type RankingSource } from "./stores/session-builder-store";
 
 /**
  * Utility for normalizing song titles and identifying potential duplicates.
@@ -155,6 +156,19 @@ export function findPotentialDuplicates(songs: readonly string[]): DuplicateGrou
   }
 
   return groups;
+}
+
+/**
+ * Resolves all tracks from a list of sources into a flat list of SongInput objects.
+ */
+export function resolveSourcesToSongs(sources: readonly RankingSource[]): SongInput[] {
+  const allSongs: SongInput[] = [];
+  for (const source of sources) {
+    if (source.resolvedTracks) {
+      allSongs.push(...source.resolvedTracks);
+    }
+  }
+  return allSongs;
 }
 
 /**

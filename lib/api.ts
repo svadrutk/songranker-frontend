@@ -33,12 +33,15 @@ export type SessionCreate = {
 export type SessionResponse = {
   session_id: string;
   count: number;
+  playlist_name?: string | null;
+  image_url?: string | null;
 };
 
 export type SessionSummary = {
   session_id: string;
   created_at: string;
   primary_artist: string;
+  display_name?: string | null;
   song_count: number;
   comparison_count: number;
   convergence_score: number;
@@ -54,6 +57,9 @@ export type ComparisonPair = {
 
 export type SessionDetail = {
   session_id: string;
+  playlist_id?: string | null;
+  playlist_name?: string | null;
+  image_url?: string | null;
   songs: SessionSong[];
   comparison_count: number;
   convergence_score?: number;
@@ -173,7 +179,14 @@ async function fetchBackend<T>(
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const message = errorData.detail || `API Error: ${response.status} ${response.statusText}`;
+      let message = "";
+      if (typeof errorData.detail === 'string') {
+        message = errorData.detail;
+      } else if (typeof errorData.detail === 'object' && errorData.detail?.message) {
+        message = errorData.detail.message;
+      } else {
+        message = `API Error: ${response.status} ${response.statusText}`;
+      }
       throw new Error(message);
     }
 
@@ -368,7 +381,19 @@ export type FeedbackResponse = {
   id: string;
   message: string;
   created_at: string;
+};export type PlaylistImportRequest = {
+  url: string;
+  user_id?: string | null;
+  limit?: number | null;
+  rank_mode?: string | null;
 };
+
+export async function importPlaylist(payload: PlaylistImportRequest): Promise<SessionResponse> {
+  return fetchBackend<SessionResponse>("/imports/playlist", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
 
 export async function submitFeedback(payload: FeedbackCreate): Promise<FeedbackResponse> {
   return fetchBackend<FeedbackResponse>("/feedback", {
