@@ -26,11 +26,18 @@ export function Navbar() {
     setMounted(true);
   }, []);
 
+  const isRankingPage = pathname?.startsWith("/ranking/");
+
   const navItems = [
     { label: "Create", href: "/" },
     { label: "My Rankings", href: "/my-rankings" },
     { label: "Stats", href: "/analytics" },
   ];
+
+  // Dynamically add Ranking item if on a ranking page
+  if (isRankingPage) {
+    navItems.push({ label: "Ranking", href: pathname });
+  }
 
   const logoSrc = mounted && resolvedTheme === "dark" ? "/logo/logo.svg" : "/logo/logo-dark.svg";
 
