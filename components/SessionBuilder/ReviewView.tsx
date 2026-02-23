@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useMemo, type JSX } from "react";
-import { Check, Merge, Split, ArrowLeft, Play, ShieldAlert, Type } from "lucide-react";
+import { useState, useMemo, useEffect, type JSX } from "react";
+import { Check, Merge, Split, ArrowLeft, ShieldAlert, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { findPotentialDuplicates, resolveSourcesToSongs } from "@/lib/deduplication";
 import { useSessionBuilderStore } from "@/lib/store";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import { IconSparkles } from "./SessionBuilder";
 import type { SongInput } from "@/lib/api";
 
 type ReviewViewProps = Readonly<{
@@ -39,6 +42,10 @@ function generateSmartDefaultName(songs: SongInput[]): string {
 
 export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element {
   const { sources } = useSessionBuilderStore();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const buttonLogoSrc = mounted && resolvedTheme === "dark" ? "/logo/logo-dark.svg" : "/logo/logo.svg";
   
   const allSongs = useMemo(() => resolveSourcesToSongs(sources), [sources]);
   const songTitles = useMemo(() => allSongs.map(s => s.name), [allSongs]);
@@ -51,6 +58,7 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
 
   const [sessionName, setSessionName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
+  const [nameFocused, setNameFocused] = useState(false);
 
   const smartDefault = useMemo(() => generateSmartDefaultName(allSongs), [allSongs]);
   const currentName = isEditingName ? sessionName : smartDefault;
@@ -77,8 +85,8 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
   const totalFinalCount = allSongs.length - removedCount;
 
   return (
-    <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 md:px-8 py-12 gap-12 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-8 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-12 gap-6 md:gap-12 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-8 duration-500">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <button 
           onClick={onBack}
           className="flex items-center gap-2 text-xs font-mono font-black text-muted-foreground hover:text-primary transition-colors uppercase tracking-[0.2em]"
@@ -86,40 +94,48 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
           <ArrowLeft className="h-4 w-4" /> Back to Builder
         </button>
         <div className="text-center md:text-right">
-          <h1 className="text-3xl md:text-4xl font-mono font-black uppercase tracking-tight">Review & Clean</h1>
+          <h1 className="text-2xl md:text-4xl font-mono font-black uppercase tracking-tight">Review & Clean</h1>
           <p className="text-xs text-muted-foreground font-mono uppercase tracking-widest opacity-70">
             {allSongs.length} songs found • {duplicateGroups.length} duplicate groups
           </p>
         </div>
       </div>
 
-      <div className="bg-card border-2 border-border/40 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-6 animate-in fade-in duration-700">
-        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
-          <Type className="h-6 w-6 text-primary" />
+      <div className="bg-card border-2 border-border/40 rounded-2xl md:rounded-3xl p-5 md:p-8 flex flex-col md:flex-row items-center gap-4 md:gap-6 animate-in fade-in duration-700">
+        <div className="hidden md:flex h-12 w-12 rounded-2xl bg-primary/10 items-center justify-center shrink-0">
+          <Pencil className="h-5 w-5 text-primary" />
         </div>
-        <div className="flex-1 w-full space-y-2">
-          <h3 className="font-mono font-black uppercase tracking-tight text-primary/60 text-[10px]">Ranking Name</h3>
-          <input
-            type="text"
-            value={currentName}
-            onChange={(e) => {
-              setSessionName(e.target.value);
-              setIsEditingName(true);
-            }}
-            placeholder="Name your ranking..."
-            className="w-full bg-transparent border-none p-0 font-mono text-xl md:text-2xl font-black uppercase tracking-tight focus:ring-0 placeholder:text-muted-foreground/30"
-          />
+        <div className="flex-1 w-full space-y-1.5 md:space-y-2">
+          <div className="flex items-center gap-2">
+            <h3 className="font-mono font-black uppercase tracking-tight text-primary/60 text-[10px]">Ranking Name</h3>
+            <Pencil className={`h-3 w-3 transition-opacity duration-300 ${nameFocused ? "opacity-0" : "text-muted-foreground/40 opacity-100"}`} />
+          </div>
+          <div className="relative">
+            <input
+              type="text"
+              value={currentName}
+              onFocus={() => setNameFocused(true)}
+              onBlur={() => setNameFocused(false)}
+              onChange={(e) => {
+                setSessionName(e.target.value);
+                setIsEditingName(true);
+              }}
+              placeholder="Name your ranking..."
+              className="w-full bg-transparent border-none p-0 font-mono text-lg md:text-2xl font-black uppercase tracking-tight focus:ring-0 placeholder:text-muted-foreground/30"
+            />
+            <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-300 ${nameFocused ? "bg-primary/50 scale-x-100" : "bg-muted-foreground/15 scale-x-100"}`} />
+          </div>
         </div>
       </div>
 
       {totalFinalCount > 150 && (
-        <div className="bg-yellow-500/10 border-2 border-yellow-500/20 rounded-3xl p-8 flex items-start gap-6 animate-in fade-in duration-700">
-          <div className="h-12 w-12 rounded-2xl bg-yellow-500/20 flex items-center justify-center shrink-0">
-            <ShieldAlert className="h-7 w-7 text-yellow-500" />
+        <div className="bg-yellow-500/10 border-2 border-yellow-500/20 rounded-2xl md:rounded-3xl p-5 md:p-8 flex items-start gap-4 md:gap-6 animate-in fade-in duration-700">
+          <div className="h-10 w-10 md:h-12 md:w-12 rounded-xl md:rounded-2xl bg-yellow-500/20 flex items-center justify-center shrink-0">
+            <ShieldAlert className="h-5 w-5 md:h-7 md:w-7 text-yellow-500" />
           </div>
-          <div className="space-y-2">
-            <h3 className="font-mono font-black uppercase tracking-tight text-yellow-500 text-lg">Large Session Warning</h3>
-            <p className="text-sm text-muted-foreground font-mono leading-relaxed opacity-80">
+          <div className="space-y-1 md:space-y-2">
+            <h3 className="font-mono font-black uppercase tracking-tight text-yellow-500 text-base md:text-lg">Large Session Warning</h3>
+            <p className="text-xs md:text-sm text-muted-foreground font-mono leading-relaxed opacity-80">
               Ranking {totalFinalCount} songs might take a significant amount of time. 
               We recommend keeping sessions under 150 songs for the best experience.
             </p>
@@ -127,35 +143,35 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-5 md:space-y-8">
         {duplicateGroups.length === 0 ? (
-          <div className="bg-muted/5 border-2 border-dashed border-border/40 rounded-[3rem] py-24 flex flex-col items-center gap-6 text-center">
-            <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Check className="h-10 w-10 text-primary" />
+          <div className="bg-muted/5 border-2 border-dashed border-border/40 rounded-2xl md:rounded-[3rem] py-14 md:py-24 flex flex-col items-center gap-4 md:gap-6 text-center px-4">
+            <div className="h-14 w-14 md:h-20 md:w-20 rounded-full bg-primary/10 flex items-center justify-center">
+              <Check className="h-7 w-7 md:h-10 md:w-10 text-primary" />
             </div>
-            <div className="space-y-2">
-              <h3 className="font-mono font-black uppercase tracking-widest text-xl text-primary">Your list is clean</h3>
+            <div className="space-y-1.5 md:space-y-2">
+              <h3 className="font-mono font-black uppercase tracking-widest text-lg md:text-xl text-primary">Your list is clean</h3>
               <p className="text-xs text-muted-foreground font-mono uppercase tracking-[0.2em] opacity-60">No duplicates were found across your sources.</p>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 gap-4 md:gap-6">
             <h2 className="font-mono font-black uppercase tracking-widest text-primary/60 text-sm px-2">
               Potential Duplicates ({duplicateGroups.length})
             </h2>
             {duplicateGroups.map((group, idx) => (
               <div 
                 key={idx} 
-                style={{ contentVisibility: 'auto', containIntrinsicSize: '0 200px' } as React.CSSProperties}
-                className={`p-8 rounded-[2rem] border-2 transition-all duration-300 ${
+                style={{ contentVisibility: 'auto', containIntrinsicSize: '0 180px' } as React.CSSProperties}
+                className={`p-5 md:p-8 rounded-2xl md:rounded-[2rem] border-2 transition-all duration-300 ${
                   resolutions[idx] 
                     ? "bg-primary/5 border-primary/20 shadow-lg ring-4 ring-primary/5" 
                     : "bg-muted/20 border-transparent opacity-60"
                 }`}
               >
-                <div className="flex flex-col md:flex-row items-start justify-between gap-8">
-                  <div className="space-y-6 flex-1 min-w-0">
-                    <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row items-start justify-between gap-4 md:gap-8">
+                  <div className="space-y-4 md:space-y-6 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 md:gap-3 flex-wrap">
                       <span className="text-[10px] font-mono font-black px-2 py-1 rounded-lg bg-background/50 uppercase tracking-widest border border-border/40">
                         Group {idx + 1}
                       </span>
@@ -166,24 +182,24 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
                       )}
                     </div>
                     
-                    <div className="space-y-4">
-                      <div className="flex items-start gap-4">
-                        <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={4} />
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="flex items-start gap-3 md:gap-4">
+                        <div className="h-5 w-5 md:h-6 md:w-6 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                          <Check className="h-3 w-3 md:h-3.5 md:w-3.5 text-primary" strokeWidth={4} />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-lg font-mono font-black text-foreground uppercase tracking-tight truncate">
+                          <p className="text-base md:text-lg font-mono font-black text-foreground uppercase tracking-tight truncate">
                             {group.canonical}
                           </p>
                           <p className="text-[10px] font-mono text-muted-foreground uppercase font-bold tracking-widest opacity-60">Canonical Version</p>
                         </div>
                       </div>
                       
-                      <div className="pl-10 space-y-3">
+                      <div className="pl-8 md:pl-10 space-y-2 md:space-y-3">
                         {group.matches.slice(1).map((m, i) => (
-                          <div key={i} className="flex items-center gap-3 opacity-50">
+                          <div key={i} className="flex items-center gap-2 md:gap-3 opacity-50">
                             <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground shrink-0" />
-                            <p className={`text-sm font-mono truncate ${resolutions[idx] ? "line-through" : ""}`}>
+                            <p className={`text-xs md:text-sm font-mono truncate ${resolutions[idx] ? "line-through" : ""}`}>
                               {m}
                             </p>
                           </div>
@@ -195,16 +211,16 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
                   <Button
                     onClick={() => toggleResolution(idx)}
                     variant="outline"
-                    className={`h-auto py-4 px-8 rounded-2xl font-mono text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`w-full md:w-auto h-auto py-3 md:py-4 px-6 md:px-8 rounded-xl md:rounded-2xl font-mono text-[10px] font-black uppercase tracking-widest transition-all ${
                       resolutions[idx] 
                         ? "border-primary/40 bg-primary/10 text-primary hover:bg-primary/20" 
                         : "border-border hover:bg-muted"
                     }`}
                   >
                     {resolutions[idx] ? (
-                      <span className="flex items-center gap-2"><Merge className="h-4 w-4" /> Merge</span>
+                      <span className="flex items-center justify-center gap-2"><Merge className="h-4 w-4" /> Merge</span>
                     ) : (
-                      <span className="flex items-center gap-2"><Split className="h-4 w-4" /> Keep All</span>
+                      <span className="flex items-center justify-center gap-2"><Split className="h-4 w-4" /> Keep All</span>
                     )}
                   </Button>
                 </div>
@@ -214,13 +230,27 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
         )}
       </div>
 
-      <div className="sticky bottom-0 bg-background/80 backdrop-blur-xl border-t border-border/40 p-8 flex flex-col items-center gap-4 mt-auto -mx-4 md:-mx-8 z-30">
+      <div className="sticky bottom-0 bg-background/80 backdrop-blur-xl border-t border-border/40 p-4 md:p-8 flex flex-col items-center gap-2 md:gap-4 mt-auto -mx-4 md:-mx-8 z-30">
         <Button 
           size="lg"
           onClick={handleConfirm}
-          className="h-20 px-16 rounded-3xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.2em] text-xl hover:scale-105 active:scale-95 transition-all group shadow-[0_20px_50px_rgba(var(--primary-rgb),0.3)]"
+          className="w-full md:w-auto h-20 px-10 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl relative overflow-hidden"
         >
-          Start Ranking ({totalFinalCount} Songs) <Play className="ml-4 h-7 w-7 fill-current transition-transform group-hover:scale-110" />
+          <div className="flex items-center gap-4 relative z-10">
+            <div className="relative h-10 w-10 flex items-center justify-center">
+              <div className="relative z-10 group-hover:rotate-12 transition-transform duration-300">
+                <Image
+                  src={buttonLogoSrc}
+                  alt="Logo"
+                  width={36}
+                  height={36}
+                  className="object-contain"
+                />
+              </div>
+              <IconSparkles />
+            </div>
+            Start Ranking ({totalFinalCount})
+          </div>
         </Button>
         <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest font-bold opacity-60">
           Your draft will be saved to your profile

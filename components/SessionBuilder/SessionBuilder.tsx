@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, type JSX } from "react";
+import { useState, useEffect, useMemo, useRef, type JSX } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSessionBuilderStore } from "@/lib/store";
@@ -22,7 +22,7 @@ import {
 } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
-import { Trash2, ArrowRight, Music } from "lucide-react";
+import { Trash2, ArrowRight, Music, ChevronDown } from "lucide-react";
 import { SiSpotify, SiApplemusic } from "@icons-pack/react-simple-icons";
 import { cn } from "@/lib/utils";
 
@@ -45,12 +45,15 @@ export function SessionBuilder(): JSX.Element {
   
   // Artist selection state
   const [searchingArtist, setSearchingArtist] = useState<{name: string} | null>(null);
+  const searchingArtistRef = useRef(searchingArtist);
+  searchingArtistRef.current = searchingArtist;
   const [artistReleases, setArtistReleases] = useState<ReleaseGroup[]>([]);
   const [loadingReleases, setLoadingReleases] = useState(false);
   
   // Playlist import state
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [selectionExpanded, setSelectionExpanded] = useState(false);
   
   const debouncedQuery = useDebouncedValue(query, 300);
 
@@ -66,7 +69,7 @@ export function SessionBuilder(): JSX.Element {
 
   useEffect(() => {
     const dTrimmed = debouncedQuery.trim();
-    if (dTrimmed.length < 2 || dTrimmed.startsWith("http") || (searchingArtist && dTrimmed === searchingArtist.name)) {
+    if (dTrimmed.length < 2 || dTrimmed.startsWith("http") || searchingArtist || query.trim().length === 0) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -75,9 +78,7 @@ export function SessionBuilder(): JSX.Element {
     setLoadingSuggestions(true);
     suggestArtists(dTrimmed)
       .then((newSuggestions) => {
-        // Only update if we're still looking for suggestions for THIS specific query
-        // and we haven't already selected an artist in the meantime
-        if (!searchingArtist || dTrimmed !== searchingArtist.name) {
+        if (!searchingArtistRef.current) {
           setSuggestions(newSuggestions);
           setShowSuggestions(true);
         }
@@ -86,10 +87,11 @@ export function SessionBuilder(): JSX.Element {
       .finally(() => {
         setLoadingSuggestions(false);
       });
-  }, [debouncedQuery, searchingArtist]);
+  }, [debouncedQuery, searchingArtist, query]);
 
   const handleSuggestionClick = async (suggestion: string) => {
     setQuery(suggestion);
+    setSuggestions([]);
     setShowSuggestions(false);
     setSearchingArtist({ name: suggestion });
     setLoadingReleases(true);
@@ -242,9 +244,9 @@ export function SessionBuilder(): JSX.Element {
         )}
       </AnimatePresence>
       {/* Left Column: Search & Discovery */}
-      <div className="flex-1 flex flex-col min-w-0 p-4 md:p-8 lg:p-12 gap-8 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 flex flex-col min-w-0 pt-8 px-4 md:p-8 lg:p-12 gap-8 overflow-y-auto custom-scrollbar">
         {/* Punchy Minimalist Header - Smaller for compact layout */}
-        <div className="flex flex-col items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700 w-full">
           <h1 className="font-sans text-3xl md:text-5xl font-semibold tracking-tighter text-foreground leading-none">
             Find your favorites<span className="text-primary">.</span>
           </h1>
@@ -284,7 +286,11 @@ export function SessionBuilder(): JSX.Element {
       {/* Right Column: Your Selection Sidebar */}
       <div className="w-full md:w-[400px] lg:w-[450px] shrink-0 border-t md:border-t-0 md:border-l border-border/10 bg-muted/5 flex flex-col overflow-hidden">
         <div className="p-6 md:p-8 flex flex-col h-full gap-6">
-          <div className="flex items-center justify-between border-b border-border/20 pb-4">
+          <button
+            type="button"
+            onClick={() => setSelectionExpanded(prev => !prev)}
+            className="md:pointer-events-none flex items-center justify-between border-b border-border/20 pb-4 w-full text-left"
+          >
             <div className="flex flex-col gap-1">
               <h2 className="font-mono font-black uppercase tracking-widest text-primary/80 text-xs">
                 Your Selection
@@ -299,56 +305,71 @@ export function SessionBuilder(): JSX.Element {
               </div>
             </div>
             
-            {sources.length > 0 && (
-              <button 
-                onClick={resetDraft}
-                className="text-muted-foreground hover:text-destructive transition-colors font-mono text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
-              >
-                <Trash2 className="h-3 w-3" /> Clear
-              </button>
-            )}
-          </div>
+            <div className="flex items-center gap-3">
+              {sources.length > 0 && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); resetDraft(); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); resetDraft(); } }}
+                  className="text-muted-foreground hover:text-destructive transition-colors font-mono text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                >
+                  <Trash2 className="h-3 w-3" /> Clear
+                </span>
+              )}
+              <ChevronDown className={cn(
+                "h-4 w-4 text-muted-foreground transition-transform duration-200 md:hidden",
+                !selectionExpanded && "rotate-180"
+              )} />
+            </div>
+          </button>
 
-          <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            {sources.length > 0 ? (
-              <div className="flex flex-col gap-4 py-2">
-                {sources.map(source => (
-                  <SourceCard key={source.id} source={source} onRemove={removeSource} />
-                ))}
-              </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-center p-8 gap-4 opacity-30">
-                <Music className="h-12 w-12" />
-                <p className="font-mono text-xs uppercase font-black tracking-widest">
-                  Nothing selected yet
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="pt-4 mt-auto">
-            <Button 
-              size="lg"
-              disabled={sources.some(s => s.status === 'loading') || sources.length === 0}
-              onClick={() => router.push("/review")}
-              className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl disabled:opacity-50 relative overflow-hidden"
-            >
-              <div className="flex items-center gap-4 relative z-10">
-                <div className="relative h-10 w-10 flex items-center justify-center">
-                  <div className="relative z-10 group-hover:rotate-12 transition-transform duration-300">
-                    <Image
-                      src={buttonLogoSrc}
-                      alt="Logo"
-                      width={36}
-                      height={36}
-                      className="object-contain"
-                    />
-                  </div>
-                  <IconSparkles />
+          <div className={cn(
+            "flex-1 flex flex-col gap-6 overflow-hidden transition-all duration-300 ease-in-out",
+            "md:opacity-100 md:max-h-none",
+            selectionExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100"
+          )}>
+            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+              {sources.length > 0 ? (
+                <div className="flex flex-col gap-4 py-2">
+                  {sources.map(source => (
+                    <SourceCard key={source.id} source={source} onRemove={removeSource} />
+                  ))}
                 </div>
-                rank selections
-              </div>
-            </Button>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 gap-4 opacity-30">
+                  <Music className="h-12 w-12" />
+                  <p className="font-mono text-xs uppercase font-black tracking-widest">
+                    Nothing selected yet
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 mt-auto">
+              <Button 
+                size="lg"
+                disabled={sources.some(s => s.status === 'loading') || sources.length === 0}
+                onClick={() => router.push("/review")}
+                className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl disabled:opacity-50 relative overflow-hidden"
+              >
+                <div className="flex items-center gap-4 relative z-10">
+                  <div className="relative h-10 w-10 flex items-center justify-center">
+                    <div className="relative z-10 group-hover:rotate-12 transition-transform duration-300">
+                      <Image
+                        src={buttonLogoSrc}
+                        alt="Logo"
+                        width={36}
+                        height={36}
+                        className="object-contain"
+                      />
+                    </div>
+                    <IconSparkles />
+                  </div>
+                  review selections
+                </div>
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -356,7 +377,7 @@ export function SessionBuilder(): JSX.Element {
   );
 }
 
-function IconSparkles() {
+export function IconSparkles() {
   const sparkles = useMemo(() => 
     [...Array(4)].map((_, i) => {
       const seed = i + 1;

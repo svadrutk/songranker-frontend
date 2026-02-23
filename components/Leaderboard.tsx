@@ -153,7 +153,7 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
           isPreview ? "max-w-lg px-3" : "max-w-3xl"
         )}
       >
-        <motion.div custom={0} variants={itemVariants} className="shrink-0 mb-4 md:mb-8 px-4 md:px-0">
+        <motion.div custom={0} variants={itemVariants} className="shrink-0 mb-4 md:mb-8 px-3 md:px-0">
         <p className="text-[10px] md:text-xs font-mono text-muted-foreground uppercase tracking-wider mb-1 md:mb-2">
           {isPreview ? "Current Standings" : "Rankings"}
         </p>
@@ -176,21 +176,21 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
               key={song.song_id}
               custom={index}
               variants={itemVariants}
-              className="flex items-center gap-3 md:gap-6 py-3 md:py-4 px-4 md:px-2 border-b border-border last:border-b-0 hover:bg-accent transition-colors"
+              className="flex items-center gap-2.5 md:gap-6 py-3 md:py-4 px-3 md:px-2 border-b border-border last:border-b-0 hover:bg-accent transition-colors"
             >
-              <div className={cn("w-10 md:w-16 shrink-0 text-2xl md:text-4xl font-black font-mono text-right", getRankColor())}>
+              <div className={cn("w-8 md:w-16 shrink-0 text-2xl md:text-4xl font-black font-mono text-right", getRankColor())}>
                 {index + 1}
               </div>
-              <div className="h-12 w-12 md:h-16 md:w-16 shrink-0">
+              <div className="h-11 w-11 md:h-16 md:w-16 shrink-0">
                 <CoverArt
                   title={song.name}
                   url={song.cover_url}
                   spotifyId={song.spotify_id}
-                  className="h-12 w-12 md:h-16 md:w-16 rounded object-cover"
+                  className="h-11 w-11 md:h-16 md:w-16 rounded object-cover"
                 />
               </div>
               <div className="flex-1 min-w-0 space-y-0.5 md:space-y-1">
-                <h3 className="font-black truncate text-sm md:text-lg uppercase tracking-tight leading-tight">{song.name}</h3>
+                <h3 className="font-black text-sm md:text-lg uppercase tracking-tight leading-tight line-clamp-2">{song.name}</h3>
                 <p className="text-[10px] md:text-sm font-mono text-muted-foreground uppercase truncate">
                   {song.artist} • {song.album}
                 </p>
@@ -200,7 +200,7 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
         })}
       </div>
 
-      <motion.div custom={0} variants={itemVariants} className="shrink-0 space-y-6 px-4 md:px-0">
+      <motion.div custom={0} variants={itemVariants} className="shrink-0 space-y-4 px-3 md:px-0">
         <div className="flex flex-col md:flex-row gap-2">
           {isOwner ? (
             <Button
