@@ -244,7 +244,7 @@ export function SessionBuilder(): JSX.Element {
       {/* Left Column: Search & Discovery */}
       <div className="flex-1 flex flex-col min-w-0 p-4 md:p-8 lg:p-12 gap-8 overflow-y-auto custom-scrollbar">
         {/* Punchy Minimalist Header - Smaller for compact layout */}
-        <div className="flex flex-col items-center md:items-start text-center md:text-left gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+        <div className="w-full flex flex-col items-center md:items-start text-center md:text-left gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
           <h1 className="font-sans text-3xl md:text-5xl font-semibold tracking-tighter text-foreground leading-none">
             Find your favorites<span className="text-primary">.</span>
           </h1>
