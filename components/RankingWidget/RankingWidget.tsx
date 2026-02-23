@@ -524,12 +524,16 @@ export function RankingWidget({
           e.preventDefault();
           handleSkip();
           break;
+        case "Backspace":
+          e.preventDefault();
+          handleUndo();
+          break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOwner, currentPair, winnerId, isTie, isSkipping, handleChoice, handleSkip]);
+  }, [isOwner, currentPair, winnerId, isTie, isSkipping, handleChoice, handleSkip, handleUndo]);
 
   if (isLoading && songs.length === 0) {
     return (

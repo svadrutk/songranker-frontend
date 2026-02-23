@@ -55,7 +55,7 @@ export function SourceCard({ source, onRemove }: SourceCardProps): JSX.Element {
 
         <div className="flex-1 min-w-0 py-0.5">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[8px] font-mono font-black uppercase tracking-widest text-primary/60">
+            <span className="text-[10px] font-mono font-black uppercase tracking-widest text-primary/60">
               {source.type.replace('_', ' ')}
             </span>
             {source.status === 'error' && (
@@ -65,18 +65,16 @@ export function SourceCard({ source, onRemove }: SourceCardProps): JSX.Element {
             )}
           </div>
           
-          <h3 className="font-bold text-sm uppercase tracking-tighter truncate leading-tight mb-0.5 group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-sm tracking-tighter truncate leading-tight mb-0.5 group-hover:text-primary transition-colors">
             {source.name}
           </h3>
           
           <p className="text-muted-foreground font-mono text-[9px] uppercase tracking-widest truncate">
-            {isArtist && source.type === 'artist_partial' 
-              ? `Selected Tracks` 
-              : source.status === 'ready' 
-                ? `${source.songCount} songs` 
-                : source.status === 'error'
-                  ? 'Failed'
-                  : 'Loading…'}
+            {source.status === 'ready' 
+              ? `${source.songCount} songs` 
+              : source.status === 'error'
+                ? 'Failed'
+                : 'Loading…'}
           </p>
 
           {source.status === 'loading' && typeof source.progress === 'number' && (

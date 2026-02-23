@@ -54,29 +54,14 @@ export function InlineArtistSelector({
   };
 
   return (
-    <div className="w-full bg-muted/10 border-2 border-primary/20 rounded-[2rem] p-6 md:p-8 animate-in zoom-in duration-500 shadow-xl backdrop-blur-xl">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-bold mb-1">{artistName}</h2>
-          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-[0.15em] font-bold opacity-70">
+    <div className="w-full bg-muted/10 border-2 border-primary/20 rounded-2xl md:rounded-[2rem] p-3 md:p-8 animate-in zoom-in duration-500 shadow-xl backdrop-blur-xl flex flex-col gap-3 md:gap-0">
+      {/* Header: artist name + subtitle */}
+      <div className="flex items-center justify-between gap-2 md:mb-8">
+        <div className="min-w-0">
+          <h2 className="text-base md:text-3xl font-bold truncate">{artistName}</h2>
+          <p className="text-[9px] md:text-[10px] text-muted-foreground font-mono uppercase tracking-[0.15em] font-bold opacity-70 hidden md:block">
             Select releases to add
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            onClick={onCancel} 
-            className="font-mono uppercase font-black tracking-widest text-[9px] h-10 px-4"
-          >
-            Cancel
-          </Button>
-          <Button 
-            disabled={selectedIds.length === 0}
-            onClick={handleAdd}
-            className="bg-primary text-primary-foreground font-mono font-black uppercase tracking-widest px-6 h-10 rounded-lg shadow-lg shadow-primary/20 text-[10px]"
-          >
-            Add Selected ({selectedIds.length})
-          </Button>
         </div>
       </div>
 
@@ -86,10 +71,11 @@ export function InlineArtistSelector({
           <p className="font-mono text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Loading…</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/40 pb-4">
+        <>
+          {/* Filters + All/None: single row on mobile */}
+          <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 md:pb-4 md:mb-6">
             <ReleaseFilters activeFilters={activeFilters} onToggleFilter={toggleFilter} />
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 shrink-0">
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -109,44 +95,65 @@ export function InlineArtistSelector({
             </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {filteredReleases.map((release) => (
-              <div 
-                key={release.id}
-                onClick={() => handleToggleRelease(release.id)}
-                className={`group flex items-center gap-3 p-2 rounded-xl border-2 transition-all cursor-pointer ${
-                  selectedIds.includes(release.id)
-                    ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/5"
-                    : "border-transparent bg-background/40 hover:border-border hover:bg-background/60"
-                }`}
+          {/* Release grid with sticky action bar */}
+          <div className="relative max-h-[45dvh] md:max-h-[400px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-2 pb-14 md:pb-16">
+              {filteredReleases.map((release) => (
+                <div 
+                  key={release.id}
+                  onClick={() => handleToggleRelease(release.id)}
+                  className={`group flex items-center gap-2.5 md:gap-3 p-1.5 md:p-2 rounded-xl border-2 transition-all cursor-pointer ${
+                    selectedIds.includes(release.id)
+                      ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/5"
+                      : "border-transparent bg-background/40 hover:border-border hover:bg-background/60"
+                  }`}
+                >
+                  <div className="relative h-9 w-9 md:h-10 md:w-10 rounded-md overflow-hidden shrink-0 shadow-sm">
+                    <CoverArt 
+                      id={release.id} 
+                      title={release.title} 
+                      url={release.cover_art?.url}
+                      className="h-full w-full"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className={`text-[11px] font-bold truncate ${selectedIds.includes(release.id) ? "text-primary" : ""}`}>
+                      {release.title}
+                    </h4>
+                    <p className="text-[9px] font-mono text-muted-foreground uppercase font-bold opacity-60">
+                      {release.type || "Other"}
+                    </p>
+                  </div>
+                  <div className={`h-5 w-5 rounded-full shrink-0 flex items-center justify-center border-2 transition-all ${
+                    selectedIds.includes(release.id)
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "border-border text-transparent"
+                  }`}>
+                    <Check className="h-2.5 w-2.5" strokeWidth={4} />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Sticky action bar pinned to bottom of scroll container */}
+            <div className="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-2 pt-3 pb-2 px-1 bg-background rounded-b-xl">
+              <Button 
+                variant="destructive" 
+                onClick={onCancel} 
+                className="font-mono uppercase font-black tracking-widest text-[9px] h-9 md:h-10 px-3 md:px-4"
               >
-                <div className="relative h-10 w-10 rounded-md overflow-hidden shrink-0 shadow-sm">
-                  <CoverArt 
-                    id={release.id} 
-                    title={release.title} 
-                    url={release.cover_art?.url}
-                    className="h-full w-full"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className={`text-[11px] font-bold truncate ${selectedIds.includes(release.id) ? "text-primary" : ""}`}>
-                    {release.title}
-                  </h4>
-                  <p className="text-[9px] font-mono text-muted-foreground uppercase font-bold opacity-60">
-                    {release.type || "Other"}
-                  </p>
-                </div>
-                <div className={`h-5 w-5 rounded-full shrink-0 flex items-center justify-center border-2 transition-all ${
-                  selectedIds.includes(release.id)
-                    ? "bg-primary border-primary text-primary-foreground"
-                    : "border-border text-transparent"
-                }`}>
-                  <Check className="h-2.5 w-2.5" strokeWidth={4} />
-                </div>
-              </div>
-            ))}
+                Cancel
+              </Button>
+              <Button 
+                disabled={selectedIds.length === 0}
+                onClick={handleAdd}
+                className="flex-1 bg-primary text-primary-foreground font-mono font-black uppercase tracking-widest px-4 md:px-6 h-9 md:h-10 rounded-lg shadow-lg shadow-primary/20 text-[10px]"
+              >
+                Add Selected ({selectedIds.length})
+              </Button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

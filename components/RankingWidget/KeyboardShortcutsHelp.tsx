@@ -5,6 +5,7 @@ const SHORTCUTS = [
   { label: "Select Right", key: "→" },
   { label: "Tie", key: "↑" },
   { label: "IDC", key: "↓" },
+  { label: "Undo", key: "Delete" },
 ] as const;
 
 export function KeyboardShortcutsHelp(): JSX.Element {

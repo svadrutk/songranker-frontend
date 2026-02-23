@@ -21,7 +21,7 @@ export function ReleaseFilters({
   onToggleFilter, 
 }: ReleaseFiltersProps): JSX.Element {
   return (
-    <div className="flex justify-center mb-3">
+    <div className="flex justify-center">
       <div className="inline-flex gap-1 rounded-lg border border-border/60 bg-muted/20 p-1">
         {FILTER_OPTIONS.map(({ type, label }) => (
           <button
