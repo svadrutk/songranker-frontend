@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { useAnalyticsStore } from "@/lib/store";
 import { useUserSessions, useDeleteSession } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
-import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { ShareButton } from "@/components/ShareButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -93,7 +93,9 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
           comparison = mult * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
           break;
         case "artist":
-          comparison = mult * (a.primary_artist ?? "").localeCompare(b.primary_artist ?? "", undefined, { sensitivity: "base" });
+          const nameA = a.display_name || a.playlist_name || a.primary_artist || "";
+          const nameB = b.display_name || b.playlist_name || b.primary_artist || "";
+          comparison = mult * nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
           break;
       }
       
@@ -223,7 +225,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-mono text-sm font-bold truncate text-foreground">
-            {session.display_name || session.primary_artist}
+            {session.display_name || session.playlist_name || session.primary_artist}
           </p>
           <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
             <span className="flex items-center gap-1">
@@ -243,17 +245,19 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
           </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
-          <CopyLinkButton 
-            url={`${typeof window !== 'undefined' ? window.location.origin : ''}/ranking/${session.session_id}`}
-            variant="ghost"
-            size="icon"
-            showLabel={false}
-            className={cn(
-              "h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10",
-              "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary",
-              "opacity-70 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-            )}
-          />
+          {openResultsOnClick && (
+            <ShareButton 
+              sessionId={session.session_id} 
+              variant="ghost"
+              size="icon"
+              showLabel={false}
+              className={cn(
+                "h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10",
+                "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "opacity-70 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+              )}
+            />
+          )}
           {onDelete && (
             <button
               type="button"
@@ -574,7 +578,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
         onConfirm={handleConfirmDelete}
         artistName={(() => {
           const s = sessions.find(s => s.session_id === confirmDeleteId);
-          return s ? (s.display_name || s.primary_artist) : "";
+          return s ? (s.display_name || s.playlist_name || s.primary_artist) : "";
         })()}
       />
     </div>

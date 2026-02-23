@@ -58,7 +58,7 @@ export function InlineArtistSelector({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h2 className="text-2xl md:text-3xl font-bold mb-1">{artistName}</h2>
-          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-[0.1em] font-bold opacity-70">
+          <p className="text-[10px] text-muted-foreground font-mono uppercase tracking-[0.15em] font-bold opacity-70">
             Select releases to add
           </p>
         </div>

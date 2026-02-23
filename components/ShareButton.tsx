@@ -1,65 +1,100 @@
 "use client";
 
-import { useState, type JSX } from "react";
-import { Share2, Loader2 } from "lucide-react";
+import { useState, useRef, useEffect, type JSX } from "react";
+import { Share2, Loader2, Link2, Ticket, Check, ChevronDown } from "lucide-react";
 import confetti from "canvas-confetti";
 import { Button } from "@/components/ui/button";
 import type { SessionSong } from "@/lib/api";
 import { generateShareImage } from "@/lib/share-actions";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type ShareButtonProps = {
-  songs: SessionSong[];
+  songs?: SessionSong[];
+  sessionId: string;
+  className?: string;
+  variant?: "default" | "outline" | "ghost" | "secondary" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
+  showLabel?: boolean;
 };
 
-export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
+export function ShareButton({ 
+  songs = [], 
+  sessionId,
+  className,
+  variant = "default",
+  size = "default",
+  showLabel = true
+}: ShareButtonProps): JSX.Element {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const handleShare = async () => {
-    if (isGenerating) return;
+  const resultsUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/ranking/${sessionId}?mode=results`;
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     
-    console.log('[ShareButton] Button clicked, starting generation...');
+    try {
+      await navigator.clipboard.writeText(resultsUrl);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+        setIsOpen(false);
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  };
+
+  const handleGenerateReceipt = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isGenerating || songs.length === 0) return;
+    
     setIsGenerating(true);
+    setIsOpen(false);
 
     try {
-      console.log('[ShareButton] Preparing request data...');
-      // Prepare data for backend
       const now = new Date();
       const dateStr = now.toLocaleDateString("en-US", {
-        month: "2-digit",
-        day: "2-digit",
-        year: "2-digit",
+        month: "2-digit", day: "2-digit", year: "2-digit",
       });
       const timeStr = now.toLocaleTimeString("en-US", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
+        hour12: false, hour: "2-digit", minute: "2-digit",
       });
       
-      // Random order ID (or could be session ID based if we had it)
       const orderId = Math.floor(Math.random() * 9000) + 1000;
-
-      console.log(`[ShareButton] Calling Server Action with ${songs.length} songs`);
-      
-      // Call Server Action instead of fetching directly
       const result = await generateShareImage(songs, orderId, dateStr, timeStr);
 
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      if (!result.success) throw new Error(result.error);
 
-      console.log('[ShareButton] Converting base64 to blob...');
-      // Convert base64 back to blob
       const binaryString = atob(result.imageData);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
       const blob = new Blob([bytes], { type: "image/png" });
-      console.log(`[ShareButton] Blob size: ${blob.size} bytes`);
       const file = new File([blob], "my-top-10.png", { type: "image/png" });
 
-      // Trigger confetti
-      console.log('[ShareButton] Triggering confetti...');
       confetti({
         particleCount: 150,
         spread: 70,
@@ -67,7 +102,6 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
         colors: ["#3b82f6", "#60a5fa", "#ffffff"],
       });
 
-      // Check for Web Share API
       if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         await navigator.share({
           files: [file],
@@ -75,7 +109,6 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
           text: "Check out my definitive top 10 songs on Song Ranker!",
         });
       } else {
-        // Fallback to download
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.download = "my-top-10.png";
@@ -84,26 +117,97 @@ export function ShareButton({ songs }: ShareButtonProps): JSX.Element {
         URL.revokeObjectURL(url);
       }
     } catch (error) {
-      console.error("[ShareButton] Failed to generate share image:", error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error("Failed to generate share image:", error);
     } finally {
-      console.log('[ShareButton] Finished, resetting state');
       setIsGenerating(false);
     }
   };
 
   return (
-    <Button
-      onClick={handleShare}
-      disabled={isGenerating}
-      className="w-full md:flex-1 h-12 font-mono uppercase tracking-wider text-xs md:text-sm font-bold bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white border border-blue-600 hover:border-blue-700 hover:cursor-pointer"
-    >
-      {isGenerating ? (
-        <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 animate-spin shrink-0" />
-      ) : (
-        <Share2 className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
-      )}
-      <span className="truncate">{isGenerating ? "Generating..." : "Share Rankings"}</span>
-    </Button>
+    <div className={cn("relative", className)} ref={dropdownRef}>
+      <Button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
+        disabled={isGenerating}
+        variant={variant}
+        size={size}
+        className={cn(
+          "font-mono uppercase tracking-wider text-xs md:text-sm font-bold transition-all duration-300",
+          isOpen && "ring-2 ring-primary/20",
+          size === "icon" ? "h-9 w-9 p-0" : "w-full h-12"
+        )}
+      >
+        {isGenerating ? (
+          <Loader2 className="h-3.5 w-3.5 md:h-4 md:w-4 animate-spin shrink-0" />
+        ) : (
+          <Share2 className={cn("h-3.5 w-3.5 md:h-4 md:w-4 shrink-0", showLabel && "mr-1.5 md:mr-2")} />
+        )}
+        {showLabel && (
+          <>
+            <span className="truncate">{isGenerating ? "Generating..." : "Share Rankings"}</span>
+            <ChevronDown className={cn("h-4 w-4 ml-2 transition-transform duration-300", isOpen && "rotate-180")} />
+          </>
+        )}
+      </Button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: -4, scale: 1 }}
+            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            className={cn(
+              "absolute z-50 bottom-full mt-0 origin-bottom overflow-hidden rounded-xl border border-border/40 bg-card p-1 shadow-2xl backdrop-blur-md",
+              size === "icon" ? "right-0 w-48" : "left-0 right-0"
+            )}
+          >
+            <button
+              onClick={handleCopyLink}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted"
+            >
+              <div className={cn(
+                "flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-muted/50 transition-colors",
+                copied && "text-green-500 border-green-500/20 bg-green-500/10"
+              )}>
+                {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black font-mono uppercase tracking-widest leading-none mb-1">
+                  {copied ? "Copied" : "Copy Link"}
+                </span>
+                <span className="text-[9px] font-medium text-muted-foreground/60 font-mono uppercase">
+                  Share direct results
+                </span>
+              </div>
+            </button>
+
+            <button
+              onClick={handleGenerateReceipt}
+              disabled={songs.length === 0}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors",
+                songs.length > 0 ? "hover:bg-muted" : "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-muted/50">
+                <Ticket className="h-4 w-4" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black font-mono uppercase tracking-widest leading-none mb-1">
+                  Receipt
+                </span>
+                <span className="text-[9px] font-medium text-muted-foreground/60 font-mono uppercase">
+                  Generate shareable image
+                </span>
+              </div>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

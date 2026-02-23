@@ -30,13 +30,13 @@ function VinylWing({ side }: { side: "left" | "right" }): JSX.Element {
     )}>
       <div className={cn(
         "h-full aspect-square rounded-full border-2 flex items-center justify-center overflow-hidden",
-        "border-[#82A67D]/40 bg-[#6b8a67] shadow-[inset_0_0_40px_rgba(255,255,255,0.15)]",
+        "border-primary/40 bg-primary/30 shadow-[inset_0_0_40px_rgba(255,255,255,0.15)]",
         "dark:border-zinc-400/30 dark:bg-zinc-950 dark:shadow-[inset_0_0_40px_rgba(255,255,255,0.1)]",
         side === "left" ? "translate-x-1/2" : "-translate-x-1/2"
       )}>
-        <div className="h-[85%] w-[80%] rounded-full border-[1.5px] border-[#2d4a28]/50 dark:border-white/10" />
-        <div className="absolute h-[65%] w-[60%] rounded-full border-[1.5px] border-[#2d4a28]/50 dark:border-white/10" />
-        <div className="absolute h-[45%] w-[40%] rounded-full border-[1.5px] border-[#2d4a28]/50 dark:border-white/10" />
+        <div className="h-[85%] w-[80%] rounded-full border-[1.5px] border-primary/50 dark:border-white/10" />
+        <div className="absolute h-[65%] w-[60%] rounded-full border-[1.5px] border-primary/50 dark:border-white/10" />
+        <div className="absolute h-[45%] w-[40%] rounded-full border-[1.5px] border-primary/50 dark:border-white/10" />
         
         {PARTICLES.map((p, i) => (
           <motion.div
@@ -133,7 +133,7 @@ export function RankingCard({
           </p>
         </div>
         <div className="hover-scroll-container w-full mt-0.5 md:mt-1 opacity-60 dark:opacity-30 dark:group-hover:opacity-100 transition-opacity duration-300">
-          <span className="hover-scroll-content text-[9px] md:text-xs lg:text-sm font-mono font-bold whitespace-nowrap text-[#2d3d28] group-hover:text-black dark:text-muted-foreground dark:group-hover:text-foreground transition-colors duration-200">
+          <span className="hover-scroll-content text-[9px] md:text-xs lg:text-sm font-mono font-bold whitespace-nowrap text-primary/60 group-hover:text-black dark:text-muted-foreground dark:group-hover:text-foreground transition-colors duration-200">
             {song.album || "Unknown Release"}
           </span>
         </div>
