@@ -37,6 +37,7 @@ export function LeaderboardPreviewModal({
               songs={songs} 
               onContinue={onClose} 
               isPreview 
+              isOwner={true}
             />
             <div className="absolute top-4 right-4 z-50">
               <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">

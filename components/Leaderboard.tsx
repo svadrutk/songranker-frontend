@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import type { JSX } from "react";
-import { RotateCcw, Check, FileDown, LogIn } from "lucide-react";
+import { RotateCcw, Check, FileDown, LogIn, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { CoverArt } from "@/components/CoverArt";
 import { ShareButton } from "@/components/ShareButton";
-import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
 import type { SessionSong } from "@/lib/api";
@@ -62,8 +62,8 @@ export type LeaderboardProps = {
   backButtonLabel?: string;
   /** Session ID for star rating feedback. */
   sessionId?: string | null;
-  /** Whether the user is a guest (viewing results only). */
-  isGuest?: boolean;
+  /** Whether the user is the owner. */
+  isOwner: boolean;
 };
 
 const containerVariants: Variants = {
@@ -96,8 +96,9 @@ const itemVariants: Variants = {
   }),
 };
 
-export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, sessionId, isGuest }: LeaderboardProps): JSX.Element {
-  const { openAuthModal } = useAuth(); // Need to import useAuth
+export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, sessionId, isOwner }: LeaderboardProps): JSX.Element {
+  const router = useRouter();
+  const { user, openAuthModal } = useAuth();
   const sortedSongs = [...songs].sort((a, b) => {
     const scoreA = a.bt_strength ?? (a.local_elo / 3000); 
     const scoreB = b.bt_strength ?? (b.local_elo / 3000);
@@ -113,7 +114,7 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
     const isDev = process.env.NODE_ENV === "development";
     
     // Only show rating prompt for non-preview leaderboards with a session ID
-    if (isPreview || !sessionId || isGuest) return;
+    if (isPreview || !sessionId || !isOwner) return;
     
     hasCheckedFeedbackRef.current = true;
 
@@ -126,7 +127,15 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [sessionId, isPreview, isGuest]);
+  }, [sessionId, isPreview, isOwner]);
+
+  const handleStartRanking = () => {
+    if (!user) {
+      openAuthModal("login");
+    } else {
+      router.push("/");
+    }
+  };
 
   return (
     <>
@@ -193,7 +202,7 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
 
       <motion.div custom={0} variants={itemVariants} className="shrink-0 space-y-6 px-4 md:px-0">
         <div className="flex flex-col md:flex-row gap-2">
-          {!isGuest ? (
+          {isOwner ? (
             <Button
               onClick={onContinue}
               variant={isPreview ? "default" : "outline"}
@@ -216,22 +225,30 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
                 </>
               )}
             </Button>
-          ) : (
+          ) : !user ? (
             <Button
-              onClick={() => openAuthModal("login")}
+              onClick={handleStartRanking}
               className="w-full md:flex-1 h-12 font-mono uppercase tracking-wider text-xs md:text-sm font-bold"
             >
               <LogIn className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
               <span className="truncate">Sign in to Rank</span>
             </Button>
+          ) : (
+            <Button
+              onClick={handleStartRanking}
+              className="w-full md:flex-1 h-12 font-mono uppercase tracking-wider text-xs md:text-sm font-bold"
+            >
+              <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1.5 md:mr-2 shrink-0" />
+              <span className="truncate">Start Your Own Ranking</span>
+            </Button>
           )}
           {!isPreview && (
             <>
-              <CopyLinkButton 
-                url={`${typeof window !== 'undefined' ? window.location.origin : ''}/ranking/${sessionId}`}
-                className="w-full md:flex-1 h-12"
+              <ShareButton 
+                songs={sortedSongs} 
+                sessionId={sessionId ?? ""} 
+                className="w-full md:flex-1"
               />
-              <ShareButton songs={sortedSongs} />
               <Button
                 onClick={() => exportRankingsToCsv(sortedSongs)}
                 variant="outline"
@@ -254,3 +271,4 @@ export function Leaderboard({ songs, onContinue, isPreview, backButtonLabel, ses
     </>
   );
 }
+

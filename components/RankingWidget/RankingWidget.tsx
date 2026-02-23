@@ -140,9 +140,12 @@ export function RankingWidget({
 
   const [isLoading, setIsLoading] = useState(false);
   const [totalDuels, setTotalDuels] = useState(initialData?.comparison_count ?? 0);
+  const [idcCount, setIdcCount] = useState(0);
+  const [tieCount, setTieCount] = useState(0);
   const [convergence, setConvergence] = useState(initialData?.convergence_score ?? 0);
+  const [isOwner, setIsOwner] = useState<boolean>(initialData?.is_owner ?? false);
   
-  const isFinished = searchParams.get("mode") === "results" || openInResultsView || !user;
+  const isFinished = searchParams.get("mode") === "results" || openInResultsView;
   
   // UI state
   const [winnerId, setWinnerId] = useState<string | null>(null);
@@ -188,7 +191,7 @@ export function RankingWidget({
     // This avoids the data fetching waterfall in MPA mode
     if (initialData && initialData.session_id === sessionId) {
       // Still need to handle the initial mode/results view logic
-      if (openInResultsView || initialMode === "results" || !user) {
+      if (openInResultsView || initialMode === "results") {
         setMode("results");
       }
       return;
@@ -197,8 +200,11 @@ export function RankingWidget({
 
     // Reset state
     setSongs([]);
+    setIsOwner(false);
     setCurrentPair(null);
     setTotalDuels(0);
+    setIdcCount(0);
+    setTieCount(0);
     setConvergence(0);
     setWinnerId(null);
     setIsTie(false);
@@ -215,6 +221,7 @@ export function RankingWidget({
         // Guests viewing results don't need the full history, minimizing data exposure.
         const detail = await getSessionDetail(sessionId!, { includeComparisons: !!user });
         if (detail && isMounted.current && isCurrent) {
+          setIsOwner(detail.is_owner ?? false);
           // Build history from existing comparisons (preserves state across page refresh)
           const detailWithComparisons = detail as SessionDetail;
           const history = detailWithComparisons.comparisons?.length 
@@ -225,9 +232,15 @@ export function RankingWidget({
           // Recalculate comparison_count from MEANINGFUL comparisons only
           // IDC responses (winner_id=null, is_tie=false) don't count for pairing priority
           const comparisonCounts: Record<string, number> = {};
+          let ties = 0;
+          let idcs = 0;
           if (detailWithComparisons.comparisons) {
             for (const comp of detailWithComparisons.comparisons) {
-              // Skip IDC responses - they don't provide ranking information
+              // Track IDCs and Ties for estimated duels calculation
+              if (comp.is_tie) ties++;
+              else if (comp.winner_id === null) idcs++;
+
+              // Skip IDC responses - they don't provide ranking information for pairings
               const isMeaningful = comp.winner_id != null || comp.is_tie === true;
               if (!isMeaningful) continue;
               
@@ -235,6 +248,9 @@ export function RankingWidget({
               comparisonCounts[comp.song_b_id] = (comparisonCounts[comp.song_b_id] ?? 0) + 1;
             }
           }
+          
+          setTieCount(ties);
+          setIdcCount(idcs);
           
           const songsWithAccurateCounts = detail.songs.map(song => ({
             ...song,
@@ -250,7 +266,7 @@ export function RankingWidget({
           setCurrentPair(getNextPair(songsWithAccurateCounts, history));
           resetTimer();
           
-          if (openInResultsView || initialMode === "results" || !user) {
+          if (openInResultsView || initialMode === "results") {
             setMode("results");
           }
         }
@@ -271,7 +287,7 @@ export function RankingWidget({
 
   const handleChoice = useCallback(
     async (winner: SessionSong | null, tie: boolean = false) => {
-      if (!user || !currentPair || !sessionId || winnerId) return;
+      if (!isOwner || !currentPair || !sessionId || winnerId) return;
 
       const [songA, songB] = currentPair;
       const wId = winner?.song_id || null;
@@ -306,6 +322,7 @@ export function RankingWidget({
       setWinnerId(null);
       setIsTie(false);
       setTotalDuels((prev) => prev + 1);
+      if (tie) setTieCount((prev) => prev + 1);
 
       try {
         const response = await createComparison(sessionId, {
@@ -383,11 +400,11 @@ export function RankingWidget({
         console.error("Failed to sync comparison:", error);
       }
     },
-    [currentPair, sessionId, winnerId, songs, queryClient, comparisonHistory, getDecisionTime, resetTimer, showRankUpdateNotification, user]
+    [isOwner, currentPair, sessionId, winnerId, songs, queryClient, comparisonHistory, getDecisionTime, resetTimer, showRankUpdateNotification]
   );
 
   const handleUndo = useCallback(async (): Promise<void> => {
-    if (!user || !sessionId || totalDuels === 0 || isUndoing) return;
+    if (!isOwner || !sessionId || totalDuels === 0 || isUndoing) return;
     setIsUndoing(true);
     try {
       const response = await undoLastComparison(sessionId);
@@ -438,10 +455,10 @@ export function RankingWidget({
     } finally {
       if (isMounted.current) setIsUndoing(false);
     }
-  }, [sessionId, totalDuels, isUndoing, songs, comparisonHistory, queryClient, resetTimer, user]);
+  }, [isOwner, sessionId, totalDuels, isUndoing, songs, comparisonHistory, queryClient, resetTimer]);
 
   const handleSkip = useCallback(async (): Promise<void> => {
-    if (!user || !currentPair || !sessionId) return;
+    if (!isOwner || !currentPair || !sessionId) return;
     
     setIsSkipping(true);
     const decisionTime = getDecisionTime();
@@ -471,6 +488,7 @@ export function RankingWidget({
     resetTimer();
 
     setTotalDuels((prev) => prev + 1);
+    setIdcCount((prev) => prev + 1);
     setIsSkipping(false);
 
     createComparison(sessionId, {
@@ -480,11 +498,11 @@ export function RankingWidget({
       is_tie: false,
       decision_time_ms: decisionTime,
     }).catch(err => console.error("Failed to record skip:", err));
-  }, [currentPair, sessionId, songs, comparisonHistory, getDecisionTime, resetTimer, user]);
+  }, [isOwner, currentPair, sessionId, songs, comparisonHistory, getDecisionTime, resetTimer]);
 
   // Keyboard shortcuts
   useEffect(() => {
-    if (!currentPair || !!winnerId || isTie || isSkipping) return;
+    if (!isOwner || !currentPair || !!winnerId || isTie || isSkipping) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (window.innerWidth < 768) return;
@@ -511,7 +529,7 @@ export function RankingWidget({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentPair, winnerId, isTie, isSkipping, handleChoice, handleSkip]);
+  }, [isOwner, currentPair, winnerId, isTie, isSkipping, handleChoice, handleSkip]);
 
   if (isLoading && songs.length === 0) {
     return (
@@ -524,7 +542,36 @@ export function RankingWidget({
     );
   }
 
-  if (isFinished) {
+  // Render states
+  // Guests or non-owners only see results if they have progress or explicitly requested mode=results
+  const canShowResults = isFinished || (!isOwner && totalDuels > 0);
+
+  if (!isOwner && totalDuels === 0) {
+    // If guest or non-owner accesses an empty session, show them auth prompt 
+    // or let them know they can't rank this specific session.
+    if (!user) {
+      return (
+        <RankingPlaceholder
+          title="Authentication Required"
+          description={sessionId ? "Sign in to save your progress and start ranking your favorite tracks." : "Sign in to search for artists, select albums, and start ranking your favorite tracks."}
+          icon={<LogIn className="h-6 w-6 text-primary" />}
+          onClick={() => openAuthModal("login")}
+        />
+      );
+    } else {
+      // Logged in but not owner of an empty session
+      return (
+        <RankingPlaceholder
+          title="Ranking Restricted"
+          description="Only the person who started this ranking can participate. Search for your own favorite artists to start a new ranking!"
+          icon={<Music className="h-5 w-5" />}
+          hideButton
+        />
+      );
+    }
+  }
+
+  if (canShowResults) {
     return (
       <Leaderboard
         songs={songs}
@@ -532,19 +579,7 @@ export function RankingWidget({
         isPreview={false}
         backButtonLabel={openInResultsView ? "Back to My Rankings" : undefined}
         sessionId={sessionId}
-        isGuest={!user}
-      />
-    );
-  }
-
-  // Render states
-  if (!user) {
-    return (
-      <RankingPlaceholder
-        title="Authentication Required"
-        description="Sign in to search for artists, select albums, and start ranking your favorite tracks."
-        icon={<LogIn className="h-6 w-6 text-primary" />}
-        onClick={() => openAuthModal("login")}
+        isOwner={isOwner}
       />
     );
   }
@@ -569,7 +604,7 @@ export function RankingWidget({
         songs={songs} 
         onClose={() => setShowPeek(false)} 
       />
-
+      
       <RankUpdateNotification isVisible={showRankNotification} />
 
       <div className="flex flex-col items-center gap-3 md:gap-6 lg:gap-8 animate-in fade-in duration-700 w-full h-full min-h-0">
@@ -578,6 +613,8 @@ export function RankingWidget({
         <ProgressSection
           displayScore={displayScore}
           totalDuels={totalDuels}
+          idcCount={idcCount}
+          tieCount={tieCount}
           songCount={songs.length}
           onViewResults={() => setMode("results")}
           onPeekRankings={() => setShowPeek(true)}
