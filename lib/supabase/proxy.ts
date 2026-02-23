@@ -37,8 +37,7 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !user &&
-    (request.nextUrl.pathname.startsWith('/my-rankings') ||
-     request.nextUrl.pathname.startsWith('/analytics'))
+    request.nextUrl.pathname.startsWith('/my-rankings')
   ) {
     // no user, potentially respond by redirecting the user to the home page
     const url = request.nextUrl.clone()

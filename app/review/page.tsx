@@ -16,7 +16,7 @@ export default function ReviewPage() {
   const [error, setError] = useState<string | null>(null);
 
   const startRankingSession = useCallback(
-    async (songs: SongInput[]) => {
+    async (songs: SongInput[], name?: string) => {
       setIsCreatingSession(true);
       setError(null);
 
@@ -24,6 +24,7 @@ export default function ReviewPage() {
         const session = await createSession({
           user_id: user?.id,
           songs,
+          playlist_name: name,
         });
         
         // Clear sessions cache

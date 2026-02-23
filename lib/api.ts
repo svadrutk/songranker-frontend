@@ -31,6 +31,7 @@ export type SongInput = {
 export type SessionCreate = {
   user_id?: string | null;
   songs: SongInput[];
+  playlist_name?: string | null;
 };
 
 export type SessionResponse = {
@@ -45,6 +46,7 @@ export type SessionSummary = {
   created_at: string;
   primary_artist: string;
   display_name?: string | null;
+  playlist_name?: string | null;
   song_count: number;
   comparison_count: number;
   convergence_score: number;
@@ -60,12 +62,14 @@ export type ComparisonPair = {
 
 export type SessionDetail = {
   session_id: string;
+  user_id?: string | null;
   playlist_id?: string | null;
   playlist_name?: string | null;
   image_url?: string | null;
   songs: SessionSong[];
   comparison_count: number;
   convergence_score?: number;
+  is_owner?: boolean;
   comparisons?: ComparisonPair[];
 };
 

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState, useEffect, type JSX } from "react";
+import { useState, useEffect, useMemo, type JSX } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSessionBuilderStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import Image from "next/image";
 import { UnifiedSearchBar } from "./UnifiedSearchBar";
 import { SourceCard } from "./SourceCard";
 import { InlineArtistSelector } from "./InlineArtistSelector";
@@ -26,7 +28,15 @@ import { cn } from "@/lib/utils";
 
 export function SessionBuilder(): JSX.Element {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const { sources, addSource, removeSource, resetDraft, setStatus, updateSource } = useSessionBuilderStore();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const buttonLogoSrc = mounted && resolvedTheme === "dark" ? "/logo/logo-dark.svg" : "/logo/logo.svg";
   
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -235,8 +245,8 @@ export function SessionBuilder(): JSX.Element {
       <div className="flex-1 flex flex-col min-w-0 p-4 md:p-8 lg:p-12 gap-8 overflow-y-auto custom-scrollbar">
         {/* Punchy Minimalist Header - Smaller for compact layout */}
         <div className="flex flex-col items-start gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
-          <h1 className="font-mono text-3xl md:text-5xl font-black uppercase tracking-tighter text-foreground leading-none">
-            FIND YOUR FAVORITES<span className="text-primary">.</span>
+          <h1 className="font-sans text-3xl md:text-5xl font-semibold tracking-tighter text-foreground leading-none">
+            Find your favorites<span className="text-primary">.</span>
           </h1>
         </div>
 
@@ -321,15 +331,71 @@ export function SessionBuilder(): JSX.Element {
               size="lg"
               disabled={sources.some(s => s.status === 'loading') || sources.length === 0}
               onClick={() => router.push("/review")}
-              className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl disabled:opacity-50"
+              className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl disabled:opacity-50 relative overflow-hidden"
             >
-              <span className="flex items-center gap-4">
-                START RANKING <ArrowRight className="h-6 w-6 group-hover:translate-x-2 transition-transform" />
-              </span>
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="relative h-10 w-10 flex items-center justify-center">
+                  <div className="relative z-10 group-hover:rotate-12 transition-transform duration-300">
+                    <Image
+                      src={buttonLogoSrc}
+                      alt="Logo"
+                      width={36}
+                      height={36}
+                      className="object-contain"
+                    />
+                  </div>
+                  <IconSparkles />
+                </div>
+                rank selections
+              </div>
             </Button>
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function IconSparkles() {
+  const sparkles = useMemo(() => 
+    [...Array(4)].map((_, i) => {
+      const seed = i + 1;
+      return {
+        id: i,
+        x: [0, (i % 2 === 0 ? 1 : -1) * (20 + seed * 5)],
+        y: [0, -20 - seed * 5],
+        duration: 0.8 + (seed * 0.2),
+        delay: seed * 0.1,
+        width: 3 + (seed % 2),
+      };
+    }), []);
+
+  return (
+    <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+      {sparkles.map((s) => (
+        <motion.div
+          key={s.id}
+          className="absolute bg-yellow-200 rounded-full"
+          animate={{
+            scale: [0, 1, 0],
+            opacity: [0, 1, 0],
+            x: s.x,
+            y: s.y,
+          }}
+          transition={{
+            duration: s.duration,
+            repeat: Infinity,
+            delay: s.delay,
+            ease: "easeOut",
+          }}
+          style={{
+            width: s.width,
+            height: s.width,
+            filter: "blur(0.5px)",
+            boxShadow: "0 0 6px rgba(250,240,150,0.8)",
+          }}
+        />
+      ))}
     </div>
   );
 }
@@ -342,7 +408,11 @@ type PlaylistImportModalProps = Readonly<{
 
 function PlaylistImportModal({ url, onConfirm, onCancel }: PlaylistImportModalProps): JSX.Element {
   // Use the refined logarithmic estimation logic (consistent with ProgressSection)
-  const getEst = (n: number) => Math.ceil(n * Math.log2(n) * 0.7 + 20);
+  const getEst = (n: number) => {
+    if (n < 2) return 0;
+    // Base recommended estimate using natural log (consistent with RankingWidget)
+    return Math.ceil(n * Math.log(n) * 1.2 + 20);
+  };
   const est50 = getEst(50);
 
   // URL detection and service identification
