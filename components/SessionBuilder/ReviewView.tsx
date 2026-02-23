@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, type JSX } from "react";
-import { Check, Merge, Split, ArrowLeft, Play, ShieldAlert } from "lucide-react";
+import { Check, Merge, Split, ArrowLeft, Play, ShieldAlert, Type } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { findPotentialDuplicates, resolveSourcesToSongs } from "@/lib/deduplication";
 import { useSessionBuilderStore } from "@/lib/store";
@@ -9,8 +9,33 @@ import type { SongInput } from "@/lib/api";
 
 type ReviewViewProps = Readonly<{
   onBack: () => void;
-  onConfirm: (songs: SongInput[]) => void;
+  onConfirm: (songs: SongInput[], name?: string) => void;
 }>;
+
+function generateSmartDefaultName(songs: SongInput[]): string {
+  if (songs.length === 0) return "New Ranking";
+
+  const artists = Array.from(new Set(songs.map(s => s.artist).filter(Boolean)));
+  const albums = Array.from(new Set(songs.map(s => s.album).filter(Boolean)));
+
+  // If single album (and likely single artist)
+  if (albums.length === 1 && albums[0]) {
+    return albums[0];
+  }
+
+  // Artist logic
+  if (artists.length === 1 && artists[0]) {
+    return artists[0];
+  } else if (artists.length === 2) {
+    return `${artists[0]} & ${artists[1]}`;
+  } else if (artists.length === 3) {
+    return `${artists[0]}, ${artists[1]} & ${artists[2]}`;
+  } else if (artists.length > 3) {
+    return `${artists[0]}, ${artists[1]} & ${artists.length - 2} others`;
+  }
+
+  return "My Custom Mix";
+}
 
 export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element {
   const { sources } = useSessionBuilderStore();
@@ -24,6 +49,12 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
     duplicateGroups.reduce((acc, _, idx) => ({ ...acc, [idx]: true }), {})
   );
 
+  const [sessionName, setSessionName] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+
+  const smartDefault = useMemo(() => generateSmartDefaultName(allSongs), [allSongs]);
+  const currentName = isEditingName ? sessionName : smartDefault;
+
   const toggleResolution = (idx: number) => {
     setResolutions((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
@@ -36,7 +67,7 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
     );
 
     const finalSongs = allSongs.filter((_, idx) => !indicesToRemove.has(idx));
-    onConfirm(finalSongs);
+    onConfirm(finalSongs, currentName.trim() || undefined);
   };
 
   const removedCount = duplicateGroups
@@ -59,6 +90,25 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
           <p className="text-xs text-muted-foreground font-mono uppercase tracking-widest opacity-70">
             {allSongs.length} songs found • {duplicateGroups.length} duplicate groups
           </p>
+        </div>
+      </div>
+
+      <div className="bg-card border-2 border-border/40 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-6 animate-in fade-in duration-700">
+        <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+          <Type className="h-6 w-6 text-primary" />
+        </div>
+        <div className="flex-1 w-full space-y-2">
+          <h3 className="font-mono font-black uppercase tracking-tight text-primary/60 text-[10px]">Ranking Name</h3>
+          <input
+            type="text"
+            value={currentName}
+            onChange={(e) => {
+              setSessionName(e.target.value);
+              setIsEditingName(true);
+            }}
+            placeholder="Name your ranking..."
+            className="w-full bg-transparent border-none p-0 font-mono text-xl md:text-2xl font-black uppercase tracking-tight focus:ring-0 placeholder:text-muted-foreground/30"
+          />
         </div>
       </div>
 

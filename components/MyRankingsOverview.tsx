@@ -6,26 +6,26 @@ import Image from "next/image";
 import type { SessionSummary } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { cn } from "@/lib/utils";
-import { useNavigationStore, useAnalyticsStore } from "@/lib/store";
+import { useAnalyticsStore } from "@/lib/store";
 import { useUserSessions, useDeleteSession } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
+import { ShareButton } from "@/components/ShareButton";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 
 const COMPLETION_THRESHOLD = 25;
 /** Same as RankingWidget "View Results" threshold (displayScore >= 90) so completed rankings appear in Completed column. */
 const COMPLETED_THRESHOLD = 90;
 
-type MyRankingsOverviewProps = Readonly<{
-  isSidebarCollapsed?: boolean;
-  onSessionDelete?: (sessionId: string) => void;
-}>;
-
 type SortField = "completion" | "date" | "artist";
 type SortDir = "asc" | "desc";
 
-export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete }: MyRankingsOverviewProps): JSX.Element {
-  const { navigateToRanking } = useNavigationStore();
+type MyRankingsOverviewProps = Record<string, never>;
+
+export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
+
+  const router = useRouter();
   const { user } = useAuth();
   const deleteSessionMutation = useDeleteSession();
 
@@ -93,7 +93,9 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
           comparison = mult * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
           break;
         case "artist":
-          comparison = mult * (a.primary_artist ?? "").localeCompare(b.primary_artist ?? "", undefined, { sensitivity: "base" });
+          const nameA = a.display_name || a.playlist_name || a.primary_artist || "";
+          const nameB = b.display_name || b.playlist_name || b.primary_artist || "";
+          comparison = mult * nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
           break;
       }
       
@@ -131,9 +133,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
     if (!confirmDeleteId) return;
     const sessionId = confirmDeleteId;
     setConfirmDeleteId(null);
-    deleteSessionMutation.mutate(sessionId, {
-      onSuccess: () => onSessionDelete?.(sessionId),
-    });
+    deleteSessionMutation.mutate(sessionId);
   };
 
   // 3-phase progress bar thresholds (matching ProgressSection)
@@ -178,7 +178,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
 
     const handleClick = () => {
       // Always navigate to ranking widget, even for completed sessions
-      navigateToRanking(session.session_id);
+      router.push(`/ranking/${session.session_id}${isComplete ? "?mode=results" : ""}`);
     };
 
     const handleDeleteClick = (e: React.MouseEvent) => {
@@ -225,7 +225,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-mono text-sm font-bold truncate text-foreground">
-            {session.display_name || session.primary_artist}
+            {session.display_name || session.playlist_name || session.primary_artist}
           </p>
           <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
             <span className="flex items-center gap-1">
@@ -245,6 +245,19 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
           </span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {openResultsOnClick && (
+            <ShareButton 
+              sessionId={session.session_id} 
+              variant="ghost"
+              size="icon"
+              showLabel={false}
+              className={cn(
+                "h-9 w-9 rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10",
+                "transition-colors outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                "opacity-70 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+              )}
+            />
+          )}
           {onDelete && (
             <button
               type="button"
@@ -316,12 +329,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-col gap-4 h-full min-h-0",
-        isSidebarCollapsed ? "w-full" : "w-full max-w-5xl mx-auto"
-      )}
-    >
+    <div className="flex flex-col gap-4 h-full min-h-0 w-full">
       <div className="flex flex-col gap-5 shrink-0">
         <h2 className="text-2xl md:text-4xl font-black uppercase tracking-tight text-foreground text-center">
           My Rankings
@@ -570,7 +578,7 @@ export function MyRankingsOverview({ isSidebarCollapsed = false, onSessionDelete
         onConfirm={handleConfirmDelete}
         artistName={(() => {
           const s = sessions.find(s => s.session_id === confirmDeleteId);
-          return s ? (s.display_name || s.primary_artist) : "";
+          return s ? (s.display_name || s.playlist_name || s.primary_artist) : "";
         })()}
       />
     </div>

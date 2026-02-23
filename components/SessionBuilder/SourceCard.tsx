@@ -76,7 +76,7 @@ export function SourceCard({ source, onRemove }: SourceCardProps): JSX.Element {
                 ? `${source.songCount} songs` 
                 : source.status === 'error'
                   ? 'Failed'
-                  : 'Loading...'}
+                  : 'Loading…'}
           </p>
 
           {source.status === 'loading' && typeof source.progress === 'number' && (

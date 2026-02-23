@@ -9,6 +9,8 @@ import { Eye, Check, Crosshair, ListOrdered, Trophy } from "lucide-react";
 type ProgressSectionProps = Readonly<{
   displayScore: number;
   totalDuels: number;
+  idcCount?: number;
+  tieCount?: number;
   songCount: number;
   onViewResults: () => void;
   onPeekRankings: () => void;
@@ -55,31 +57,37 @@ const PHASES: Phase[] = [
   },
 ];
 
-function estimateDuelsForConvergence(nSongs: number): { minimum: number; recommended: number } {
+function estimateDuelsForConvergence(nSongs: number, idcCount: number = 0, tieCount: number = 0): { minimum: number; recommended: number } {
   if (nSongs < 2) return { minimum: 0, recommended: 0 };
 
-  // Bradley-Terry model convergence estimates using n log2(n) as base.
-  // - Top 10 stability typically requires around 0.7 * n log2(n) comparisons
-  //   when using active pairing (our current algorithm).
-  // - Fixed buffer accounts for user noise (Ties/IDC/Skips) which 
-  //   increase total duels without advancing the model.
+  // n * ln(n) is a standard theoretical bound for ranking stability.
+  // We use natural log (Math.log) for a smoother estimation curve.
+  const lnN = Math.log(nSongs);
   
-  const logN = Math.log2(nSongs);
+  // Base coefficients optimized for Bradley-Terry convergence with active pairing.
+  const minBase = nSongs * lnN * 0.8 + 10;
+  const recBase = nSongs * lnN * 1.2 + 20;
+
+  // IDC and Ties increase the total duels needed because they provide less 
+  // directional information than clear wins, requiring more duels to reach stability.
+  const penalty = idcCount + (tieCount * 0.5);
   
   return {
-    minimum: Math.ceil(nSongs * logN * 0.5 + 10),
-    recommended: Math.ceil(nSongs * logN * 0.7 + 20),
+    minimum: Math.ceil(minBase + penalty),
+    recommended: Math.ceil(recBase + penalty),
   };
 }
 
 export function ProgressSection({
   displayScore,
   totalDuels,
+  idcCount = 0,
+  tieCount = 0,
   songCount,
   onViewResults,
   onPeekRankings,
 }: ProgressSectionProps): JSX.Element {
-  const { minimum, recommended } = estimateDuelsForConvergence(songCount);
+  const { minimum, recommended } = estimateDuelsForConvergence(songCount, idcCount, tieCount);
   
   // Calculate progress as percentage of recommended duels
   const duelProgress = Math.min(100, (totalDuels / recommended) * 100);
@@ -117,7 +125,7 @@ export function ProgressSection({
             "Rankings Converged"
           ) : (
             <>
-              Est. <span className="text-primary/70 font-bold">{minimum}–{recommended}</span> duels for stable rankings
+            Est. <span className="text-emerald-500/70 font-bold">{minimum}–{recommended}</span> duels for stable rankings
             </>
           )}
         </p>
@@ -145,14 +153,14 @@ export function ProgressSection({
               {/* Phase header */}
               <div className={cn(
                 "flex items-center justify-center gap-1.5 md:gap-2 transition-colors duration-300",
-                isCompleted && "text-green-500",
-                isActive && "text-primary",
+                isCompleted && "text-emerald-500",
+                isActive && "text-emerald-500",
                 isPending && "text-muted-foreground/30"
               )}>
                 <div className={cn(
                   "flex items-center justify-center w-5 h-5 md:w-6 md:h-6 rounded-full border transition-all duration-300",
-                  isCompleted && "bg-green-500/10 border-green-500/50",
-                  isActive && "bg-primary/10 border-primary/50",
+                  isCompleted && "bg-emerald-500/10 border-emerald-500/50",
+                  isActive && "bg-emerald-500/10 border-emerald-500/50",
                   isPending && "bg-muted/5 border-muted-foreground/20"
                 )}>
                   {isCompleted ? (
@@ -164,8 +172,8 @@ export function ProgressSection({
                 <div className="flex flex-col min-w-0">
                   <span className={cn(
                     "text-[9px] md:text-[11px] font-mono font-bold uppercase tracking-wider truncate",
-                    isCompleted && "text-green-500",
-                    isActive && "text-primary",
+                    isCompleted && "text-emerald-500",
+                    isActive && "text-emerald-500",
                     isPending && "text-muted-foreground/40"
                   )}>
                     {isCompleted ? phase.completedName : phase.name}
@@ -176,15 +184,15 @@ export function ProgressSection({
               {/* Phase progress bar */}
               <div className={cn(
                 "h-1.5 md:h-2 w-full overflow-hidden rounded-full transition-colors duration-300",
-                isCompleted && "bg-green-500/20",
-                isActive && "bg-primary/20",
+                isCompleted && "bg-emerald-500/20",
+                isActive && "bg-emerald-500/20",
                 isPending && "bg-muted/10"
               )}>
                 <motion.div 
                   className={cn(
                     "h-full rounded-full transition-colors duration-500",
-                    isCompleted && "bg-green-500",
-                    isActive && "bg-primary",
+                    isCompleted && "bg-emerald-500",
+                    isActive && "bg-emerald-500",
                     isPending && "bg-muted-foreground/20"
                   )}
                   initial={{ width: 0 }}
@@ -209,7 +217,7 @@ export function ProgressSection({
             {isComplete ? (
               <Button 
                 onClick={onViewResults}
-                className="h-12 md:h-14 w-full md:w-[60%] rounded-xl bg-muted/10 hover:bg-primary/5 text-green-500 border border-green-500 font-mono hover:cursor-pointer uppercase tracking-[0.15em] md:tracking-[0.25em] text-[10px] md:text-xs font-black transition-all group active:scale-95"
+                className="h-12 md:h-14 w-full md:w-[60%] rounded-xl bg-muted/10 hover:bg-emerald-500/5 text-emerald-500 border border-emerald-500 font-mono hover:cursor-pointer uppercase tracking-[0.15em] md:tracking-[0.25em] text-[10px] md:text-xs font-black transition-all group active:scale-95"
               >
                 View Results
               </Button>
@@ -231,7 +239,7 @@ export function ProgressSection({
               <Button 
                 onClick={onPeekRankings}
                 variant="outline"
-                className="h-11 md:h-14 w-full md:w-[60%] border-primary/20 hover:border-primary/40 text-muted-foreground hover:text-primary font-mono uppercase tracking-widest text-[9px] md:text-[10px] font-black py-2 md:py-3 px-3 md:px-6 rounded-xl group bg-background/50 backdrop-blur-sm"
+                className="h-11 md:h-14 w-full md:w-[60%] border-emerald-500/20 hover:border-emerald-500/40 text-muted-foreground hover:text-emerald-500 font-mono uppercase tracking-widest text-[9px] md:text-[10px] font-black py-2 md:py-3 px-3 md:px-6 rounded-xl group bg-background/50 backdrop-blur-sm"
               >
                 <Eye className="h-3 w-3 md:h-3.5 md:w-3.5 mr-1.5 md:mr-2 group-hover:scale-110 transition-transform" />
                 Peek Rankings

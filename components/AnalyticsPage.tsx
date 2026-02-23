@@ -65,9 +65,7 @@ const ComparisonsPerArtistChart = dynamic(
   { ssr: false, loading: () => <div className="w-full h-[280px] animate-pulse rounded-lg bg-muted/30" aria-hidden /> }
 );
 
-type AnalyticsPageProps = Readonly<{
-  isSidebarCollapsed?: boolean;
-}>;
+type AnalyticsPageProps = Record<string, never>;
 
 function StatCard({
   icon: Icon,
@@ -151,7 +149,7 @@ function TechnicalPanel({
   );
 }
 
-export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps): JSX.Element {
+export function AnalyticsPage({}: AnalyticsPageProps): JSX.Element {
   const { user, openAuthModal } = useAuth();
   
   const { data: sessions = [], isLoading: loadingSessions } = useUserSessions(user?.id);
@@ -202,12 +200,11 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
   }, [leaderboardModalOpen, closeLeaderboardModal]);
 
   useEffect(() => {
-    if (!isSidebarCollapsed) return;
     const updateHeight = () => setExpandedChartHeight(Math.min(640, Math.max(400, (typeof window !== "undefined" ? window.innerHeight : 600) - 160)));
     updateHeight();
     window.addEventListener("resize", updateHeight);
     return () => window.removeEventListener("resize", updateHeight);
-  }, [isSidebarCollapsed, setExpandedChartHeight]);
+  }, [setExpandedChartHeight]);
 
   const handleGlobalSearch = useCallback((artistName: string) => {
     if (!user) { openAuthModal("login"); return; }
@@ -326,7 +323,7 @@ export function AnalyticsPage({ isSidebarCollapsed = false }: AnalyticsPageProps
         {/* Right Column: Chart */}
         <div className="lg:col-span-8 min-w-0 flex flex-col animate-in slide-in-from-right-4 duration-700 delay-200 h-full">
           <div className="flex-1 w-full bg-card/10 rounded-xl border border-border/20 p-4 overflow-hidden flex flex-col">
-            {chartSection(isSidebarCollapsed ? expandedChartHeight : undefined)}
+            {chartSection(expandedChartHeight)}
           </div>
         </div>
       </div>

@@ -1,5 +1,8 @@
 "use server";
 
+import { cache } from "react";
+import { createClient } from "@/lib/supabase/server";
+
 export type CoverArtArchive = {
   artwork: boolean | null;
   back: boolean | null;
@@ -28,6 +31,7 @@ export type SongInput = {
 export type SessionCreate = {
   user_id?: string | null;
   songs: SongInput[];
+  playlist_name?: string | null;
 };
 
 export type SessionResponse = {
@@ -42,6 +46,7 @@ export type SessionSummary = {
   created_at: string;
   primary_artist: string;
   display_name?: string | null;
+  playlist_name?: string | null;
   song_count: number;
   comparison_count: number;
   convergence_score: number;
@@ -57,12 +62,14 @@ export type ComparisonPair = {
 
 export type SessionDetail = {
   session_id: string;
+  user_id?: string | null;
   playlist_id?: string | null;
   playlist_name?: string | null;
   image_url?: string | null;
   songs: SessionSong[];
   comparison_count: number;
   convergence_score?: number;
+  is_owner?: boolean;
   comparisons?: ComparisonPair[];
 };
 
@@ -98,6 +105,7 @@ export type SessionSong = {
   local_elo: number;
   bt_strength: number | null;
   comparison_count: number;
+  genres?: string[] | null;
 };
 
 export type ComparisonCreate = {
@@ -168,29 +176,57 @@ async function fetchBackend<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const url = `${BACKEND_URL}${endpoint}`;
+  
+  // Get Supabase session for authentication
+  let token: string | undefined;
+  try {
+    const supabase = await createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    token = session?.access_token;
+  } catch (err) {
+    console.error("[API] Failed to get session:", err);
+  }
+
   try {
     const response = await fetch(url, {
       ...options,
       headers: {
         "Content-Type": "application/json",
+        ...(token ? { "Authorization": `Bearer ${token}` } : {}),
         ...options.headers,
       },
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      // Safely try to get error detail from JSON
       let message = "";
-      if (typeof errorData.detail === 'string') {
-        message = errorData.detail;
-      } else if (typeof errorData.detail === 'object' && errorData.detail?.message) {
-        message = errorData.detail.message;
-      } else {
+      try {
+        const errorData = await response.json();
+        if (typeof errorData.detail === 'string') {
+          message = errorData.detail;
+        } else if (typeof errorData.detail === 'object' && errorData.detail?.message) {
+          message = errorData.detail.message;
+        } else {
+          message = `API Error: ${response.status} ${response.statusText}`;
+        }
+      } catch (jsonErr) {
         message = `API Error: ${response.status} ${response.statusText}`;
       }
+      
+      // If it's a backend validation error or internal error, log it but don't crash everything
+      if (response.status >= 500) {
+        console.warn(`[Backend Error] ${response.status} on ${endpoint}: ${message}`);
+      }
+      
       throw new Error(message);
     }
 
-    return await response.json();
+    try {
+      return await response.json();
+    } catch (parseErr) {
+      console.error("[API] Failed to parse JSON response:", parseErr);
+      throw new Error("Invalid response from server");
+    }
   } catch (error) {
     if (error instanceof TypeError && error.message.includes("fetch")) {
       const message = `Cannot reach backend at ${BACKEND_URL}. Check connection.`;
@@ -255,13 +291,29 @@ export async function getSessionSongs(sessionId: string): Promise<SessionSong[]>
   }
 }
 
-export async function getSessionDetail(sessionId: string): Promise<SessionDetail | null> {
+export async function getSessionDetail(
+  sessionId: string, 
+  options: { includeComparisons?: boolean } = {}
+): Promise<SessionDetail | null> {
+  const { includeComparisons = false } = options;
   try {
-    return await fetchBackend<SessionDetail>(`/sessions/${sessionId}`, {
+    // We call fetchBackend which throws on !response.ok
+    const detail = await fetchBackend<SessionDetail>(`/sessions/${sessionId}`, {
       cache: "no-store",
     });
+
+    if (detail && !includeComparisons) {
+      // Strip comparison history for guest/results-only views to minimize data exposure
+      const rest = { ...detail };
+      delete rest.comparisons;
+      return rest as SessionDetail;
+    }
+
+    return detail;
   } catch (error) {
-    console.error("[API] Error in getSessionDetail:", error);
+    // Catch backend validation errors (like the Pydantic 'genres' error) 
+    // to prevent the entire page/metadata from crashing.
+    console.error(`[API] Failed to fetch session ${sessionId}:`, error);
     return null;
   }
 }
@@ -381,7 +433,9 @@ export type FeedbackResponse = {
   id: string;
   message: string;
   created_at: string;
-};export type PlaylistImportRequest = {
+};
+
+export type PlaylistImportRequest = {
   url: string;
   user_id?: string | null;
   limit?: number | null;

@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * @deprecated Import from '@/components/RankingWidget' folder instead.
  * 

@@ -28,7 +28,7 @@ export function UnifiedSearchBar({
   onImportPlaylist,
   onFocus,
   onBlur,
-  placeholder = "Paste playlist link or search artist...",
+  placeholder = "Paste playlist link or search artist…",
 }: UnifiedSearchBarProps): JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   

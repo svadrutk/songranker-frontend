@@ -130,10 +130,10 @@ export function useArtistSuggestions(query: string, enabled: boolean = true) {
 
 // ==================== Session Details ====================
 
-export function useSessionDetail(sessionId: string | null) {
+export function useSessionDetail(sessionId: string | null, options: { includeComparisons?: boolean } = {}) {
   return useQuery<SessionDetail | null, Error>({
-    queryKey: queryKeys.sessionDetail(sessionId ?? ""),
-    queryFn: () => getSessionDetail(sessionId!),
+    queryKey: [...queryKeys.sessionDetail(sessionId ?? ""), options.includeComparisons],
+    queryFn: () => getSessionDetail(sessionId!, options),
     enabled: !!sessionId,
     staleTime: 30 * 1000,
   });
