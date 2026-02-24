@@ -183,6 +183,63 @@ export function RankingWidget({
     };
   }, []);
 
+  // Re-check ownership client-side when the server-side fetch didn't have auth
+  // (e.g. middleware hadn't refreshed cookies yet, or production cookie mismatch)
+  useEffect(() => {
+    if (!isRanking || !sessionId || !user || isOwner) return;
+    if (!initialData || initialData.session_id !== sessionId) return;
+    if (initialData.is_owner) return;
+
+    let isCurrent = true;
+    async function recheckOwnership() {
+      try {
+        const detail = await getSessionDetail(sessionId!, { includeComparisons: true });
+        if (!detail || !isCurrent || !isMounted.current) return;
+        if (!detail.is_owner) return;
+
+        setIsOwner(true);
+
+        const detailComps = (detail as SessionDetail).comparisons;
+        const history = detailComps?.length
+          ? buildHistoryFromComparisons(detailComps)
+          : createComparisonHistory();
+        setComparisonHistory(history);
+
+        const comparisonCounts: Record<string, number> = {};
+        let ties = 0;
+        let idcs = 0;
+        if (detailComps) {
+          for (const comp of detailComps) {
+            if (comp.is_tie) ties++;
+            else if (comp.winner_id === null) idcs++;
+            const isMeaningful = comp.winner_id != null || comp.is_tie === true;
+            if (!isMeaningful) continue;
+            comparisonCounts[comp.song_a_id] = (comparisonCounts[comp.song_a_id] ?? 0) + 1;
+            comparisonCounts[comp.song_b_id] = (comparisonCounts[comp.song_b_id] ?? 0) + 1;
+          }
+        }
+        setTieCount(ties);
+        setIdcCount(idcs);
+
+        const songsWithAccurateCounts = detail.songs.map(song => ({
+          ...song,
+          comparison_count: detailComps
+            ? (comparisonCounts[song.song_id] ?? 0)
+            : song.comparison_count
+        }));
+        setSongs(songsWithAccurateCounts);
+        setTotalDuels(detail.comparison_count);
+        setConvergence(detail.convergence_score ?? 0);
+        setCurrentPair(getNextPair(songsWithAccurateCounts, history));
+        resetTimer();
+      } catch (error) {
+        console.error("Failed to re-check ownership:", error);
+      }
+    }
+    recheckOwnership();
+    return () => { isCurrent = false; };
+  }, [isRanking, sessionId, user, isOwner, initialData, resetTimer]);
+
   // Load session data
   useEffect(() => {
     if (!isRanking || !sessionId) return;
