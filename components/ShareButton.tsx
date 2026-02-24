@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, type JSX } from "react";
+import { useState, useRef, useEffect, useCallback, type JSX } from "react";
 import { Share2, Loader2, Link2, Ticket, Check, ChevronDown } from "lucide-react";
 import confetti from "canvas-confetti";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import type { SessionSong } from "@/lib/api";
 import { generateShareImage } from "@/lib/share-actions";
@@ -29,24 +30,50 @@ export function ShareButton({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [dropdownPos, setDropdownPos] = useState<{ top: number; left: number; width: number } | null>(null);
 
   const resultsUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/ranking/${sessionId}?mode=results`;
 
   useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const updatePosition = useCallback(() => {
+    if (!buttonRef.current) return;
+    const rect = buttonRef.current.getBoundingClientRect();
+    if (size === "icon") {
+      setDropdownPos({ top: rect.top, left: rect.right - 192, width: 192 });
+    } else {
+      setDropdownPos({ top: rect.top, left: rect.left, width: rect.width });
+    }
+  }, [size]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(target) &&
+        buttonRef.current && !buttonRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
 
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -123,9 +150,72 @@ export function ShareButton({
     }
   };
 
+  const dropdown = (
+    <AnimatePresence>
+      {isOpen && dropdownPos && (
+        <motion.div
+          ref={dropdownRef}
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 10, scale: 0.95 }}
+          transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+          className="fixed z-[9999] origin-bottom overflow-hidden rounded-xl border border-border/40 bg-card p-1 shadow-2xl backdrop-blur-md"
+          style={{
+            top: dropdownPos.top - 4,
+            left: dropdownPos.left,
+            width: dropdownPos.width,
+            transform: "translateY(-100%)",
+          }}
+        >
+          <button
+            onClick={handleCopyLink}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted"
+          >
+            <div className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-muted/50 transition-colors",
+              copied && "text-green-500 border-green-500/20 bg-green-500/10"
+            )}>
+              {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black font-mono uppercase tracking-widest leading-none mb-1">
+                {copied ? "Copied" : "Copy Link"}
+              </span>
+              <span className="text-[9px] font-medium text-muted-foreground/60 font-mono uppercase">
+                Share direct results
+              </span>
+            </div>
+          </button>
+
+          <button
+            onClick={handleGenerateReceipt}
+            disabled={songs.length === 0}
+            className={cn(
+              "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors",
+              songs.length > 0 ? "hover:bg-muted" : "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-muted/50">
+              <Ticket className="h-4 w-4" />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-black font-mono uppercase tracking-widest leading-none mb-1">
+                Receipt
+              </span>
+              <span className="text-[9px] font-medium text-muted-foreground/60 font-mono uppercase">
+                Generate shareable image
+              </span>
+            </div>
+          </button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+
   return (
-    <div className={cn("relative", className)} ref={dropdownRef}>
+    <div className={cn("relative", className)}>
       <Button
+        ref={buttonRef}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -153,61 +243,7 @@ export function ShareButton({
         )}
       </Button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: -4, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className={cn(
-              "absolute z-50 bottom-full mt-0 origin-bottom overflow-hidden rounded-xl border border-border/40 bg-card p-1 shadow-2xl backdrop-blur-md",
-              size === "icon" ? "right-0 w-48" : "left-0 right-0"
-            )}
-          >
-            <button
-              onClick={handleCopyLink}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-muted"
-            >
-              <div className={cn(
-                "flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-muted/50 transition-colors",
-                copied && "text-green-500 border-green-500/20 bg-green-500/10"
-              )}>
-                {copied ? <Check className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black font-mono uppercase tracking-widest leading-none mb-1">
-                  {copied ? "Copied" : "Copy Link"}
-                </span>
-                <span className="text-[9px] font-medium text-muted-foreground/60 font-mono uppercase">
-                  Share direct results
-                </span>
-              </div>
-            </button>
-
-            <button
-              onClick={handleGenerateReceipt}
-              disabled={songs.length === 0}
-              className={cn(
-                "flex w-full items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors",
-                songs.length > 0 ? "hover:bg-muted" : "opacity-50 cursor-not-allowed"
-              )}
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border/40 bg-muted/50">
-                <Ticket className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black font-mono uppercase tracking-widest leading-none mb-1">
-                  Receipt
-                </span>
-                <span className="text-[9px] font-medium text-muted-foreground/60 font-mono uppercase">
-                  Generate shareable image
-                </span>
-              </div>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {isMounted ? createPortal(dropdown, document.body) : null}
     </div>
   );
 }
