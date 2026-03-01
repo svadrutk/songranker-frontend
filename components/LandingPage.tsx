@@ -1,6 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef, useCallback, useState, useEffect } from "react";
+import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 import Image from "next/image";
 import { ReceiptMarquee } from "./ReceiptMarquee";
 import { LogIn, ChevronDown } from "lucide-react";
@@ -56,8 +57,25 @@ const FEATURES = [
 ];
 
 export function LandingPage({ openAuthModal }: LandingPageProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { scrollY } = useScroll({ container: scrollRef });
+  const [scrollHidden, setScrollHidden] = useState(false);
+
+  useMotionValueEvent(scrollY, "change", (y) => {
+    setScrollHidden(y > 50);
+  });
+
+  const scrollPastHero = useCallback(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const hero = container.querySelector("section");
+    if (hero) {
+      container.scrollTo({ top: hero.offsetHeight, behavior: "smooth" });
+    }
+  }, []);
+
   return (
-    <div className="h-full w-full overflow-y-auto scroll-smooth">
+    <div ref={scrollRef} className="h-full w-full overflow-y-auto scroll-smooth">
       {/* ─── Hero ─── */}
       <section className="relative min-h-[100dvh] flex flex-col items-center justify-center overflow-hidden bg-background">
         <ReceiptMarquee />
@@ -90,18 +108,28 @@ export function LandingPage({ openAuthModal }: LandingPageProps) {
           </div>
         </div>
 
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, y: [0, 6, 0] }}
-          transition={{
-            opacity: { delay: 1.5, duration: 0.8 },
-            y: { delay: 1.5, duration: 2, repeat: Infinity, ease: "easeInOut" },
-          }}
-        >
-          <ChevronDown className="h-5 w-5 text-muted-foreground/40" />
-        </motion.div>
       </section>
+
+      {/* Scroll indicator — fixed to viewport bottom, fades out on scroll */}
+      <motion.button
+        type="button"
+        aria-label="Scroll down"
+        onClick={scrollPastHero}
+        className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-1 cursor-pointer"
+        initial={{ opacity: 0 }}
+        animate={{
+          opacity: scrollHidden ? 0 : 1,
+          pointerEvents: scrollHidden ? "none" : "auto",
+        }}
+        transition={{
+          opacity: { delay: scrollHidden ? 0 : 0.5, duration: scrollHidden ? 0.3 : 0.4 },
+        }}
+      >
+        <span className="text-[10px] font-mono uppercase tracking-[0.25em] text-muted-foreground">
+          Scroll
+        </span>
+        <ChevronDown className="h-6 w-6 text-muted-foreground" />
+      </motion.button>
 
       {/* ─── How It Works ─── */}
       <section className="py-24 sm:py-32 px-6 bg-background">
