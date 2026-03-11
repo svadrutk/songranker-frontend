@@ -19,26 +19,26 @@ export function SourceCard({ source, onRemove }: SourceCardProps): JSX.Element {
   
   return (
     <div className={cn(
-      "relative group bg-muted/5 border-2 border-border/10 rounded-3xl p-6 transition-all duration-300 hover:bg-muted/10 hover:border-primary/40",
+      "relative group rounded-3xl p-4 transition-all duration-300 hover:border-border/40 border-2 border-transparent",
       source.status === 'loading' && "animate-pulse"
     )}>
       <button
         onClick={() => onRemove(source.id)}
-        className="absolute top-4 right-4 p-2 rounded-xl bg-background border border-border/10 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-all md:opacity-0 md:group-hover:opacity-100 z-10"
+        className="absolute top-3 right-3 p-1.5 rounded-lg text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive transition-all z-10"
         aria-label={`Remove ${source.name}`}
       >
         <X className="h-4 w-4" />
       </button>
 
       <div className="flex items-start gap-4">
-        <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-muted flex items-center justify-center shadow-sm border border-border/10">
+        <div className="relative h-20 w-20 shrink-0 rounded-xl overflow-hidden bg-muted flex items-center justify-center shadow-sm">
           {source.coverUrl && !imageError ? (
             <Image
               src={source.coverUrl}
               alt={source.name}
               fill
-              className="object-cover group-hover:scale-110 transition-transform duration-500"
-              sizes="(max-width: 768px) 56px, 56px"
+              className="object-cover"
+              sizes="(max-width: 768px) 80px, 80px"
               unoptimized
               onError={() => setImageError(true)}
             />

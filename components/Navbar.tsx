@@ -85,7 +85,7 @@ export function Navbar() {
                 href={item.href}
                 onClick={(e) => handleNavItemClick(e, item)}
                 className={cn(
-                  "px-4 py-1.5 rounded-full font-mono text-[10px] lg:text-xs uppercase font-black tracking-[0.2em] transition-all duration-300 relative cursor-pointer outline-none",
+                  "px-4 py-1.5 rounded-full font-mono text-[10px] lg:text-xs uppercase font-black tracking-wider transition-all duration-300 relative cursor-pointer outline-none",
                   pathname === item.href ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -108,7 +108,7 @@ export function Navbar() {
             variant="ghost"
             size="sm"
             onClick={openFeedback}
-            className="hidden sm:flex font-mono text-[10px] md:text-xs uppercase font-bold tracking-widest text-muted-foreground hover:text-primary gap-2 h-9 md:h-10 px-3 md:px-5 rounded-full transition-all"
+            className="hidden sm:flex font-mono text-[10px] md:text-xs uppercase font-bold tracking-wider text-muted-foreground hover:text-primary gap-2 h-9 md:h-10 px-3 md:px-5 rounded-full transition-all"
           >
             <Send className="h-3.5 w-3.5 md:h-4 md:w-4" />
             <span>Feedback</span>
@@ -116,7 +116,7 @@ export function Navbar() {
 
           {user ? (
             <div className="flex items-center gap-3">
-              <span className="hidden lg:block font-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border/50">
+              <span className="hidden lg:block font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-full border border-border/50">
                 {user.email}
               </span>
               <Button 
@@ -179,7 +179,7 @@ export function Navbar() {
                     if (!item.protected || user) setMobileMenuOpen(false);
                   }}
                   className={cn(
-                    "px-4 py-3 rounded-xl font-mono text-sm uppercase font-black tracking-[0.1em] transition-all text-left block",
+                    "px-4 py-3 rounded-xl font-mono text-sm uppercase font-black tracking-wider transition-all text-left block",
                     pathname === item.href 
                       ? "bg-primary/10 text-primary border border-primary/20" 
                       : "text-muted-foreground hover:bg-muted"
@@ -191,7 +191,7 @@ export function Navbar() {
               <button
                 type="button"
                 onClick={openFeedback}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl font-mono text-sm uppercase font-black tracking-[0.1em] text-muted-foreground hover:bg-muted w-full text-left transition-all"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl font-mono text-sm uppercase font-black tracking-wider text-muted-foreground hover:bg-muted w-full text-left transition-all"
               >
                 <Send className="h-4 w-4" />
                 Feedback

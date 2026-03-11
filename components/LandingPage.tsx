@@ -3,6 +3,7 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 import Image from "next/image";
+import { useTheme } from "next-themes";
 import { ReceiptMarquee } from "./ReceiptMarquee";
 import { LogIn, ChevronDown } from "lucide-react";
 
@@ -15,7 +16,7 @@ const STEPS = [
     number: "01",
     title: "Find your songs",
     description:
-      "Search any artist or paste a Spotify/Apple Music playlist link to get started.",
+      "Search any artist or paste a public Spotify/Apple Music playlist link to get started.",
     image: "/findSongs.png",
   },
   {
@@ -60,6 +61,10 @@ export function LandingPage({ openAuthModal }: LandingPageProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll({ container: scrollRef });
   const [scrollHidden, setScrollHidden] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const buttonLogoSrc = mounted && resolvedTheme === "dark" ? "/logo/logo-dark.svg" : "/logo/logo.svg";
 
   useMotionValueEvent(scrollY, "change", (y) => {
     setScrollHidden(y > 50);
@@ -94,15 +99,16 @@ export function LandingPage({ openAuthModal }: LandingPageProps) {
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-xs sm:max-w-none justify-center">
               <button
                 onClick={() => openAuthModal("signup")}
-                className="h-12 sm:h-14 px-8 rounded-full bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.2em] text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-primary/20"
+                className="h-14 sm:h-16 px-10 rounded-full bg-primary text-primary-foreground font-mono font-black uppercase tracking-wider text-base hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 group cursor-pointer"
               >
-                Join Chorusboard
+                <Image src={buttonLogoSrc} alt="" width={26} height={26} className="group-hover:rotate-12 transition-transform duration-300" />
+                Join
               </button>
               <button
                 onClick={() => openAuthModal("login")}
-                className="h-12 sm:h-14 px-8 rounded-full border-2 border-primary/20 bg-background/50 backdrop-blur-md text-foreground font-mono font-black uppercase tracking-[0.2em] text-sm hover:bg-primary/5 hover:border-primary/40 transition-all flex items-center justify-center gap-2"
+                className="h-14 sm:h-16 px-10 rounded-full border-2 border-primary/20 bg-background/50 backdrop-blur-md text-foreground font-mono font-black uppercase tracking-wider text-base hover:bg-primary/5 hover:border-primary/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                <LogIn className="h-4 w-4" /> Sign In
+                <LogIn className="h-5 w-5" /> Sign In
               </button>
             </div>
           </div>
@@ -250,18 +256,13 @@ export function LandingPage({ openAuthModal }: LandingPageProps) {
           <p className="text-sm sm:text-base text-muted-foreground font-mono uppercase tracking-widest leading-relaxed mb-10">
             It takes 30 seconds to start your first session.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex justify-center">
             <button
               onClick={() => openAuthModal("signup")}
-              className="h-12 sm:h-14 px-8 rounded-full bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.2em] text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-primary/20"
+              className="h-16 sm:h-20 px-14 rounded-full bg-primary text-primary-foreground font-mono font-black uppercase tracking-wider text-lg sm:text-xl hover:scale-[1.02] active:scale-95 transition-all shadow-2xl shadow-primary/20 flex items-center justify-center gap-3 group cursor-pointer"
             >
-              Join Chorusboard
-            </button>
-            <button
-              onClick={() => openAuthModal("login")}
-              className="h-12 sm:h-14 px-8 rounded-full border-2 border-primary/20 bg-background/50 backdrop-blur-md text-foreground font-mono font-black uppercase tracking-[0.2em] text-sm hover:bg-primary/5 hover:border-primary/40 transition-all flex items-center justify-center gap-2"
-            >
-              <LogIn className="h-4 w-4" /> Sign In
+              <Image src={buttonLogoSrc} alt="" width={32} height={32} className="group-hover:rotate-12 transition-transform duration-300" />
+              Join
             </button>
           </div>
         </motion.div>

@@ -201,18 +201,18 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
         onClick={handleClick}
         onKeyDown={handleKeyDown}
         className={cn(
-          "w-full group flex items-center gap-4 p-4 rounded-xl border border-border/40 bg-card relative cursor-pointer",
+          "w-full group flex items-center gap-4 px-4 pt-2 pb-5 rounded-xl border border-border/40 bg-card relative cursor-pointer",
           "hover:bg-muted/50 hover:border-primary/20 text-left transition-all",
           "outline-none focus-visible:ring-2 focus-visible:ring-primary"
         )}
       >
-        <div className="relative w-12 h-12 shrink-0 rounded-lg overflow-hidden bg-muted/20">
+        <div className="relative w-14 h-14 shrink-0 overflow-hidden bg-muted/20 rounded-sm">
           {(session.top_album_covers ?? []).length > 0 && !imageErrors[session.session_id] ? (
             <Image
               src={(session.top_album_covers ?? [])[0]}
               alt=""
-              width={48}
-              height={48}
+              width={56}
+              height={56}
               className="w-full h-full object-cover"
               onError={() => setImageErrors((prev) => ({ ...prev, [session.session_id]: true }))}
               unoptimized
@@ -224,7 +224,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-mono text-sm font-bold truncate text-foreground">
+          <p className="font-sans text-sm font-bold truncate text-foreground">
             {session.display_name || session.playlist_name || session.primary_artist}
           </p>
           <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground font-mono uppercase tracking-tighter">
@@ -308,7 +308,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
                   "flex-1 h-[3px] rounded-full overflow-hidden transition-colors duration-300",
                   isPhaseCompleted && "bg-green-500/30",
                   isPhaseActive && "bg-primary/20",
-                  isPhasePending && "bg-muted/20"
+                  isPhasePending && "bg-muted-foreground/20"
                 )}
               >
                 <div
@@ -510,7 +510,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
       {/* Desktop: Kanban Columns */}
       <div className="hidden sm:grid gap-4 grid-cols-3 flex-1 min-h-0 min-w-0">
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-          <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
+          <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider text-center shrink-0">
             Created
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`draft-${sortField}-${sortDir}`}>
@@ -530,7 +530,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
           </div>
         </div>
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-          <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
+          <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider text-center shrink-0">
             Unfinished
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`progress-${sortField}-${sortDir}`}>
@@ -550,7 +550,7 @@ export function MyRankingsOverview({}: MyRankingsOverviewProps): JSX.Element {
           </div>
         </div>
         <div className="flex flex-col gap-3 min-h-0 overflow-hidden">
-          <p className="text-[10px] font-mono font-bold text-muted-foreground uppercase tracking-widest text-center shrink-0">
+          <p className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-wider text-center shrink-0">
             Settled
           </p>
           <div className="flex flex-col gap-3 overflow-y-auto min-h-0" key={`settled-${sortField}-${sortDir}`}>

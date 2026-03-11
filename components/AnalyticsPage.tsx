@@ -303,9 +303,9 @@ export function AnalyticsPage({}: AnalyticsPageProps): JSX.Element {
     <Button
       type="button"
       onClick={openLeaderboardModal}
-      className="relative w-full py-7 text-sm font-black font-mono uppercase tracking-[0.25em] bg-primary text-primary-foreground hover:scale-[1.01] active:scale-[0.99] rounded-xl shadow-lg shadow-primary/10 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden group shrink-0"
+      className="relative w-full py-7 text-xl font-semibold font-sans tracking-tight bg-primary text-primary-foreground active:scale-[0.99] rounded-xl shadow-lg shadow-primary/10 transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden group shrink-0 cursor-pointer"
     >
-      <Globe className="h-4 w-4 animate-pulse" />
+      <Globe className="h-6 w-6 shrink-0 group-hover:rotate-12 transition-transform duration-300" />
       <span>Global Artist Rankings</span>
     </Button>
   );

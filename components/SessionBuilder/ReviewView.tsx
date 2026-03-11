@@ -89,12 +89,13 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <button 
           onClick={onBack}
-          className="flex items-center gap-2 text-xs font-mono font-black text-muted-foreground hover:text-primary transition-colors uppercase tracking-[0.2em]"
+          className="text-muted-foreground hover:text-primary transition-colors"
+          aria-label="Back to builder"
         >
-          <ArrowLeft className="h-4 w-4" /> Back to Builder
+          <ArrowLeft className="h-8 w-8 md:h-10 md:w-10" />
         </button>
         <div className="text-center md:text-right">
-          <h1 className="text-2xl md:text-4xl font-mono font-black uppercase tracking-tight">Review & Clean</h1>
+          <h1 className="text-2xl md:text-4xl font-sans font-black uppercase tracking-tight">Review & Clean</h1>
           <p className="text-xs text-muted-foreground font-mono uppercase tracking-widest opacity-70">
             {allSongs.length} songs found • {duplicateGroups.length} duplicate groups
           </p>
@@ -121,7 +122,7 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
                 setIsEditingName(true);
               }}
               placeholder="Name your ranking..."
-              className="w-full bg-transparent border-none p-0 font-mono text-lg md:text-2xl font-black uppercase tracking-tight focus:ring-0 placeholder:text-muted-foreground/30"
+              className="w-full bg-transparent border-none p-0 font-sans text-lg md:text-2xl font-black uppercase tracking-tight focus:ring-0 placeholder:text-muted-foreground/30"
             />
             <div className={`absolute bottom-0 left-0 right-0 h-px transition-all duration-300 ${nameFocused ? "bg-primary/50 scale-x-100" : "bg-muted-foreground/15 scale-x-100"}`} />
           </div>
@@ -150,8 +151,8 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
               <Check className="h-7 w-7 md:h-10 md:w-10 text-primary" />
             </div>
             <div className="space-y-1.5 md:space-y-2">
-              <h3 className="font-mono font-black uppercase tracking-widest text-lg md:text-xl text-primary">Your list is clean</h3>
-              <p className="text-xs text-muted-foreground font-mono uppercase tracking-[0.2em] opacity-60">No duplicates were found across your sources.</p>
+              <h3 className="font-sans font-black uppercase tracking-normal text-2xl md:text-3xl text-primary">Your list is clean</h3>
+              <p className="text-xs text-muted-foreground font-mono uppercase tracking-normal opacity-60">No duplicates were found across your sources.</p>
             </div>
           </div>
         ) : (
@@ -234,7 +235,7 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
         <Button 
           size="lg"
           onClick={handleConfirm}
-          className="w-full md:w-auto h-20 px-10 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl relative overflow-hidden"
+          className="w-full md:w-auto h-20 px-10 rounded-2xl bg-primary text-primary-foreground font-sans font-semibold tracking-tight text-2xl active:scale-95 transition-all cursor-pointer group shadow-2xl relative overflow-hidden"
         >
           <div className="flex items-center gap-4 relative z-10">
             <div className="relative h-10 w-10 flex items-center justify-center">

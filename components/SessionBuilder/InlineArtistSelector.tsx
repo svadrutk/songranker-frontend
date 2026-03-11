@@ -1,50 +1,34 @@
 "use client";
 
-import { useState, useMemo, type JSX } from "react";
+import { type JSX } from "react";
 import { Check, Loader2 } from "lucide-react";
 import type { ReleaseGroup } from "@/lib/api";
-import { ReleaseFilters, type ReleaseType } from "@/components/Catalog/ReleaseFilters";
-import { Button } from "@/components/ui/button";
+
 import { CoverArt } from "@/components/CoverArt";
 
 type InlineArtistSelectorProps = Readonly<{
   artistName: string;
   releases: ReleaseGroup[];
+  filteredReleases: ReleaseGroup[];
+  selectedIds: string[];
+  onToggleSelection: (ids: string[]) => void;
   loading: boolean;
   onAdd: (selectedReleases: ReleaseGroup[]) => void;
   onCancel: () => void;
 }>;
 
 export function InlineArtistSelector({
-  artistName,
   releases,
+  filteredReleases,
+  selectedIds,
+  onToggleSelection,
   loading,
   onAdd,
   onCancel,
 }: InlineArtistSelectorProps): JSX.Element {
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [activeFilters, setActiveFilters] = useState<ReleaseType[]>(["Album"]);
-
-  const toggleFilter = (type: ReleaseType) => {
-    setActiveFilters(prev => 
-      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
-    );
-  };
-
-  const filteredReleases = useMemo(() => {
-    const activeFiltersLower = new Set(activeFilters.map((f) => f.toLowerCase()));
-    const mainTypes = new Set(["album", "ep", "single"]);
-
-    return releases.filter((release) => {
-      const type = (release.type || "Other").toLowerCase();
-      if (activeFiltersLower.has(type)) return true;
-      return activeFiltersLower.has("other") && !mainTypes.has(type);
-    });
-  }, [releases, activeFilters]);
-
   const handleToggleRelease = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    onToggleSelection(
+      selectedIds.includes(id) ? selectedIds.filter(i => i !== id) : [...selectedIds, id]
     );
   };
 
@@ -54,17 +38,7 @@ export function InlineArtistSelector({
   };
 
   return (
-    <div className="w-full bg-muted/10 border-2 border-primary/20 rounded-2xl md:rounded-[2rem] p-3 md:p-8 animate-in zoom-in duration-500 shadow-xl backdrop-blur-xl flex flex-col gap-3 md:gap-0">
-      {/* Header: artist name + subtitle */}
-      <div className="flex items-center justify-between gap-2 md:mb-8">
-        <div className="min-w-0">
-          <h2 className="text-base md:text-3xl font-bold truncate">{artistName}</h2>
-          <p className="text-[9px] md:text-[10px] text-muted-foreground font-mono uppercase tracking-[0.15em] font-bold opacity-70 hidden md:block">
-            Select releases to add
-          </p>
-        </div>
-      </div>
-
+    <div className="w-full h-full p-3 md:p-0 animate-in zoom-in duration-500 flex flex-col gap-3 md:gap-0">
       {loading ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
@@ -72,43 +46,19 @@ export function InlineArtistSelector({
         </div>
       ) : (
         <>
-          {/* Filters + All/None: single row on mobile */}
-          <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 md:pb-4 md:mb-6">
-            <ReleaseFilters activeFilters={activeFilters} onToggleFilter={toggleFilter} />
-            <div className="flex gap-1.5 shrink-0">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setSelectedIds(filteredReleases.map(r => r.id))}
-                className="font-mono text-[8px] uppercase font-bold tracking-widest h-7 px-2"
-              >
-                All
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setSelectedIds([])}
-                className="font-mono text-[8px] uppercase font-bold tracking-widest h-7 px-2"
-              >
-                None
-              </Button>
-            </div>
-          </div>
-          
-          {/* Release grid with sticky action bar */}
-          <div className="relative max-h-[45dvh] md:max-h-[400px] overflow-y-auto pr-1 md:pr-2 custom-scrollbar">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-2 pb-14 md:pb-16">
+          <div className="relative flex-1 min-h-0 md:overflow-y-auto scrollbar-none">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 md:gap-2 pb-2 md:pb-16">
               {filteredReleases.map((release) => (
                 <div 
                   key={release.id}
                   onClick={() => handleToggleRelease(release.id)}
-                  className={`group flex items-center gap-2.5 md:gap-3 p-1.5 md:p-2 rounded-xl border-2 transition-all cursor-pointer ${
+                  className={`group flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-xl border-2 transition-all cursor-pointer ${
                     selectedIds.includes(release.id)
                       ? "border-primary bg-primary/5 shadow-sm ring-2 ring-primary/5"
                       : "border-transparent bg-background/40 hover:border-border hover:bg-background/60"
                   }`}
                 >
-                  <div className="relative h-9 w-9 md:h-10 md:w-10 rounded-md overflow-hidden shrink-0 shadow-sm">
+                  <div className="relative h-14 w-14 md:h-16 md:w-16 rounded-lg overflow-hidden shrink-0 shadow-sm">
                     <CoverArt 
                       id={release.id} 
                       title={release.title} 
@@ -117,14 +67,14 @@ export function InlineArtistSelector({
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className={`text-[11px] font-bold truncate ${selectedIds.includes(release.id) ? "text-primary" : ""}`}>
+                    <h4 className={`text-sm md:text-base font-bold truncate ${selectedIds.includes(release.id) ? "text-primary" : ""}`}>
                       {release.title}
                     </h4>
-                    <p className="text-[9px] font-mono text-muted-foreground uppercase font-bold opacity-60">
+                    <p className="text-[10px] md:text-xs font-mono text-muted-foreground uppercase font-bold opacity-60">
                       {release.type || "Other"}
                     </p>
                   </div>
-                  <div className={`h-5 w-5 rounded-full shrink-0 flex items-center justify-center border-2 transition-all ${
+                  <div className={`h-6 w-6 rounded-full shrink-0 flex items-center justify-center border-2 transition-all ${
                     selectedIds.includes(release.id)
                       ? "bg-primary border-primary text-primary-foreground"
                       : "border-border text-transparent"
@@ -135,22 +85,22 @@ export function InlineArtistSelector({
               ))}
             </div>
 
-            {/* Sticky action bar pinned to bottom of scroll container */}
-            <div className="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-2 pt-3 pb-2 px-1 bg-background rounded-b-xl">
-              <Button 
-                variant="destructive" 
+            <div className="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-3 pt-4 pb-6 bg-background">
+              <button 
+                type="button"
                 onClick={onCancel} 
-                className="font-mono uppercase font-black tracking-widest text-[9px] h-9 md:h-10 px-3 md:px-4"
+                className="px-5 py-3 rounded-lg font-mono text-xs sm:text-sm uppercase tracking-wider font-bold transition-all border border-border/60 bg-muted/20 text-muted-foreground hover:text-destructive hover:border-destructive/40"
               >
                 Cancel
-              </Button>
-              <Button 
+              </button>
+              <button 
+                type="button"
                 disabled={selectedIds.length === 0}
                 onClick={handleAdd}
-                className="flex-1 bg-primary text-primary-foreground font-mono font-black uppercase tracking-widest px-4 md:px-6 h-9 md:h-10 rounded-lg shadow-lg shadow-primary/20 text-[10px]"
+                className="flex-1 px-5 py-3 rounded-lg font-mono text-xs sm:text-sm uppercase tracking-wider font-bold transition-all bg-primary text-primary-foreground disabled:opacity-40"
               >
                 Add Selected ({selectedIds.length})
-              </Button>
+              </button>
             </div>
           </div>
         </>

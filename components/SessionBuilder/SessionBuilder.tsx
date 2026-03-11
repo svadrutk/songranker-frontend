@@ -22,8 +22,9 @@ import {
 } from "@/lib/api";
 import { useDebouncedValue } from "@/lib/hooks";
 import { Button } from "@/components/ui/button";
-import { Trash2, ArrowRight, Music, ChevronDown } from "lucide-react";
+import { Trash2, ArrowRight, Music } from "lucide-react";
 import { SiSpotify, SiApplemusic } from "@icons-pack/react-simple-icons";
+import { ReleaseFilters, type ReleaseType } from "@/components/Catalog/ReleaseFilters";
 import { cn } from "@/lib/utils";
 
 export function SessionBuilder(): JSX.Element {
@@ -31,6 +32,8 @@ export function SessionBuilder(): JSX.Element {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const { sources, addSource, removeSource, resetDraft, setStatus, updateSource } = useSessionBuilderStore();
+  const [activeFilters, setActiveFilters] = useState<ReleaseType[]>(["Album"]);
+  const [selectedReleaseIds, setSelectedReleaseIds] = useState<string[]>([]);
 
   useEffect(() => {
     setMounted(true);
@@ -232,8 +235,24 @@ export function SessionBuilder(): JSX.Element {
 
   const totalSongs = sources.reduce((acc, s) => acc + s.songCount, 0);
 
+  const toggleFilter = (type: ReleaseType) => {
+    setActiveFilters(prev => 
+      prev.includes(type) ? prev.filter(t => t !== type) : [...prev, type]
+    );
+  };
+
+  const filteredReleases = useMemo(() => {
+    const activeFiltersLower = new Set(activeFilters.map((f) => f.toLowerCase()));
+    const mainTypes = new Set(["album", "ep", "single"]);
+    return artistReleases.filter((release) => {
+      const type = (release.type || "Other").toLowerCase();
+      if (activeFiltersLower.has(type)) return true;
+      return activeFiltersLower.has("other") && !mainTypes.has(type);
+    });
+  }, [artistReleases, activeFilters]);
+
   return (
-    <div className="flex flex-col md:flex-row h-full w-full max-w-(--breakpoint-2xl) mx-auto overflow-hidden relative">
+    <div className="flex flex-col md:flex-row h-full w-full overflow-hidden relative">
       <AnimatePresence>
         {showImportModal && (
           <PlaylistImportModal 
@@ -244,15 +263,8 @@ export function SessionBuilder(): JSX.Element {
         )}
       </AnimatePresence>
       {/* Left Column: Search & Discovery */}
-      <div className="flex-1 flex flex-col min-w-0 pt-8 px-4 md:p-8 lg:p-12 gap-8 overflow-y-auto custom-scrollbar">
-        {/* Punchy Minimalist Header - Smaller for compact layout */}
-        <div className="flex flex-col items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700 w-full">
-          <h1 className="font-sans text-3xl md:text-5xl font-semibold tracking-tighter text-foreground leading-none">
-            Find your favorites<span className="text-primary">.</span>
-          </h1>
-        </div>
-
-        <div className="w-full sticky top-0 z-30">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto scrollbar-none">
+        <div className="w-full sticky top-0 z-30 bg-background px-4 md:px-8 lg:px-12 pt-6 md:pt-8">
           <UnifiedSearchBar 
             query={query}
             onQueryChange={handleQueryChange}
@@ -263,14 +275,38 @@ export function SessionBuilder(): JSX.Element {
             onImportPlaylist={handleImportPlaylist}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
           />
+          {searchingArtist && !loadingReleases && artistReleases.length > 0 && (
+            <div className="flex items-center justify-between gap-2 border-b border-border/40 pb-2 pt-4 md:pb-4">
+              <ReleaseFilters activeFilters={activeFilters} onToggleFilter={toggleFilter} />
+              <div className="flex gap-1 shrink-0 rounded-lg border border-border/60 bg-muted/20 p-1">
+                <button 
+                  type="button"
+                  onClick={() => setSelectedReleaseIds(filteredReleases.map(r => r.id))}
+                  className="px-3 py-2 rounded-md font-mono text-[10px] sm:text-xs uppercase tracking-wider font-bold transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                >
+                  All
+                </button>
+                <button 
+                  type="button"
+                  onClick={() => setSelectedReleaseIds([])}
+                  className="px-3 py-2 rounded-md font-mono text-[10px] sm:text-xs uppercase tracking-wider font-bold transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                >
+                  None
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 px-4 md:px-8 lg:px-12 pt-6 flex flex-col">
           {searchingArtist && (
-            <div className="w-full animate-in slide-in-from-top-4 duration-500">
+            <div className="w-full flex-1 min-h-0 animate-in slide-in-from-top-4 duration-500">
               <InlineArtistSelector 
                 artistName={searchingArtist.name}
                 releases={artistReleases}
+                filteredReleases={filteredReleases}
+                selectedIds={selectedReleaseIds}
+                onToggleSelection={setSelectedReleaseIds}
                 loading={loadingReleases}
                 onAdd={handleAddArtistReleases}
                 onCancel={() => {
@@ -284,52 +320,38 @@ export function SessionBuilder(): JSX.Element {
       </div>
 
       {/* Right Column: Your Selection Sidebar */}
-      <div className="w-full md:w-[400px] lg:w-[450px] shrink-0 border-t md:border-t-0 md:border-l border-border/10 bg-muted/5 flex flex-col overflow-hidden">
-        <div className="p-6 md:p-8 flex flex-col h-full gap-6">
+      <div className="w-full md:w-[460px] lg:w-[520px] shrink-0 flex flex-col overflow-hidden">
+        <div className="px-6 md:px-10 pt-6 md:pt-8 pb-6 flex flex-col h-full gap-6">
           <button
             type="button"
             onClick={() => setSelectionExpanded(prev => !prev)}
-            className="md:pointer-events-none flex items-center justify-between border-b border-border/20 pb-4 w-full text-left"
+            className="md:pointer-events-none flex flex-col gap-2 w-full text-left"
           >
-            <div className="flex flex-col gap-1">
-              <h2 className="font-mono font-black uppercase tracking-widest text-primary/80 text-xs">
-                Your Selection
-              </h2>
-              <div className="flex gap-2">
-                <span className="font-mono text-[10px] font-black uppercase tracking-widest opacity-60">
-                  {sources.length} sources
-                </span>
-                <span className="font-mono text-[10px] font-black uppercase tracking-widest text-primary">
-                  {totalSongs} songs
-                </span>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-sm md:text-base font-black uppercase tracking-widest text-muted-foreground/60">
+                {sources.length} {sources.length === 1 ? "source" : "sources"} · {totalSongs} songs
+              </span>
               {sources.length > 0 && (
                 <span
                   role="button"
                   tabIndex={0}
                   onClick={(e) => { e.stopPropagation(); resetDraft(); }}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); resetDraft(); } }}
-                  className="text-muted-foreground hover:text-destructive transition-colors font-mono text-[10px] font-black uppercase tracking-widest flex items-center gap-2"
+                  className="text-muted-foreground/30 hover:text-destructive transition-colors flex-shrink-0 pointer-events-auto cursor-pointer mr-[18px]"
                 >
-                  <Trash2 className="h-3 w-3" /> Clear
+                  <Trash2 className="h-5 w-5" />
                 </span>
               )}
-              <ChevronDown className={cn(
-                "h-4 w-4 text-muted-foreground transition-transform duration-200 md:hidden",
-                !selectionExpanded && "rotate-180"
-              )} />
             </div>
           </button>
+          <div className="h-px w-full bg-border/40" />
 
           <div className={cn(
             "flex-1 flex flex-col gap-6 overflow-hidden transition-all duration-300 ease-in-out",
             "md:opacity-100 md:max-h-none",
             selectionExpanded ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100"
           )}>
-            <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
               {sources.length > 0 ? (
                 <div className="flex flex-col gap-4 py-2">
                   {sources.map(source => (
@@ -351,7 +373,7 @@ export function SessionBuilder(): JSX.Element {
                 size="lg"
                 disabled={sources.some(s => s.status === 'loading') || sources.length === 0}
                 onClick={() => router.push("/review")}
-                className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-mono font-black uppercase tracking-[0.1em] text-xl hover:scale-[1.02] active:scale-95 transition-all group shadow-2xl disabled:opacity-50 relative overflow-hidden"
+                className="w-full h-20 rounded-2xl bg-primary text-primary-foreground font-sans font-semibold tracking-tight text-2xl active:scale-95 transition-all cursor-pointer group shadow-2xl disabled:opacity-50 relative overflow-hidden"
               >
                 <div className="flex items-center gap-4 relative z-10">
                   <div className="relative h-10 w-10 flex items-center justify-center">
@@ -366,7 +388,7 @@ export function SessionBuilder(): JSX.Element {
                     </div>
                     <IconSparkles />
                   </div>
-                  review selections
+                  Review Selections
                 </div>
               </Button>
             </div>

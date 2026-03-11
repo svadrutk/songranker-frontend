@@ -170,6 +170,12 @@
 }
 
 @layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
+  }
+
   /* Minimal Pure CSS Hover Scroll with Container Queries */
   .hover-scroll-container {
     @apply overflow-hidden whitespace-nowrap;
