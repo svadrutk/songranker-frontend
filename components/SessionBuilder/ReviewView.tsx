@@ -85,7 +85,7 @@ export function ReviewView({ onBack, onConfirm }: ReviewViewProps): JSX.Element 
   const totalFinalCount = allSongs.length - removedCount;
 
   return (
-    <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-12 gap-6 md:gap-12 overflow-y-auto custom-scrollbar animate-in slide-in-from-right-8 duration-500">
+    <div className="flex flex-col h-full w-full max-w-5xl mx-auto px-4 md:px-8 py-6 md:py-12 gap-6 md:gap-12 overflow-y-auto scrollbar-none animate-in slide-in-from-right-8 duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6">
         <button 
           onClick={onBack}
